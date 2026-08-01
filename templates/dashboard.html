@@ -203,17 +203,9 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🚗 Volkswagen WeConnect</div>
-      <div class="setting-hint" style="margin-bottom:8px;">Haal ritten en laaddata direct van VW servers (gratis). Alleen voor WeConnect-voertuigen (ID.3/4/5/7, etc.)</div>
-      <input type="email" class="setting-input" id="vwUserInput" placeholder="VW account e-mail" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="vwPassInput" placeholder="VW wachtwoord" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="vwSpinInput" placeholder="S-PIN (optioneel)" style="margin-bottom:6px;">
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="vwSave()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
-        <button class="btn btn-secondary" onclick="vwSync()" style="font-size:.8rem;padding:8px 16px;">🔄 Sync</button>
-        <button class="btn btn-danger" onclick="vwDelete()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
-      </div>
-      <div id="vwStatus" style="margin-top:8px;font-size:.78rem;"></div>
+      <div class="setting-label">🚗 Voertuig Connecties</div>
+      <div class="setting-hint" style="margin-bottom:10px;">Koppel je auto om automatisch ritten en laaddata op te halen. Kies je merk hieronder.</div>
+      <div id="connectorsContainer"></div>
     </div>
 
     <div class="setting-section">
@@ -379,15 +371,11 @@ function openSettings() {
   renderPalettes();
   // System info
   fetch('/api/status').then(r => r.json()).then(d => {
-    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}<br>VW WeConnect: ${d.vw_connected ? '✅ geconfigureerd' : '❌ niet ingesteld'}`;
+    const connList = (d.connectors || []).join(', ') || 'geen';
+    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}<br>Actieve connecties: ${connList}`;
   }).catch(() => { document.getElementById('systemInfo').innerHTML = 'Offline mode (embedded data)'; });
-  // Load VW config
-  fetch('/api/vw/status').then(r => r.json()).then(d => {
-    if (d.configured) {
-      document.getElementById('vwUserInput').value = d.username || '';
-      document.getElementById('vwStatus').innerHTML = `✅ Geconfigureerd als ${d.username}`;
-    }
-  }).catch(() => {});
+  // Render dynamic connector panels
+  renderConnectors();
   document.getElementById('settingsModal').classList.add('show');
 }
 
@@ -464,53 +452,130 @@ async function testToken() {
 function openHelp() { document.getElementById('helpModal').classList.add('show'); }
 function closeHelp() { document.getElementById('helpModal').classList.remove('show'); }
 
-// ─── Volkswagen WeConnect ────────────────────────────────────────
-async function vwSave() {
-  const username = document.getElementById('vwUserInput').value.trim();
-  const password = document.getElementById('vwPassInput').value.trim();
-  const spin = document.getElementById('vwSpinInput').value.trim();
-  if (!username || !password) { document.getElementById('vwStatus').innerHTML = '⚠️ E-mail en wachtwoord vereist'; return; }
+// ─── Dynamic Connector System ────────────────────────────────────
+// Renders all vehicle connectors from /api/connectors, handles save/sync/delete generically.
+// To add a new brand: add it to connectors/__init__.py — the UI updates automatically.
+
+let _connectors = [];
+
+async function loadConnectors() {
   try {
-    const resp = await fetch('/api/vw/config', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username, password, spin })
-    });
-    const d = await resp.json();
-    document.getElementById('vwStatus').innerHTML = '✅ ' + d.message;
-    document.getElementById('vwPassInput').value = '';  // Clear for security
-  } catch(e) { document.getElementById('vwStatus').innerHTML = '❌ Server niet bereikbaar'; }
+    const resp = await fetch('/api/connectors');
+    _connectors = await resp.json();
+  } catch(e) { _connectors = []; }
+  return _connectors;
 }
 
-async function vwSync() {
-  const status = document.getElementById('vwStatus');
-  status.innerHTML = '🔄 Bezig met sync...';
-  try {
-    // Use saved config or inline values
-    const body = {};
-    if (document.getElementById('vwUserInput').value) {
-      body.username = document.getElementById('vwUserInput').value.trim();
-      body.password = document.getElementById('vwPassInput').value.trim();
-      body.spin = document.getElementById('vwSpinInput').value.trim();
-    }
-    const resp = await fetch('/api/vw/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    const d = await resp.json();
-    if (d.status === 'ok') {
-      status.innerHTML = `✅ ${d.message}`;
-      if (d.fetched > 0) { await loadData(); renderDashboard(); }
-    } else {
-      status.innerHTML = '❌ ' + (d.error || 'Onbekende fout').substring(0, 120);
-    }
-  } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
+async function renderConnectors() {
+  const container = document.getElementById('connectorsContainer');
+  if (!container) return;
+  if (_connectors.length === 0) await loadConnectors();
+
+  // For each connector, check if it's already configured
+  const html = [];
+  for (const c of _connectors) {
+    let status = '';
+    let isConfigured = false;
+    try {
+      const sr = await fetch(`/api/connector/${c.brand}/status`);
+      const sd = await sr.json();
+      isConfigured = sd.configured;
+    } catch(e) {}
+
+    const badge = c.available
+      ? (isConfigured ? '<span style="color:var(--green);font-size:.72rem;">✅ Verbonden</span>' : '<span style="color:var(--text-muted);font-size:.72rem;">● Niet gekoppeld</span>')
+      : `<span style="color:var(--orange);font-size:.72rem;">⚠ Niet geïnstalleerd (${c.install_hint})</span>`;
+
+    // Build input fields dynamically
+    const fields = c.credential_fields.map(f => {
+      const req = f.required ? '<span style="color:var(--red)">*</span>' : '';
+      if (f.type === 'select') {
+        const opts = (f.options || []).map(o => `<option value="${o}" ${o === f.default ? 'selected' : ''}>${o}</option>`).join('');
+        return `<select class="setting-input connector-field" data-brand="${c.brand}" data-key="${f.key}" data-type="${f.type}" style="margin-bottom:6px;"><option value="" ${!f.default ? 'selected' : ''}>${f.label}${req}</option>${opts}</select>`;
+      }
+      return `<input type="${f.type}" class="setting-input connector-field" data-brand="${c.brand}" data-key="${f.key}" data-type="${f.type}" placeholder="${f.label}${req}" style="margin-bottom:6px;">`;
+    }).join('');
+
+    const syncBtn = c.available
+      ? `<button class="btn btn-secondary" onclick="connectorAction('${c.brand}','sync')" style="font-size:.8rem;padding:8px 12px;">🔄 Sync</button>`
+      : '';
+
+    html.push(`
+      <div class="connector-card" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:.9rem;font-weight:600;">${c.icon} ${c.display_name}</span>
+          ${badge}
+        </div>
+        ${fields}
+        <div class="btn-row" style="margin-top:4px;">
+          <button class="btn btn-primary" onclick="connectorAction('${c.brand}','save')" style="font-size:.8rem;padding:8px 12px;" ${c.available ? '' : 'disabled'}>Opslaan</button>
+          ${syncBtn}
+          <button class="btn btn-danger" onclick="connectorAction('${c.brand}','delete')" style="font-size:.8rem;padding:8px 12px;" ${isConfigured ? '' : 'disabled'}>Verwijderen</button>
+        </div>
+        <div id="connector-status-${c.brand}" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>
+      </div>
+    `);
+  }
+  container.innerHTML = html.join('');
 }
 
-async function vwDelete() {
-  try {
-    await fetch('/api/vw/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'delete'}) });
-    document.getElementById('vwUserInput').value = '';
-    document.getElementById('vwPassInput').value = '';
-    document.getElementById('vwSpinInput').value = '';
-    document.getElementById('vwStatus').innerHTML = '🗑️ WeConnect gegevens verwijderd';
-  } catch(e) { document.getElementById('vwStatus').innerHTML = '❌ Kon niet verwijderen'; }
+async function connectorAction(brand, action) {
+  const statusEl = document.getElementById(`connector-status-${brand}`);
+  const c = _connectors.find(x => x.brand === brand);
+  if (!c) return;
+
+  if (action === 'delete') {
+    statusEl.innerHTML = '🗑️ Verwijderen...';
+    try {
+      await fetch(`/api/connector/${brand}/config`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action:'delete'}) });
+      statusEl.innerHTML = '✅ Verwijderd';
+      renderConnectors();
+    } catch(e) { statusEl.innerHTML = '❌ Fout'; }
+    return;
+  }
+
+  // Collect field values from inputs
+  const creds = {};
+  document.querySelectorAll(`.connector-field[data-brand="${brand}"]`).forEach(el => {
+    if (el.value) creds[el.dataset.key] = el.value.trim();
+  });
+
+  if (action === 'save') {
+    // Validate required fields
+    for (const f of c.credential_fields) {
+      if (f.required && !creds[f.key]) {
+        statusEl.innerHTML = `⚠️ ${f.label} is verplicht`;
+        return;
+      }
+    }
+    statusEl.innerHTML = '💾 Opslaan...';
+    try {
+      const resp = await fetch(`/api/connector/${brand}/config`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(creds) });
+      const d = await resp.json();
+      statusEl.innerHTML = d.status === 'ok' ? '✅ ' + d.message : '❌ ' + (d.error || 'Fout');
+      // Clear password fields after save
+      document.querySelectorAll(`.connector-field[data-brand="${brand}"][data-type="password"]`).forEach(el => el.value = '');
+      renderConnectors();
+    } catch(e) { statusEl.innerHTML = '❌ Server niet bereikbaar'; }
+    return;
+  }
+
+  if (action === 'sync') {
+    statusEl.innerHTML = '🔄 Bezig met sync...';
+    // If fields have values, send them; otherwise server uses saved config
+    const body = Object.keys(creds).length > 0 ? { credentials: creds } : {};
+    try {
+      const resp = await fetch(`/api/connector/${brand}/sync`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const d = await resp.json();
+      if (d.status === 'ok') {
+        statusEl.innerHTML = '✅ ' + d.message;
+        if (d.fetched > 0) { await loadData(); renderDashboard(); }
+      } else {
+        statusEl.innerHTML = '❌ ' + (d.error || 'Onbekende fout').substring(0, 150);
+      }
+    } catch(e) { statusEl.innerHTML = '❌ Verbindingsfout'; }
+    return;
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════

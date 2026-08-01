@@ -53,12 +53,10 @@ That's it. The installer will:
 - 📂 **Excel upload** — drag your ABRP exports, auto-parsed and merged
 - 📄 **PDF export** — full dashboard as multi-page PDF
 
-### Settings Panel (⚙️ button)
-- 🌙 **Light / Dark mode** — instant toggle, saved in browser
-- 🌈 **6 color palettes** — default, warm, ocean, forest, sunset, mono
-- 🔑 **ABRP API token** — securely stored in browser localStorage
-- 🔗 **Test connection** — verify your API key works
-- ℹ️ **System info** — Pi model, record count, server status
+### Data Sources (choose what you need)
+- 📂 **Excel upload** — upload ABRP exports (works always, no account needed)
+- 🚗 **VW WeConnect** (free) — sync trips, charging, odometer directly from Volkswagen servers
+- 🔑 **ABRP API** (premium key needed) — fetch activities from ABRP's own API
 
 ### Server
 - 🐍 **Flask backend** — lightweight, perfect for Pi

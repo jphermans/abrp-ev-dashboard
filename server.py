@@ -343,6 +343,219 @@ def abrp_activities():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/vw/sync", methods=["POST"])
+def vw_sync():
+    """
+    Fetch trip and charging data from Volkswagen WeConnect.
+    Uses the weconnect Python library (free, no API key needed).
+    Requires VW account credentials (email + password).
+    """
+    data = request.json or {}
+    username = data.get("username", "")
+    password = data.get("password", "")
+    spin = data.get("spin", "")
+
+    # Also check environment / config file
+    if not username:
+        username = os.environ.get("VW_USERNAME", "")
+    if not password:
+        password = os.environ.get("VW_PASSWORD", "")
+
+    if not username or not password:
+        return jsonify({"error": "VW username (email) and password required"}), 400
+
+    try:
+        from weconnect import WeConnect
+        from weconnect.domain import Domain
+    except ImportError:
+        return jsonify({
+            "error": "weconnect library not installed",
+            "hint": "Install with: pip install weconnect"
+        }), 500
+
+    try:
+        rate_limited()
+
+        # Token cache file (avoids re-login on every sync)
+        token_file = str(DATA_DIR / "vw_token.json")
+
+        wc = WeConnect(
+            username=username,
+            password=password,
+            spin=spin or None,
+            tokenfile=token_file,
+            updateAfterLogin=True,
+            loginOnInit=True,
+            updatePictures=False,
+            maxAge=300,  # 5 min cache
+            timeout=30,
+            numRetries=2,
+            selective=[Domain.TRIPS, Domain.CHARGING, Domain.MEASUREMENTS, Domain.BATTERY_SUPPORT],
+        )
+
+        records = []
+
+        # Iterate vehicles
+        for vin, vehicle in wc.vehicles.items():
+            vehicle_name = getattr(vehicle, 'nickname', None) or vin
+
+            # ─── Trips ───
+            try:
+                trips_dict = vehicle.getByAddressString("trips", allowEmpty=True) if vehicle.statusExists("trips") else None
+                if trips_dict:
+                    for trip_id, trip in trips_dict.items():
+                        trip_data = trip.asDict() if hasattr(trip, 'asDict') else {}
+                        distance_km = trip_data.get('mileage_km', 0) - trip_data.get('startMileage_km', 0)
+                        if distance_km < 0:
+                            distance_km = trip_data.get('mileage_km', 0)
+
+                        records.append({
+                            "date": str(trip_data.get('tripEndTimestamp', ''))[:10],
+                            "time": str(trip_data.get('tripEndTimestamp', ''))[11:16],
+                            "datetime": str(trip_data.get('tripEndTimestamp', '')).replace(' ', 'T')[:16],
+                            "weekday": "",
+                            "activity": "Rijd",
+                            "duration": f"{trip_data.get('travelTime', 0)} sec",
+                            "distance_km": round(distance_km, 1) if distance_km else None,
+                            "distance_mi": round(distance_km / 1.609344, 1) if distance_km else None,
+                            "start_soc": None,
+                            "end_soc": None,
+                            "energy_kwh": None,
+                            "start_odo_mi": round(trip_data.get('startMileage_km', 0) / 1.609344, 1) if trip_data.get('startMileage_km') else None,
+                            "end_odo_mi": round(trip_data.get('mileage_km', 0) / 1.609344, 1) if trip_data.get('mileage_km') else None,
+                            "vehicle": str(vehicle_name),
+                            "charge_provider": None,
+                            "charge_location": None,
+                            "_avg_speed": trip_data.get('averageSpeed_kmph'),
+                            "_avg_consumption": trip_data.get('averageElectricConsumption'),
+                            "_avg_recuperation": trip_data.get('averageRecuperation'),
+                        })
+            except Exception as e:
+                print(f"  ⚠️ Trips error: {e}")
+
+            # ─── Charging sessions ───
+            try:
+                if vehicle.statusExists("charging"):
+                    charging = vehicle.getByAddressString("charging", allowEmpty=True)
+                    if charging:
+                        charge_data = charging.asDict() if hasattr(charging, 'asDict') else {}
+                        # Current charging status (not historical sessions from WeConnect basic API)
+                        # Historical charging sessions come from the trips endpoint
+                        records.append({
+                            "date": "",
+                            "time": "",
+                            "datetime": "",
+                            "weekday": "",
+                            "activity": "Laad op",
+                            "duration": "",
+                            "distance_km": None,
+                            "distance_mi": None,
+                            "start_soc": round(charge_data.get('batteryStatus', {}).get('currentSOC_pct', 0)) if charge_data.get('batteryStatus') else None,
+                            "end_soc": None,
+                            "energy_kwh": None,
+                            "vehicle": str(vehicle_name),
+                            "charge_provider": None,
+                            "charge_location": charge_data.get('chargingStatus', {}).get('chargeType', '') if charge_data.get('chargingStatus') else None,
+                        })
+            except Exception as e:
+                print(f"  ⚠️ Charging error: {e}")
+
+        wc.disconnect()
+
+        if not records:
+            return jsonify({
+                "status": "ok",
+                "message": "Login successful but no trip data found. Your vehicle may not expose trip history via WeConnect, or terms need to be accepted in the VW app first.",
+                "records": 0
+            })
+
+        # Merge with existing data
+        existing_json = DATA_DIR / "activities.json"
+        all_records = []
+        if existing_json.exists():
+            with open(existing_json) as f:
+                all_records = json.load(f)
+
+        all_records.extend(records)
+
+        # Deduplicate
+        seen = set()
+        deduped = []
+        for r in all_records:
+            key = f"{r.get('datetime','')}|{r.get('activity','')}"
+            if key and key not in seen:
+                seen.add(key)
+                deduped.append(r)
+        deduped.sort(key=lambda x: x.get("datetime", ""))
+
+        with open(existing_json, "w") as f:
+            json.dump(deduped, f, ensure_ascii=False)
+
+        _cache.clear()
+
+        return jsonify({
+            "status": "ok",
+            "message": f"WeConnect sync complete: {len(records)} records fetched, {len(deduped)} total",
+            "fetched": len(records),
+            "total": len(deduped)
+        })
+
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Unauthorized" in error_msg:
+            return jsonify({"error": "VW login failed — check your email and password"}), 401
+        if "terms" in error_msg.lower():
+            return jsonify({"error": "Please accept WeConnect terms in the VW app first"}), 403
+        return jsonify({"error": error_msg[:500]}), 500
+
+
+@app.route("/api/vw/status", methods=["GET"])
+def vw_status():
+    """Check if WeConnect is configured."""
+    config_file = DATA_DIR / "vw_config.json"
+    if config_file.exists():
+        with open(config_file) as f:
+            config = json.load(f)
+        return jsonify({
+            "configured": True,
+            "username": config.get("username", ""),
+            "has_password": bool(config.get("password")),
+            "last_sync": config.get("last_sync"),
+        })
+    return jsonify({"configured": bool(os.environ.get("VW_USERNAME"))})
+
+
+@app.route("/api/vw/config", methods=["POST"])
+def vw_config():
+    """Save or delete WeConnect credentials."""
+    data = request.json or {}
+    action = data.get("action", "save")
+    config_file = DATA_DIR / "vw_config.json"
+
+    if action == "delete":
+        config_file.unlink(missing_ok=True)
+        (DATA_DIR / "vw_token.json").unlink(missing_ok=True)
+        return jsonify({"status": "ok", "message": "WeConnect credentials deleted"})
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+    spin = data.get("spin", "").strip()
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+
+    config = {
+        "username": username,
+        "password": password,
+        "spin": spin,
+        "last_sync": None,
+    }
+    with open(config_file, "w") as f:
+        json.dump(config, f, ensure_ascii=False)
+
+    return jsonify({"status": "ok", "message": "WeConnect credentials saved"})
+
+
 @app.route("/api/status")
 def status():
     """Health check endpoint."""
@@ -358,6 +571,9 @@ def status():
         except:
             pass
 
+    # Check WeConnect config
+    vw_configured = bool(os.environ.get("VW_USERNAME") or (DATA_DIR / "vw_config.json").exists())
+
     return jsonify({
         "status": "running",
         "data_source": str(data_file) if data_file else "none",
@@ -365,6 +581,7 @@ def status():
         "total_records": record_count,
         "cache_entries": len(_cache),
         "pi_model": get_pi_model(),
+        "vw_connected": vw_configured,
     })
 
 

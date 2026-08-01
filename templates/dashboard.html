@@ -188,6 +188,20 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
+      <div class="setting-label">🚗 Volkswagen WeConnect</div>
+      <div class="setting-hint" style="margin-bottom:8px;">Haal ritten en laaddata direct van VW servers (gratis). Alleen voor WeConnect-voertuigen (ID.3/4/5/7, etc.)</div>
+      <input type="email" class="setting-input" id="vwUserInput" placeholder="VW account e-mail" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="vwPassInput" placeholder="VW wachtwoord" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="vwSpinInput" placeholder="S-PIN (optioneel)" style="margin-bottom:6px;">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="vwSave()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
+        <button class="btn btn-secondary" onclick="vwSync()" style="font-size:.8rem;padding:8px 16px;">🔄 Sync</button>
+        <button class="btn btn-danger" onclick="vwDelete()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
+      </div>
+      <div id="vwStatus" style="margin-top:8px;font-size:.78rem;"></div>
+    </div>
+
+    <div class="setting-section">
       <div class="setting-label">ℹ️ Systeem</div>
       <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
     </div>
@@ -266,10 +280,15 @@ function openSettings() {
   renderPalettes();
   // System info
   fetch('/api/status').then(r => r.json()).then(d => {
-    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}`;
-  }).catch(() => {
-    document.getElementById('systemInfo').innerHTML = 'Offline mode (embedded data)';
-  });
+    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}<br>VW WeConnect: ${d.vw_connected ? '✅ geconfigureerd' : '❌ niet ingesteld'}`;
+  }).catch(() => { document.getElementById('systemInfo').innerHTML = 'Offline mode (embedded data)'; });
+  // Load VW config
+  fetch('/api/vw/status').then(r => r.json()).then(d => {
+    if (d.configured) {
+      document.getElementById('vwUserInput').value = d.username || '';
+      document.getElementById('vwStatus').innerHTML = `✅ Geconfigureerd als ${d.username}`;
+    }
+  }).catch(() => {});
   document.getElementById('settingsModal').classList.add('show');
 }
 
@@ -340,6 +359,55 @@ async function testToken() {
   } catch(e) {
     document.getElementById('tokenStatus').innerHTML = '⚠️ Server niet bereikbaar — token lokaal opgeslagen';
   }
+}
+
+// ─── Volkswagen WeConnect ────────────────────────────────────────
+async function vwSave() {
+  const username = document.getElementById('vwUserInput').value.trim();
+  const password = document.getElementById('vwPassInput').value.trim();
+  const spin = document.getElementById('vwSpinInput').value.trim();
+  if (!username || !password) { document.getElementById('vwStatus').innerHTML = '⚠️ E-mail en wachtwoord vereist'; return; }
+  try {
+    const resp = await fetch('/api/vw/config', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password, spin })
+    });
+    const d = await resp.json();
+    document.getElementById('vwStatus').innerHTML = '✅ ' + d.message;
+    document.getElementById('vwPassInput').value = '';  // Clear for security
+  } catch(e) { document.getElementById('vwStatus').innerHTML = '❌ Server niet bereikbaar'; }
+}
+
+async function vwSync() {
+  const status = document.getElementById('vwStatus');
+  status.innerHTML = '🔄 Bezig met sync...';
+  try {
+    // Use saved config or inline values
+    const body = {};
+    if (document.getElementById('vwUserInput').value) {
+      body.username = document.getElementById('vwUserInput').value.trim();
+      body.password = document.getElementById('vwPassInput').value.trim();
+      body.spin = document.getElementById('vwSpinInput').value.trim();
+    }
+    const resp = await fetch('/api/vw/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      status.innerHTML = `✅ ${d.message}`;
+      if (d.fetched > 0) { await loadData(); renderDashboard(); }
+    } else {
+      status.innerHTML = '❌ ' + (d.error || 'Onbekende fout').substring(0, 120);
+    }
+  } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
+}
+
+async function vwDelete() {
+  try {
+    await fetch('/api/vw/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'delete'}) });
+    document.getElementById('vwUserInput').value = '';
+    document.getElementById('vwPassInput').value = '';
+    document.getElementById('vwSpinInput').value = '';
+    document.getElementById('vwStatus').innerHTML = '🗑️ WeConnect gegevens verwijderd';
+  } catch(e) { document.getElementById('vwStatus').innerHTML = '❌ Kon niet verwijderen'; }
 }
 
 // ═════════════════════════════════════════════════════════════════

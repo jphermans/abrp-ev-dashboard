@@ -52,7 +52,7 @@ else
 fi
 
 echo "   Installing dependencies..."
-"$INSTALL_DIR/venv/bin/pip" install --quiet flask openpyxl 2>&1 | tail -2
+"$INSTALL_DIR/venv/bin/pip" install --quiet flask openpyxl weconnect 2>&1 | tail -2
 echo "   ✅ Dependencies installed"
 
 # ─── Step 3: Create data directory + copy Excel files ────────────

@@ -1,0 +1,103 @@
+{
+  "meta": { "language": "Français", "code": "fr", "author": "ABRP Dashboard" },
+  "ui": {
+    "title": "Tableau de bord ABRP",
+    "subtitle": "statistiques de distance, comportement de charge & fournisseurs",
+    "upload": "Importer",
+    "pdf": "PDF",
+    "help": "Aide",
+    "settings": "Paramètres",
+    "close": "Fermer"
+  },
+  "filters": { "day": "Jour", "week": "Semaine", "month": "Mois", "year": "Année", "all": "Tout" },
+  "kpi": {
+    "total_driven": "Total parcouru", "total_charged": "Total chargé", "consumption": "Consommation",
+    "active_days": "Jours actifs", "top_provider": "Fournisseur principal", "longest_trip": "Trajet le plus long",
+    "trips": "trajets", "sessions": "sessions", "avg_per_day": "moy.", "charged_times": "x chargé",
+    "single_trip": "trajet unique", "km_day": "km/jour", "average": "moyenne"
+  },
+  "sections": {
+    "charging": "⚡ Statistiques de charge & Fournisseurs", "driving": "📊 Statistiques de conduite",
+    "charge_locations": "📍 Lieux de charge", "all_activities": "📋 Toutes les activités"
+  },
+  "charts": {
+    "sessions_per_provider": "🔌 Sessions par fournisseur", "energy_per_provider": "⚡ Énergie par fournisseur (kWh)",
+    "distance_per_period": "📊 Distance par période (km)", "energy_charged": "⚡ Énergie chargée (kWh)",
+    "soc_trend": "🔋 Charge moyenne de la batterie (SoC)", "odometer": "🏁 Kilométrage (cumulatif, km)",
+    "weekday_trips": "📅 Trajets par jour de semaine", "distance_distribution": "🛣️ Répartition des distances"
+  },
+  "table": {
+    "date": "Date", "time": "Heure", "type": "Type", "duration": "Durée", "distance_km": "Distance (km)",
+    "soc": "SoC", "charged": "Chargé", "provider": "Fournisseur", "location": "Lieu",
+    "sessions": "Sessions", "energy_kwh": "Énergie (kWh)", "last_visit": "Dernière visite"
+  },
+  "activity": { "drive": "🚗 Conduite", "charge": "⚡ Charge" },
+  "settings": {
+    "theme": "🎨 Thème", "dark": "🌙 Sombre", "light": "☀️ Clair", "palette": "🌈 Palette de couleurs",
+    "abrp_token": "🔑 Jeton API ABRP", "token_hint": "Votre clé API ABRP (gratuite sur iternio.com/api). Stockée localement.",
+    "save": "Enregistrer", "delete": "Supprimer", "test_connection": "Tester la connexion",
+    "vehicle_connections": "🚗 Connexions véhicule", "connections_hint": "Connectez votre voiture pour récupérer automatiquement les trajets et données de charge.",
+    "system": "ℹ️ Système", "language": "🌐 Langue", "download_template": "⬇ Télécharger le modèle",
+    "upload_language": "⬆ Importer un fichier de langue", "connected": "✅ Connecté", "not_connected": "● Non associé",
+    "not_installed": "⚠ Non installé", "sync": "🔄 Sync", "required": "est requis"
+  },
+  "messages": {
+    "token_saved": "Jeton enregistré", "token_deleted": "Jeton supprimé", "token_empty": "Entrez un jeton",
+    "token_test_first": "Entrez d'abord un jeton", "theme_changed": "Thème modifié", "palette_changed": "Palette modifiée",
+    "no_data": "Aucune donnée chargée.", "upload_success": "enregistrements ajoutés", "upload_error": "Erreur d'import",
+    "pdf_generating": "Génération du PDF...", "pdf_saved": "PDF enregistré !", "pdf_error": "Erreur PDF",
+    "syncing": "🔄 Synchronisation...", "connection_error": "❌ Erreur de connexion", "server_unreachable": "❌ Serveur inaccessible",
+    "saved": "💾 Enregistrement...", "deleting": "🗑️ Suppression...", "deleted": "✅ Supprimé", "error": "❌ Erreur",
+    "offline_mode": "Mode hors ligne (données intégrées)", "language_loaded": "Langue chargée", "language_error": "Fichier de langue invalide",
+    "records_loaded": "enregistrements chargés", "server": "Serveur", "records": "Enregistrements",
+    "excel_files": "Fichiers Excel", "active_connections": "Connexions actives"
+  },
+  "help": {
+    "title": "❓ Aide — Comment fonctionne le tableau de bord",
+    "kpi_cards": "📊 Cartes KPI",
+    "total_driven_desc": "Tous les kilomètres parcourus dans la période sélectionnée. Le chiffre ci-dessous indique le nombre de trajets.",
+    "total_charged_desc": "Total kWh chargé lors de toutes les sessions. Le chiffre ci-dessous indique le nombre de sessions.",
+    "consumption_desc": "Consommation moyenne en kWh par 100 km. Calcul : total kWh chargé ÷ total km × 100. Plus bas = plus efficace.",
+    "active_days_desc": "Nombre de jours uniques avec activité de conduite. Le sous-texte indique la moyenne km par jour actif.",
+    "top_provider_desc": "Quel fournisseur de charge vous utilisez le plus. Le sous-texte indique combien de fois vous y avez chargé.",
+    "longest_trip_desc": "Le trajet unique le plus long en kilomètres dans la période sélectionnée.",
+    "charging_stats": "⚡ Statistiques de charge & Fournisseurs",
+    "sessions_provider_desc": "Nombre de charges par fournisseur. Chaque couleur représente un fournisseur différent.",
+    "energy_provider_desc": "Quantité de kWh chargée par fournisseur. Utile pour voir d'où vient la majeure partie de votre énergie.",
+    "charge_locations_desc": "Aperçu de chaque lieu de charge avec nombre de sessions, total kWh et dernière visite.",
+    "driving_stats": "📊 Statistiques de conduite",
+    "distance_period_desc": "Graphique à barres avec le total km par jour, semaine, mois ou année.",
+    "energy_charged_desc": "Graphique à barres avec le total kWh chargé par période.",
+    "soc_trend_desc": "Graphique linéaire de la charge moyenne de la batterie au début de chaque période. Une ligne descendante signifie que vous commencez à rouler avec moins de batterie en moyenne.",
+    "odometer_desc": "Graphique linéaire du kilométrage du véhicule dans le temps.",
+    "weekday_desc": "Graphique à barres avec le nombre de trajets par jour de la semaine (Lun-Dim).",
+    "distribution_desc": "Graphique en anneau avec la répartition des trajets par catégorie de distance.",
+    "time_filters": "🔀 Filtres temporels",
+    "filters_intro": "Utilisez les boutons de filtre pour choisir comment les données sont regroupées :",
+    "filter_day_desc": "Chaque jour individuel comme colonne/ligne séparée",
+    "filter_week_desc": "Groupé par numéro de semaine ISO",
+    "filter_month_desc": "Groupé par mois (par défaut)",
+    "filter_year_desc": "Totaux annuels",
+    "filter_all_desc": "Toutes les données combinées en une seule période",
+    "filters_note": "Tous les graphiques se mettent à jour immédiatement.",
+    "add_data": "📂 Ajouter des données",
+    "upload_desc": "Cliquez sur Importer et sélectionnez un ou plusieurs exports Excel ABRP.",
+    "vw_desc": "Dans Paramètres, vous pouvez lier votre compte VW (gratuit). Cliquez sur Sync pour récupérer les données.",
+    "abrp_desc": "Pour les clés API ABRP premium. Enregistrez votre jeton dans Paramètres.",
+    "settings_section": "⚙️ Paramètres",
+    "dark_light_desc": "Basculez entre apparence sombre et claire.",
+    "palette_desc": "Choisissez parmi 6 palettes de couleurs.",
+    "export_section": "📄 Export",
+    "export_desc": "Cliquez sur PDF pour enregistrer tout le tableau de bord en PDF.",
+    "mobile_section": "📱 Mobile",
+    "mobile_desc": "Le tableau de bord fonctionne sur téléphones et tablettes.",
+    "privacy_section": "🔒 Confidentialité",
+    "privacy_desc": "Toutes les données restent locales sur votre Raspberry Pi.",
+    "language_section": "🌐 Langue",
+    "language_desc": "Le tableau de bord prend en charge plusieurs langues. Téléchargez un modèle, traduisez-le et importez-le."
+  },
+  "providers": {
+    "DATS 24": "DATS 24", "Fastned": "Fastned", "Allego": "Allego", "Shell Recharge": "Shell Recharge",
+    "T-Line": "T-Line", "PluginCompany": "PluginCompany", "Ionity": "Ionity", "Electra": "Electra", "Onbekend": "Inconnu"
+  }
+}

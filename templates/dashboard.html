@@ -145,7 +145,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
   <div class="date-range" id="dateRangeInfo"></div>
 </div>
 <div class="kpi-grid" id="kpiGrid"></div>
-<div class="section-title">⚡ Laadstatistieken & Providers</div>
+<div class="section-title" id="chargingSection">⚡ Laadstatistieken & Providers</div>
 <div class="charts-grid">
   <div class="chart-card"><div class="chart-title">🔌 Laadsessies per provider</div><div class="chart-canvas-wrap"><canvas id="providerChart"></canvas></div></div>
   <div class="chart-card"><div class="chart-title">⚡ Energie per provider (kWh)</div><div class="chart-canvas-wrap"><canvas id="providerEnergyChart"></canvas></div></div>
@@ -156,7 +156,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <table><thead><tr><th>Provider</th><th>Locatie</th><th>Sessies</th><th>Energie (kWh)</th><th>Laatste bezoek</th></tr></thead><tbody id="chargeLocationsBody"></tbody></table>
   </div>
 </div>
-<div class="section-title">📊 Rijstatistieken</div>
+<div class="section-title" id="drivingSection">📊 Rijstatistieken</div>
 <div class="charts-grid">
   <div class="chart-card full"><div class="chart-title">📊 Afstand per periode (km)</div><div class="chart-canvas-wrap tall"><canvas id="distanceChart"></canvas></div></div>
   <div class="chart-card"><div class="chart-title">⚡ Energie bijgeladen (kWh)</div><div class="chart-canvas-wrap"><canvas id="energyChart"></canvas></div></div>
@@ -178,6 +178,16 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <h2>⚙️ Instellingen</h2>
 
     <div class="setting-section">
+      <div class="setting-label">🌐 Taal</div>
+      <select id="langSelect" class="setting-input" onchange="changeLanguage(this.value)" style="margin-bottom:8px;"></select>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="downloadTemplate()" style="font-size:.8rem;padding:8px 12px;">⬇ Template</button>
+        <button class="btn btn-secondary" onclick="uploadLanguageFile()" style="font-size:.8rem;padding:8px 12px;">⬆ Upload</button>
+      </div>
+      <div class="setting-hint" style="margin-top:6px;">Download een template, vertaal deze, en upload je eigen taalbestand.</div>
+    </div>
+
+    <div class="setting-section">
       <div class="setting-label">🎨 Thema</div>
       <div class="theme-toggle-group">
         <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')">🌙 Donker</button>
@@ -192,7 +202,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 
     <div class="setting-section">
       <div class="setting-label">🔑 ABRP API Token</div>
-      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="your-api-key-here">
+      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
       <div class="setting-hint">Je ABRP API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Lokaal opgeslagen in je browser.</div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveToken()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
@@ -305,6 +315,134 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 
 <script>
 // ═════════════════════════════════════════════════════════════════
+// I18N — INTERNATIONALIZATION
+// ═════════════════════════════════════════════════════════════════
+let _i18n = {};       // current translations
+let _i18nCode = 'nl'; // current language code
+
+function t(key) {
+  // Navigate dotted path: t('kpi.total_driven') → _i18n.kpi.total_driven
+  const parts = key.split('.');
+  let val = _i18n;
+  for (const p of parts) {
+    if (val && typeof val === 'object' && p in val) val = val[p];
+    else return key; // fallback: return the key itself
+  }
+  return val;
+}
+
+async function loadLanguage(code) {
+  try {
+    const resp = await fetch(`/api/locales/${code}`);
+    if (resp.ok) {
+      _i18n = await resp.json();
+      _i18nCode = code;
+      localStorage.setItem('lang', code);
+      applyTranslations();
+      if (RAW_DATA.length > 0) renderDashboard();
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function applyTranslations() {
+  // Update all elements with data-i18n attribute
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val && val !== key) el.textContent = val;
+  });
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.getAttribute('data-i18n-ph');
+    const val = t(key);
+    if (val && val !== key) el.placeholder = val;
+  });
+  // Update title
+  const titleEl = document.querySelector('.header h1');
+  if (titleEl) titleEl.innerHTML = `${t('ui.title').includes('Rijdashboard') ? '🚗 ABRP <span>' + t('ui.title').replace('ABRP ','') + '</span>' : '🚗 ABRP <span>' + t('ui.title').replace('ABRP ','') + '</span>'}`;
+  document.querySelector('.header-sub').textContent = t('ui.subtitle');
+  // Update section titles
+  const sections = document.querySelectorAll('.section-title');
+  if (sections[0]) sections[0].textContent = t('sections.charging');
+  if (sections[1]) sections[1].textContent = t('sections.driving');
+  // Update filter buttons
+  const filterMap = { day: t('filters.day'), week: t('filters.week'), month: t('filters.month'), year: t('filters.year'), all: t('filters.all') };
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    const p = btn.dataset.period;
+    if (filterMap[p]) btn.textContent = filterMap[p];
+  });
+  // Re-render settings if open
+  if (document.getElementById('settingsModal')?.classList.contains('show')) {
+    // update settings labels via data-i18n
+  }
+}
+
+async function initLanguage() {
+  const saved = localStorage.getItem('lang') || 'nl';
+  await loadLanguage(saved);
+}
+
+// Language management in settings
+async function loadLanguageList() {
+  try {
+    const resp = await fetch('/api/locales');
+    return await resp.json();
+  } catch(e) { return []; }
+}
+
+async function changeLanguage(code) {
+  showToast(t('messages.language_loaded'));
+  await loadLanguage(code);
+  // Re-render everything
+  if (RAW_DATA.length > 0) renderDashboard();
+  // Update language dropdown if open
+  if (document.getElementById('langSelect')) {
+    document.getElementById('langSelect').value = code;
+  }
+  showToast(`${t('messages.language_loaded')}: ${code.toUpperCase()}`);
+}
+
+async function downloadTemplate() {
+  window.open('/api/locales/template', '_blank');
+}
+
+async function uploadLanguageFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const resp = await fetch('/api/locales/upload', { method: 'POST', body: formData });
+      const d = await resp.json();
+      if (d.status === 'ok') {
+        showToast(`✅ ${d.message}`);
+        // Reload language list and switch to new language
+        await loadLanguage(d.code);
+        if (document.getElementById('langSelect')) {
+          await refreshLangSelect();
+        }
+      } else {
+        showToast(`❌ ${d.error}`, true);
+      }
+    } catch(err) { showToast('❌ Upload failed', true); }
+  };
+  input.click();
+}
+
+async function refreshLangSelect() {
+  const langs = await loadLanguageList();
+  const sel = document.getElementById('langSelect');
+  if (!sel) return;
+  sel.innerHTML = langs.map(l => `<option value="${l.code}" ${l.code === _i18nCode ? 'selected' : ''}>${l.name}${l.custom ? ' ⭐' : ''}</option>`).join('');
+}
+
+// ═════════════════════════════════════════════════════════════════
 // STATE
 // ═════════════════════════════════════════════════════════════════
 let RAW_DATA = [];
@@ -369,11 +507,13 @@ function openSettings() {
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
   currentPalette = localStorage.getItem('palette') || 'default';
   renderPalettes();
+  // Language dropdown
+  refreshLangSelect();
   // System info
   fetch('/api/status').then(r => r.json()).then(d => {
     const connList = (d.connectors || []).join(', ') || 'geen';
-    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}<br>Actieve connecties: ${connList}`;
-  }).catch(() => { document.getElementById('systemInfo').innerHTML = 'Offline mode (embedded data)'; });
+    document.getElementById('systemInfo').innerHTML = `${t('messages.server')}: ${d.status}<br>${d.pi_model}<br>${t('messages.records')}: ${d.total_records}<br>${t('messages.excel_files')}: ${d.excel_files}<br>${t('messages.active_connections')}: ${connList}`;
+  }).catch(() => { document.getElementById('systemInfo').innerHTML = t('messages.offline_mode'); });
   // Render dynamic connector panels
   renderConnectors();
   document.getElementById('settingsModal').classList.add('show');
@@ -697,10 +837,11 @@ function renderTable(data){
 }
 
 function renderDashboard(){
-  if(RAW_DATA.length===0){showToast('Geen data geladen.',true);return;}
+  if(RAW_DATA.length===0){showToast(t('messages.no_data'),true);return;}
   const k=calcKPIs(RAW_DATA);renderKPIs(k);renderCharts(RAW_DATA,currentPeriod);renderChargeLocations(RAW_DATA);renderTable(RAW_DATA);
-  // Update vehicle info
-  const v=RAW_DATA[0]?.vehicle||'EV';document.getElementById('vehicleInfo').textContent=v+' — kilometerstatistieken, laadgedrag & providers';
+  // Update vehicle info using translated subtitle
+  const v=RAW_DATA[0]?.vehicle||'EV';
+  document.getElementById('vehicleInfo').textContent=`${v} — ${t('ui.subtitle').replace('EV — ','')}`;
 }
 
 // ─── Filters ─────────────────────────────────────────────────────
@@ -733,7 +874,8 @@ async function init(){
   document.documentElement.setAttribute('data-theme', savedTheme);
   currentPalette = localStorage.getItem('palette') || 'default';
 
-  // Load data
+  // Load language first, then data
+  await initLanguage();
   await loadData();
   renderDashboard();
 }

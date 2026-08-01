@@ -23,10 +23,12 @@ app = Flask(__name__)
 from routes.core import register as register_core
 from routes.abrp import register as register_abrp
 from routes.connectors import register as register_connectors
+from routes.locales import register as register_locales
 
 register_core(app)
 register_abrp(app)
 register_connectors(app)
+register_locales(app)
 
 
 def startup_import():

@@ -27,6 +27,7 @@ COPY connectors/ connectors/
 
 # Create data directory (will be mounted as volume)
 RUN mkdir -p /app/data
+COPY locales/ locales/
 
 # Expose port
 EXPOSE 8000

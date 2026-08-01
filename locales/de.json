@@ -1,0 +1,99 @@
+{
+  "meta": { "language": "Deutsch", "code": "de", "author": "ABRP Dashboard" },
+  "ui": {
+    "title": "ABRP Fahr-Dashboard",
+    "subtitle": "EV — Kilometerstatistiken, Ladeverhalten & Anbieter",
+    "upload": "Hochladen", "pdf": "PDF", "help": "Hilfe", "settings": "Einstellungen", "close": "Schließen"
+  },
+  "filters": { "day": "Tag", "week": "Woche", "month": "Monat", "year": "Jahr", "all": "Alle" },
+  "kpi": {
+    "total_driven": "Gesamt gefahren", "total_charged": "Gesamt geladen", "consumption": "Verbrauch",
+    "active_days": "Aktive Tage", "top_provider": "Top-Anbieter", "longest_trip": "Längste Fahrt",
+    "trips": "Fahrten", "sessions": "Ladevorgänge", "avg_per_day": "Ø", "charged_times": "x geladen",
+    "single_trip": "einzelne Fahrt", "km_day": "km/Tag", "average": "Durchschnitt"
+  },
+  "sections": {
+    "charging": "⚡ Ladestatistiken & Anbieter", "driving": "📊 Fahrstatistiken",
+    "charge_locations": "📍 Ladestandorte", "all_activities": "📋 Alle Aktivitäten"
+  },
+  "charts": {
+    "sessions_per_provider": "🔌 Ladevorgänge pro Anbieter", "energy_per_provider": "⚡ Energie pro Anbieter (kWh)",
+    "distance_per_period": "📊 Strecke pro Zeitraum (km)", "energy_charged": "⚡ Geladene Energie (kWh)",
+    "soc_trend": "🔋 Durchschnittlicher Batterie-SoC", "odometer": "🏁 Kilometerstand (kumulativ, km)",
+    "weekday_trips": "📅 Fahrten pro Wochentag", "distance_distribution": "🛣️ Streckenverteilung"
+  },
+  "table": {
+    "date": "Datum", "time": "Zeit", "type": "Typ", "duration": "Dauer", "distance_km": "Strecke (km)",
+    "soc": "SoC", "charged": "Geladen", "provider": "Anbieter", "location": "Standort",
+    "sessions": "Vorgänge", "energy_kwh": "Energie (kWh)", "last_visit": "Letzter Besuch"
+  },
+  "activity": { "drive": "🚗 Fahrt", "charge": "⚡ Laden" },
+  "settings": {
+    "theme": "🎨 Design", "dark": "🌙 Dunkel", "light": "☀️ Hell", "palette": "🌈 Farbpalette",
+    "abrp_token": "🔑 ABRP API-Token", "token_hint": "Ihr ABRP API-Schlüssel (kostenlos auf iternio.com/api). Lokal gespeichert.",
+    "save": "Speichern", "delete": "Löschen", "test_connection": "Verbindung testen",
+    "vehicle_connections": "🚗 Fahrzeugverbindungen", "connections_hint": "Verbinden Sie Ihr Auto, um automatisch Fahrten und Ladedaten abzurufen.",
+    "system": "ℹ️ System", "language": "🌐 Sprache", "download_template": "⬇ Vorlage herunterladen",
+    "upload_language": "⬇ Sprachdatei hochladen", "connected": "✅ Verbunden", "not_connected": "● Nicht gekoppelt",
+    "not_installed": "⚠ Nicht installiert", "sync": "🔄 Sync", "required": "ist erforderlich"
+  },
+  "messages": {
+    "token_saved": "Token gespeichert", "token_deleted": "Token gelöscht", "token_empty": "Token eingeben",
+    "token_test_first": "Zuerst Token eingeben", "theme_changed": "Design geändert", "palette_changed": "Palette geändert",
+    "no_data": "Keine Daten geladen.", "upload_success": "Datensätze hinzugefügt", "upload_error": "Fehler beim Hochladen",
+    "pdf_generating": "PDF wird erstellt...", "pdf_saved": "PDF gespeichert!", "pdf_error": "PDF-Fehler",
+    "syncing": "🔄 Synchronisierung...", "connection_error": "❌ Verbindungsfehler", "server_unreachable": "❌ Server nicht erreichbar",
+    "saved": "💾 Speichern...", "deleting": "🗑️ Löschen...", "deleted": "✅ Gelöscht", "error": "❌ Fehler",
+    "offline_mode": "Offline-Modus (eingebettete Daten)", "language_loaded": "Sprache geladen", "language_error": "Ungültige Sprachdatei",
+    "records_loaded": "Datensätze geladen", "server": "Server", "records": "Datensätze",
+    "excel_files": "Excel-Dateien", "active_connections": "Aktive Verbindungen"
+  },
+  "help": {
+    "title": "❓ Hilfe — So funktioniert das Dashboard",
+    "kpi_cards": "📊 KPI-Karten",
+    "total_driven_desc": "Alle gefahrenen Kilometer im ausgewählten Zeitraum. Die Zahl darunter zeigt die Anzahl der Fahrten.",
+    "total_charged_desc": "Gesamte geladene kWh aller Ladevorgänge. Die Zahl darunter zeigt die Anzahl der Ladevorgänge.",
+    "consumption_desc": "Durchschnittlicher Energieverbrauch in kWh pro 100 km. Berechnet als: gesamte kWh ÷ gesamte km × 100. Niedriger = effizienter.",
+    "active_days_desc": "Anzahl eindeutiger Tage mit Fahraktivität. Der Untertext zeigt Durchschnitt km pro aktivem Tag.",
+    "top_provider_desc": "Welchen Ladeanbieter Sie am häufigsten nutzen. Der Untertext zeigt, wie oft Sie dort geladen haben.",
+    "longest_trip_desc": "Die längste einzelne Fahrt in Kilometern im ausgewählten Zeitraum.",
+    "charging_stats": "⚡ Ladestatistiken & Anbieter",
+    "sessions_provider_desc": "Zeigt die Anzahl der Ladevorgänge pro Anbieter. Jede Farbe steht für einen anderen Anbieter.",
+    "energy_provider_desc": "Zeigt, wie viel kWh Sie pro Anbieter geladen haben.",
+    "charge_locations_desc": "Übersicht jedes Ladestandorts mit Anzahl der Vorgänge, gesamten kWh und letztem Besuch.",
+    "driving_stats": "📊 Fahrstatistiken",
+    "distance_period_desc": "Balkendiagramm mit Gesamt-km pro Tag, Woche, Monat oder Jahr.",
+    "energy_charged_desc": "Balkendiagramm mit gesamten geladenen kWh pro Zeitraum.",
+    "soc_trend_desc": "Liniendiagramm der durchschnittlichen Batterieladung zu Beginn jedes Zeitraums.",
+    "odometer_desc": "Liniendiagramm des Kilometerstands des Fahrzeugs über die Zeit.",
+    "weekday_desc": "Balkendiagramm mit Anzahl der Fahrten pro Wochentag (Mo-So).",
+    "distribution_desc": "Ringdiagramm mit Verteilung der Fahrten in Entfernungskategorien.",
+    "time_filters": "🔀 Zeitfilter",
+    "filters_intro": "Mit den Filterbuttons wählen Sie, wie Daten gruppiert werden:",
+    "filter_day_desc": "Jeder einzelne Tag als separate Spalte/Zeile",
+    "filter_week_desc": "Gruppiert nach ISO-Wochennummer",
+    "filter_month_desc": "Gruppiert nach Monat (Standard)",
+    "filter_year_desc": "Jahressummen",
+    "filter_all_desc": "Alle Daten als ein Zeitraum zusammengefasst",
+    "filters_note": "Alle Diagramme aktualisieren sich sofort beim Filterwechsel.",
+    "add_data": "📂 Daten hinzufügen",
+    "upload_desc": "Klicken Sie auf Hochladen und wählen Sie ABRP Excel-Exporte aus.",
+    "vw_desc": "Unter Einstellungen können Sie Ihr VW-Konto verknüpfen (kostenlos).",
+    "abrp_desc": "Für Premium ABRP API-Schlüssel. Speichern Sie Ihren Token in den Einstellungen.",
+    "settings_section": "⚙️ Einstellungen",
+    "dark_light_desc": "Wechseln zwischen dunklem und hellem Erscheinungsbild.",
+    "palette_desc": "Wählen Sie aus 6 Farbpaletten.",
+    "export_section": "📄 Export",
+    "export_desc": "Klicken Sie auf PDF, um das gesamte Dashboard als PDF-Bericht zu speichern.",
+    "mobile_section": "📱 Mobil",
+    "mobile_desc": "Das Dashboard funktioniert auf Telefonen und Tablets.",
+    "privacy_section": "🔒 Datenschutz",
+    "privacy_desc": "Alle Daten bleiben lokal auf Ihrem Raspberry Pi.",
+    "language_section": "🌐 Sprache",
+    "language_desc": "Das Dashboard unterstützt mehrere Sprachen. Laden Sie eine Vorlage herunter, übersetzen Sie diese und laden Sie Ihre Sprachdatei hoch."
+  },
+  "providers": {
+    "DATS 24": "DATS 24", "Fastned": "Fastned", "Allego": "Allego", "Shell Recharge": "Shell Recharge",
+    "T-Line": "T-Line", "PluginCompany": "PluginCompany", "Ionity": "Ionity", "Electra": "Electra", "Onbekend": "Unbekannt"
+  }
+}

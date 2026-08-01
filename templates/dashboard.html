@@ -50,7 +50,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .header h1 { font-size:1.6rem; font-weight:700; } .header h1 span { color:var(--accent-light); }
 .header-sub { color:var(--text-muted); font-size:.85rem; margin-top:4px; }
 .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.btn { padding:10px 18px; border-radius:8px; border:none; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:6px; }
+.btn { padding:10px 18px; border-radius:8px; border:none; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; justify-content:center; gap:6px; text-align:center; }
 .btn-primary { background:var(--accent); color:#fff; } .btn-primary:hover { background:var(--accent-light); }
 .btn-secondary { background:var(--card); color:var(--text); border:1px solid var(--border); } .btn-secondary:hover { background:var(--card-hover); }
 .btn-icon { width:40px; height:40px; padding:0; justify-content:center; font-size:1.2rem; }
@@ -142,6 +142,13 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <button class="filter-btn active" data-period="month">Maand</button>
     <button class="filter-btn" data-period="year">Jaar</button>
     <button class="filter-btn" data-period="all">Alles</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <input type="date" id="dateFromInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
+    <span style="color:var(--text-muted);font-size:.78rem;">→</span>
+    <input type="date" id="dateToInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
+    <button class="btn btn-secondary" onclick="applyDateRange()" style="font-size:.75rem;padding:6px 12px;">Toepassen</button>
+    <button class="btn btn-secondary" onclick="clearDateRange()" style="font-size:.75rem;padding:6px 12px;">Reset</button>
   </div>
   <div class="date-range" id="dateRangeInfo"></div>
 </div>
@@ -604,6 +611,7 @@ let RAW_DATA = [];
 let charts = {};
 let currentPeriod = 'month';
 let currentPalette = 'default';
+let dateRangeFilter = null; // {from: 'YYYY-MM-DD', to: 'YYYY-MM-DD'} or null
 
 // ─── Color Palettes ──────────────────────────────────────────────
 const PALETTES = {
@@ -996,12 +1004,56 @@ function renderTable(data){
   document.getElementById('dataTableBody').innerHTML=data.slice().reverse().map(r=>'<'+'tr><td>'+esc(r.date)+'</td><td>'+esc(r.datetime.slice(11,16))+'</td><td><span class="badge '+(r.activity==='Rijd'?'badge-drive':'badge-charge')+'">'+(r.activity==='Rijd'?t('activity.drive'):t('activity.charge'))+'</span></td><td>'+esc(r.duration)+'</td><td>'+(r.distance_km!=null?r.distance_km:'—')+'</td><td>'+(r.start_soc!=null?r.start_soc+'%':'—')+'</td><td>'+(r.energy_kwh!=null?r.energy_kwh+' kWh':'—')+'</td><td>'+(r.charge_provider?'<span class="provider-badge '+providerClass(r.charge_provider)+'">'+esc(r.charge_provider)+'</span>':'—')+'</td><td style="font-size:.78rem;color:var(--text-muted)">'+esc(r.charge_location||'—')+'</td></tr>').join('');
 }
 
+function getFilteredData() {
+  if (!dateRangeFilter) return RAW_DATA;
+  return RAW_DATA.filter(r => {
+    const d = r.date;
+    if (dateRangeFilter.from && d < dateRangeFilter.from) return false;
+    if (dateRangeFilter.to && d > dateRangeFilter.to) return false;
+    return true;
+  });
+}
+
+function applyDateRange() {
+  const from = document.getElementById('dateFromInput').value;
+  const to = document.getElementById('dateToInput').value;
+  if (!from && !to) { showToast('Kies eerst een datum'); return; }
+  dateRangeFilter = { from: from || null, to: to || null };
+  renderDashboard();
+  const range = document.getElementById('dateRangeInfo');
+  if (range) {
+    range.textContent = ' Periode: ' + (from || 'begin') + ' tot ' + (to || 'einde') + ' — ' + getFilteredData().length + ' records';
+    range.style.color = 'var(--accent-light)';
+  }
+  showToast('Datumbereik toegepast: ' + (from || '?') + ' → ' + (to || '?'));
+}
+
+function clearDateRange() {
+  dateRangeFilter = null;
+  document.getElementById('dateFromInput').value = '';
+  document.getElementById('dateToInput').value = '';
+  renderDashboard();
+  const range = document.getElementById('dateRangeInfo');
+  if (range) { range.textContent = ''; range.style.color = ''; }
+  showToast('Datumbereik gereset');
+}
+
 function renderDashboard(){
   if(RAW_DATA.length===0){showToast(t('messages.no_data'),true);return;}
-  const k=calcKPIs(RAW_DATA);renderKPIs(k);renderCharts(RAW_DATA,currentPeriod);renderChargeLocations(RAW_DATA);renderTable(RAW_DATA);
+  const data = getFilteredData();
+  if (data.length === 0) { showToast('Geen data in deze periode', true); return; }
+  const k=calcKPIs(data);renderKPIs(k);renderCharts(data,currentPeriod);renderChargeLocations(data);renderTable(data);
   // Update vehicle info using translated subtitle
-  const v=RAW_DATA[0]?.vehicle||'EV';
-  document.getElementById('vehicleInfo').textContent=`${v} — ${t('ui.subtitle').replace('EV — ','')}`;
+  const v=(data[0]?.vehicle||RAW_DATA[0]?.vehicle||'EV');
+  document.getElementById('vehicleInfo').textContent = v + ' — ' + t('ui.subtitle').replace('EV — ','');
+  // Update date range info if filter is active
+  if (dateRangeFilter) {
+    const range = document.getElementById('dateRangeInfo');
+    if (range) {
+      range.textContent = ' Periode: ' + (dateRangeFilter.from || 'begin') + ' tot ' + (dateRangeFilter.to || 'einde') + ' — ' + data.length + ' records';
+      range.style.color = 'var(--accent-light)';
+    }
+  }
 }
 
 // ─── Filters ─────────────────────────────────────────────────────

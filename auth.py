@@ -137,6 +137,7 @@ def register_auth(app):
     app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB upload limit
+    app.config['SESSION_COOKIE_PERMANENT'] = False  # Session expires when browser closes
 
     @app.route("/api/auth/register", methods=["POST"])
     def auth_register():

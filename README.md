@@ -119,10 +119,20 @@ CONNECTORS["polestar"] = PolestarConnector
 ### 👥 Multi-User Support
 
 - **User accounts** — register, login, logout (SQLite-backed)
-- **Data isolation** — each user has their own data directory, connectors, and settings
+- **Strict data isolation** — every user gets a private sandbox:
+  ```
+  data/users/<id>/activities.json      ← trips + charging data
+  data/users/<id>/*.xlsx                ← uploaded Excel originals
+  data/users/<id>/connector_vw.json     ← manufacturer credentials
+  data/users/<id>/token_vw.json         ← auth tokens
+  data/users/<id>/locales/              ← custom language files
+  ```
+  No user can ever see, access, or overwrite another user's data. All API endpoints are scoped to the authenticated user's directory.
 - **Default admin** — auto-created on first run (`admin` / `admin`)
+- **Startup auto-import** — Excel files placed in `data/` before first boot are moved into the admin's directory automatically
 - **Per-user connectors** — User A's VW credentials are invisible to User B
 - **Per-user language uploads** — custom language files stored per user
+- **Per-user caching** — cache keys include user ID to prevent cross-user data leaks
 
 ### 🌐 Internationalization (i18n)
 

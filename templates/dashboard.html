@@ -787,24 +787,24 @@ async function renderConnectors() {
     }).join('');
 
     const syncBtn = c.available
-      ? '<button class="btn btn-secondary" onclick="connectorAction(\'' + c.brand + "','sync')\" style=\"font-size:.8rem;padding:8px 12px;\">" + t('settings.sync') + "</button>"
+      ? '<button class="btn btn-secondary" onclick="connectorAction(\'' + esc(c.brand) + '\',\'sync\')" style="font-size:.8rem;padding:8px 12px;">' + t('settings.sync') + '</button>'
       : '';
 
-    html.push('\
-      <div class="connector-card" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">\
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">\
-          <span style="font-size:.9rem;font-weight:600;">' + esc(c.icon) + ' ' + esc(c.display_name) + '</span>\
-          ' + badge + '\
-        </div>\
-        ' + fields + '\
-        <div class="btn-row" style="margin-top:4px;">\
-          <button class="btn btn-primary" onclick="connectorAction(\'' + c.brand + "','save')\" style=\"font-size:.8rem;padding:8px 12px;\" " + (c.available ? '' : 'disabled') + ">" + t('settings.save') + "</button>\
-          " + syncBtn + "\
-          <button class=\"btn btn-danger\" onclick=\"connectorAction('" + c.brand + "','delete')\" style=\"font-size:.8rem;padding:8px 12px;\" " + (isConfigured ? '' : 'disabled') + ">" + t('settings.delete') + "</button>\
-        </div>\
-        <div id=\"connector-status-" + esc(c.brand) + "\" style=\"margin-top:8px;font-size:.78rem;min-height:1.2em;\"></div>\
-      </div>\
-    ');
+    html.push(
+      '<div class="connector-card" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<span style="font-size:.9rem;font-weight:600;">' + esc(c.icon) + ' ' + esc(c.display_name) + '</span>' +
+          badge +
+        '</div>' +
+        fields +
+        '<div class="btn-row" style="margin-top:4px;">' +
+          '<button class="btn btn-primary" onclick="connectorAction(\'' + esc(c.brand) + '\',\'save\')" style="font-size:.8rem;padding:8px 12px;"' + (c.available ? '' : ' disabled') + '>' + t('settings.save') + '</button>' +
+          syncBtn +
+          '<button class="btn btn-danger" onclick="connectorAction(\'' + esc(c.brand) + '\',\'delete\')" style="font-size:.8rem;padding:8px 12px;"' + (isConfigured ? '' : ' disabled') + '>' + t('settings.delete') + '</button>' +
+        '</div>' +
+        '<div id="connector-status-' + esc(c.brand) + '" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>' +
+      '</div>'
+    );
   }
   container.innerHTML = html.join('');
 }

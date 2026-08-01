@@ -12,20 +12,17 @@ services:
     restart: unless-stopped
 
     ports:
-      - "${ABRP_PORT:-8000}:8000"
+      - "${ABRP_PORT:-8765}:8000"
 
     # Persistent data (Excel uploads + cached JSON)
     volumes:
       - ./data:/app/data
 
     # Resource limits — keep it light on the Pi
-    deploy:
-      resources:
-        limits:
-          memory: 256M        # 256MB max (gunicorn 2 workers ~80MB each)
-          cpus: "0.5"         # Half a core max
-        reservations:
-          memory: 64M         # Guarantee 64MB available
+    # Note: deploy.resources requires Swarm or docker compose v2+
+    # On older kernels (cgroup v1) memory limits may be silently ignored
+    mem_limit: 256m
+    cpus: 0.5
 
     # Environment
     environment:

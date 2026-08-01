@@ -20,16 +20,15 @@ COPY docker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (modular structure)
-COPY server.py config.py excel_parser.py ./
+COPY server.py config.py excel_parser.py auth.py data_utils.py ./
 COPY templates/ templates/
 COPY routes/ routes/
 COPY connectors/ connectors/
+COPY locales/ locales/
 
 # Create data directory (will be mounted as volume)
 RUN mkdir -p /app/data
-COPY locales/ locales/
 
-COPY data_utils.py ./
 # Expose port
 EXPOSE 8000
 

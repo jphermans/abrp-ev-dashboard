@@ -125,24 +125,19 @@ CONNECTORS["polestar"] = PolestarConnector
 | 🚗 **Manufacturer API** | Free | VW WeConnect (email + password). More brands via plugin system |
 | 🔑 **ABRP API** | Premium key | Fetch activities directly from ABRP servers |
 
-### 👥 Multi-User Support
+### 👥 Multi-User & Fleet Support
 
 - **User accounts** — register, login, logout (SQLite-backed)
-- **Strict data isolation** — every user gets a private sandbox:
-  ```
-  data/users/<id>/activities.json      ← trips + charging data
-  data/users/<id>/*.xlsx                ← uploaded Excel originals
-  data/users/<id>/connector_vw.json     ← manufacturer credentials
-  data/users/<id>/token_vw.json         ← auth tokens
-  data/users/<id>/locales/              ← custom language files
-  ```
-  No user can ever see, access, or overwrite another user's data. All API endpoints are scoped to the authenticated user's directory.
+- **Multiple vehicles per user** — each user can track multiple cars with separate data
+- **Vehicle management** — add, edit, delete vehicles with name, model, license plate
+- **Fleet manager role** — designated users can see a fleet overview of all vehicles across all users
+- **Fleet overview page** — total vehicles, total km, per-user breakdown with vehicle stats
+- **Strict data isolation** — every vehicle's data in separate directories
 - **Default admin** — auto-created on first run (`admin` / `admin123`, forced to change on first login)
-- **Startup auto-import** — Excel files placed in `data/` before first boot are moved into the admin's directory automatically
-- **Per-user connectors** — User A's VW credentials are invisible to User B
+- **Per-vehicle connectors** — each vehicle can have its own manufacturer connection
 - **Per-user language uploads** — custom language files stored per user
-- **Per-user caching** — cache keys include user ID to prevent cross-user data leaks
-- **Account deletion** — users can delete their own account from Settings (🗑️ section). Requires password confirmation. Removes: the user record, all uploaded Excel files, `activities.json`, connector credentials, auth tokens, custom locales, and settings. The last admin account cannot be deleted. Deleted users' stale session cookies are rejected (`user_exists` guard).
+- **Per-user caching** — cache keys include user + vehicle ID to prevent cross-user data leaks
+- **Account deletion** — users can delete their own account from Settings
 
 ### 🌐 Internationalization (i18n)
 
@@ -208,6 +203,12 @@ templates/
 | `POST /api/auth/logout` | Logout |
 | `GET /api/auth/me` | Current user info |
 | `POST /api/auth/delete-account` | Permanently delete account + all data (password required) |
+| `GET /api/vehicles` | List all vehicles for current user |
+| `POST /api/vehicles` | Create a new vehicle |
+| `DELETE /api/vehicles/<id>` | Delete a vehicle and all its data |
+| `GET /api/vehicles/<id>/data` | Get activity data for a specific vehicle |
+| `POST /api/vehicles/<id>/upload` | Upload Excel files for a specific vehicle |
+| `GET /api/fleet` | Fleet overview (fleet managers + admins only) |
 | `GET /api/data` | Get all activity records (per-user) |
 | `POST /api/upload` | Upload ABRP Excel files (per-user) |
 | `GET /api/status` | Server health + user info |

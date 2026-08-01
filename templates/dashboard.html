@@ -127,6 +127,9 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <div class="header">
   <div><h1>🚗 ABRP <span>Rijdashboard</span></h1><div class="header-sub" id="vehicleInfo">EV — kilometerstatistieken, laadgedrag & providers</div></div>
   <div class="toolbar">
+    <select id="vehicleSelector" onchange="switchVehicle(this.value)" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;cursor:pointer;display:none;"></select>
+    <button class="btn btn-secondary" onclick="showVehicleManager()" title="Voertuigen beheren" id="vehicleMgrBtn" style="display:none;">🚗</button>
+    <button class="btn btn-secondary" onclick="showFleetOverview()" title="Fleet overzicht" id="fleetBtn" style="display:none;">📊</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls" multiple>
     <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📂 Upload</button>
     <button class="btn btn-primary" onclick="exportPDF()">📄 PDF</button>
@@ -371,7 +374,214 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
   </div>
 </div>
 
+<!-- Vehicle Manager Modal -->
+<div class="modal-overlay" id="vehicleManagerModal">
+  <div class="modal wide">
+    <h2>🚗 Mijn Voertuigen</h2>
+    <div id="vehicleManagerContent"><p style="color:var(--text-muted);text-align:center;padding:20px;">Laden...</p></div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <h3 style="font-size:.9rem;margin-bottom:10px;">➕ Voertuig toevoegen</h3>
+      <input type="text" id="newVehicleName" placeholder="Naam (bijv. ID.7)" class="setting-input" style="margin-bottom:6px;">
+      <input type="text" id="newVehicleModel" placeholder="Model (optioneel)" class="setting-input" style="margin-bottom:6px;">
+      <input type="text" id="newVehiclePlate" placeholder="Kenteken (optioneel)" class="setting-input" style="margin-bottom:8px;">
+      <button class="btn btn-primary" onclick="addVehicle()" style="width:100%;">Toevoegen</button>
+    </div>
+    <button class="btn btn-secondary" onclick="closeVehicleManager()" style="width:100%;margin-top:8px;">Sluiten</button>
+  </div>
+</div>
+
+<!-- Fleet Overview Modal -->
+<div class="modal-overlay" id="fleetModal">
+  <div class="modal wide">
+    <h2>📊 Fleet Overzicht</h2>
+    <div id="fleetContent"><p style="color:var(--text-muted);text-align:center;padding:20px;">Laden...</p></div>
+    <button class="btn btn-secondary" onclick="closeFleetOverview()" style="width:100%;margin-top:8px;">Sluiten</button>
+  </div>
+</div>
+
 <script>
+// ─── Vehicle Management ─────────────────────────────────────────
+let _vehicles = [];
+let _currentVehicleId = null;
+
+async function loadVehicles() {
+  try {
+    const resp = await fetch('/api/vehicles');
+    _vehicles = await resp.json();
+  } catch(e) { _vehicles = []; }
+  return _vehicles;
+}
+
+function renderVehicleSelector() {
+  const sel = document.getElementById('vehicleSelector');
+  const mgrBtn = document.getElementById('vehicleMgrBtn');
+  if (!sel) return;
+
+  if (_vehicles.length === 0) {
+    // No vehicles — use legacy mode (single data dir)
+    sel.style.display = 'none';
+    if (mgrBtn) mgrBtn.style.display = 'inline-flex';
+    _currentVehicleId = null;
+    return;
+  }
+
+  sel.style.display = 'inline-block';
+  if (mgrBtn) mgrBtn.style.display = 'inline-flex';
+
+  sel.innerHTML = _vehicles.map(v => '<option value="' + v.id + '"' + (v.id === _currentVehicleId ? ' selected' : '') + '>' + esc(v.name) + (v.records ? ' (' + v.records + ')' : '') + '</option>').join('');
+
+  // Auto-select first if none selected
+  if (!_currentVehicleId && _vehicles.length > 0) {
+    _currentVehicleId = _vehicles[0].id;
+    sel.value = _currentVehicleId;
+  }
+}
+
+async function switchVehicle(vid) {
+  _currentVehicleId = parseInt(vid);
+  localStorage.setItem('activeVehicle', vid);
+  await loadDataForVehicle(vid);
+  renderDashboard();
+}
+
+async function loadDataForVehicle(vid) {
+  try {
+    const resp = await fetch('/api/vehicles/' + vid + '/data');
+    RAW_DATA = await resp.json();
+  } catch(e) { RAW_DATA = []; }
+}
+
+async function showVehicleManager() {
+  document.getElementById('vehicleManagerModal').classList.add('show');
+  await loadVehicles();
+  renderVehicleList();
+}
+
+function closeVehicleManager() {
+  document.getElementById('vehicleManagerModal').classList.remove('show');
+}
+
+function renderVehicleList() {
+  const content = document.getElementById('vehicleManagerContent');
+  if (_vehicles.length === 0) {
+    content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Nog geen voertuigen. Voeg er hieronder één toe.</p>';
+    return;
+  }
+  content.innerHTML = _vehicles.map(v => {
+    const stats = (v.records ? v.records + ' records' : 'geen data') + (v.total_km ? ' · ' + v.total_km.toLocaleString() + ' km' : '');
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+      '<div><strong>' + esc(v.name) + '</strong>' + (v.model ? ' <span style="color:var(--text-muted);">' + esc(v.model) + '</span>' : '') +
+      (v.license_plate ? ' <span style="font-size:.75rem;background:var(--bg);padding:2px 6px;border-radius:4px;">' + esc(v.license_plate) + '</span>' : '') +
+      '<br><span style="font-size:.75rem;color:var(--text-muted);">' + stats + '</span></div>' +
+      '<button class="btn btn-danger" onclick="removeVehicle(' + v.id + ')" style="font-size:.75rem;padding:6px 10px;">🗑️</button>' +
+      '</div>';
+  }).join('');
+}
+
+async function addVehicle() {
+  const name = document.getElementById('newVehicleName').value.trim();
+  if (!name) { showToast('Voer een naam in', true); return; }
+  const model = document.getElementById('newVehicleModel').value.trim();
+  const plate = document.getElementById('newVehiclePlate').value.trim();
+  try {
+    const resp = await fetch('/api/vehicles', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, model, license_plate: plate })
+    });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      showToast('✅ Voertuig toegevoegd');
+      document.getElementById('newVehicleName').value = '';
+      document.getElementById('newVehicleModel').value = '';
+      document.getElementById('newVehiclePlate').value = '';
+      await loadVehicles();
+      renderVehicleList();
+      renderVehicleSelector();
+    } else {
+      showToast('❌ ' + (d.error || 'Fout'), true);
+    }
+  } catch(e) { showToast('❌ Verbindingsfout', true); }
+}
+
+async function removeVehicle(vid) {
+  if (!confirm('Weet je het zeker? Alle data voor dit voertuig wordt verwijderd.')) return;
+  try {
+    await fetch('/api/vehicles/' + vid, { method: 'DELETE' });
+    showToast('✅ Voertuig verwijderd');
+    await loadVehicles();
+    renderVehicleList();
+    renderVehicleSelector();
+    if (_vehicles.length > 0) {
+      await switchVehicle(_vehicles[0].id);
+    } else {
+      _currentVehicleId = null;
+      await loadData();
+      renderDashboard();
+    }
+  } catch(e) { showToast('❌ Fout', true); }
+}
+
+// ─── Fleet Overview ─────────────────────────────────────────────
+async function showFleetOverview() {
+  document.getElementById('fleetModal').classList.add('show');
+  const content = document.getElementById('fleetContent');
+  content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Laden...</p>';
+  try {
+    const resp = await fetch('/api/fleet');
+    const d = await resp.json();
+    if (d.error) {
+      content.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">' + esc(d.error) + '</p>';
+      return;
+    }
+    renderFleetOverview(d.fleet);
+  } catch(e) {
+    content.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">Fout bij laden fleet data</p>';
+  }
+}
+
+function closeFleetOverview() {
+  document.getElementById('fleetModal').classList.remove('show');
+}
+
+function renderFleetOverview(fleet) {
+  const content = document.getElementById('fleetContent');
+  let totalVehicles = 0;
+  let totalKm = 0;
+  let html = [];
+
+  fleet.forEach(user => {
+    totalVehicles += user.vehicles.length;
+    html.push('<div style="margin-bottom:16px;">');
+    html.push('<div style="font-size:.95rem;font-weight:700;margin-bottom:8px;color:var(--accent-light);">👤 ' + esc(user.display_name) + '</div>');
+
+    user.vehicles.forEach(v => {
+      totalKm += (v.total_km || 0);
+      html.push('<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:6px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">');
+      html.push('<div><strong>🚗 ' + esc(v.name) + '</strong>');
+      if (v.model) html.push(' <span style="color:var(--text-muted);font-size:.82rem;">' + esc(v.model) + '</span>');
+      if (v.license_plate) html.push(' <span style="font-size:.72rem;background:var(--bg);padding:2px 6px;border-radius:4px;">' + esc(v.license_plate) + '</span>');
+      html.push('</div>');
+      html.push('<div style="display:flex;gap:12px;font-size:.78rem;color:var(--text-muted);">');
+      if (v.odometer_km) html.push('<span>🏁 ' + v.odometer_km.toLocaleString() + ' km</span>');
+      if (v.total_km) html.push('<span>📊 ' + v.total_km.toLocaleString() + ' km gereden</span>');
+      if (v.battery_soc != null) html.push('<span>🔋 ' + v.battery_soc + '%</span>');
+      if (v.records) html.push('<span>📋 ' + v.records + ' records</span>');
+      html.push('</div>');
+      html.push('</div>');
+    });
+    html.push('</div>');
+  });
+
+  // Summary header
+  let summary = '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">';
+  summary += '<span style="font-size:1.1rem;font-weight:700;color:var(--accent-light);">' + totalVehicles + '</span> voertuigen';
+  summary += ' · <span style="font-weight:700;">' + Math.round(totalKm).toLocaleString() + '</span> km totaal';
+  summary += ' · ' + fleet.length + ' gebruiker(s)';
+  summary += '</div>';
+
+  content.innerHTML = summary + html.join('');
+}
+
 // ═════════════════════════════════════════════════════════════════
 // AUTH
 // ═════════════════════════════════════════════════════════════════
@@ -446,11 +656,16 @@ async function checkAuth() {
     // Check if user must change password (first login with default password)
     if (d.must_change_password) {
       showForceChangeModal();
-      return false; // Block dashboard loading until password is changed
+      return false;
     }
     // Show username in header
     const hdr = document.querySelector('.header-sub');
     if (hdr) hdr.dataset.username = d.display_name || d.username;
+    // Show fleet button for fleet managers and admins
+    if (d.is_fleet_manager || d.is_admin) {
+      const fleetBtn = document.getElementById('fleetBtn');
+      if (fleetBtn) fleetBtn.style.display = 'inline-flex';
+    }
     return true;
   } catch(e) {
     window.location.href = '/login';
@@ -1388,11 +1603,22 @@ async function init(){
   document.documentElement.setAttribute('data-theme', savedTheme);
   currentPalette = localStorage.getItem('palette') || 'default';
 
-  // Load language first, then data, then vehicle info
+  // Load language
   await initLanguage();
-  await loadData();
+
+  // Load vehicles — if user has vehicles, use multi-vehicle mode
+  await loadVehicles();
+  if (_vehicles.length > 0) {
+    const savedVid = localStorage.getItem('activeVehicle');
+    _currentVehicleId = savedVid && _vehicles.find(v => v.id === parseInt(savedVid)) ? parseInt(savedVid) : _vehicles[0].id;
+    renderVehicleSelector();
+    await loadDataForVehicle(_currentVehicleId);
+  } else {
+    // Legacy mode: single data directory
+    await loadData();
+  }
   renderDashboard();
-  loadVehicleInfo(); // Non-blocking — loads in background
+  loadVehicleInfo();
 }
 
 init();

@@ -22,17 +22,19 @@ from data_utils import merge_and_save_records
 
 app = Flask(__name__)
 
-# Register all route modules
 from routes.core import register as register_core
 from routes.abrp import register as register_abrp
 from routes.connectors import register as register_connectors
 from routes.locales import register as register_locales
+from routes.vehicles import register as register_vehicles
+from auth import register_auth, init_db
 
 register_auth(app)
 register_core(app)
 register_abrp(app)
 register_connectors(app)
 register_locales(app)
+register_vehicles(app)
 
 
 def startup_import():

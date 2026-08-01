@@ -65,6 +65,27 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
+    # Migration: add is_fleet_manager column
+    try:
+        conn.execute("SELECT is_fleet_manager FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE users ADD COLUMN is_fleet_manager INTEGER DEFAULT 0")
+        print("   DB migrated: added is_fleet_manager column")
+    # Vehicles table — supports multiple vehicles per user
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS vehicles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL DEFAULT 'My Vehicle',
+            vin TEXT,
+            brand TEXT,
+            model TEXT,
+            license_plate TEXT,
+            connector_brand TEXT,
+            created_at REAL DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
     conn.commit()
 
     # Create default admin if no users exist
@@ -191,12 +212,14 @@ def register_auth(app):
         session["username"] = user["username"]
         session["is_admin"] = user["is_admin"]
         must_change = bool(user["must_change_password"]) if "must_change_password" in user.keys() else False
+        fleet_mgr = bool(user["is_fleet_manager"]) if "is_fleet_manager" in user.keys() else False
         return jsonify({
             "status": "ok",
             "username": user["username"],
             "display_name": user["display_name"] or user["username"],
             "is_admin": bool(user["is_admin"]),
-            "must_change_password": must_change
+            "must_change_password": must_change,
+            "is_fleet_manager": fleet_mgr
         })
 
     @app.route("/api/auth/logout", methods=["POST"])
@@ -214,12 +237,14 @@ def register_auth(app):
             session.clear()
             return jsonify({"authenticated": False})
         must_change = bool(user["must_change_password"]) if "must_change_password" in user.keys() else False
+        fleet_mgr = bool(user["is_fleet_manager"]) if "is_fleet_manager" in user.keys() else False
         return jsonify({
             "authenticated": True,
             "username": user["username"],
             "display_name": user["display_name"] or user["username"],
             "is_admin": bool(user["is_admin"]),
-            "must_change_password": must_change
+            "must_change_password": must_change,
+            "is_fleet_manager": fleet_mgr
         })
 
     @app.route("/api/auth/change-password", methods=["POST"])
@@ -338,3 +363,66 @@ def set_setting(key: str, value: str):
         (uid, key, str(value))
     )
     conn.commit()
+
+
+# ─── Vehicle Management ──────────────────────────────────────────
+
+def get_vehicle_data_dir(user_id: int, vehicle_id: int) -> Path:
+    """Get the per-vehicle data directory."""
+    d = Path(__file__).parent / "data" / "users" / str(user_id) / "vehicles" / str(vehicle_id)
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def get_user_vehicles(user_id: int) -> list:
+    """Get all vehicles for a user."""
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM vehicles WHERE user_id = ? ORDER BY created_at", (user_id,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_vehicle_by_id(vehicle_id: int, user_id: int = None) -> dict:
+    """Get a vehicle by ID. If user_id is given, verify ownership."""
+    conn = get_db()
+    if user_id is not None:
+        row = conn.execute("SELECT * FROM vehicles WHERE id = ? AND user_id = ?", (vehicle_id, user_id)).fetchone()
+    else:
+        row = conn.execute("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def create_vehicle(user_id: int, name: str, brand: str = None, model: str = None,
+                   vin: str = None, license_plate: str = None, connector_brand: str = None) -> int:
+    """Create a new vehicle for a user. Returns the vehicle ID."""
+    import time as _time
+    conn = get_db()
+    cursor = conn.execute(
+        "INSERT INTO vehicles (user_id, name, vin, brand, model, license_plate, connector_brand, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (user_id, name, vin, brand, model, license_plate, connector_brand, _time.time())
+    )
+    conn.commit()
+    vid = cursor.lastrowid
+    # Create the vehicle data directory
+    get_vehicle_data_dir(user_id, vid)
+    return vid
+
+
+def delete_vehicle(vehicle_id: int, user_id: int):
+    """Delete a vehicle and its data directory."""
+    import shutil
+    conn = get_db()
+    conn.execute("DELETE FROM vehicles WHERE id = ? AND user_id = ?", (vehicle_id, user_id))
+    conn.commit()
+    vdir = Path(__file__).parent / "data" / "users" / str(user_id) / "vehicles" / str(vehicle_id)
+    if vdir.exists():
+        shutil.rmtree(vdir)
+
+
+def is_fleet_manager() -> bool:
+    """Check if the current user is a fleet manager."""
+    uid = get_current_user_id()
+    if uid is None:
+        return False
+    conn = get_db()
+    row = conn.execute("SELECT is_fleet_manager FROM users WHERE id = ?", (uid,)).fetchone()
+    return bool(row["is_fleet_manager"]) if row else False

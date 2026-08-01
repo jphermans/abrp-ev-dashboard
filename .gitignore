@@ -1,0 +1,21 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Real data (keep only demo/fake data)
+exports/
+*.xlsx
+!sample-data/*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

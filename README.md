@@ -272,7 +272,7 @@ Login → click 📂 Upload → select `.xlsx` files. Auto-parsed, miles→km co
 ### Manufacturer sync (VW)
 Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + password → click 🔄 Sync.
 
-> **VW Note:** As of May 2026, VW changed their auth flow (BFF endpoints deprecated). The connector detects this and shows a clear message suggesting Excel upload instead. The `weconnect` and `carconnectivity` libraries are being updated by their maintainers. Excel upload works independently.
+> **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library (successor to WeConnect-python). As of July 2026, VW's BFF auth endpoints are still being adapted. The connector handles errors gracefully and suggests Excel upload as fallback. CarConnectivity also supports Skoda, Audi, Seat/Cupra and Tronity through the same plugin architecture.
 
 ### ABRP API
 Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requires a premium API key with the `session` feature.

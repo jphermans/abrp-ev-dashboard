@@ -1,0 +1,17 @@
+[Unit]
+Description=ABRP EV Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/abrp-dashboard
+Environment=PORT=8000
+Environment=HOST=0.0.0.0
+ExecStart=/home/%i/abrp-dashboard/venv/bin/python /home/%i/abrp-dashboard/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

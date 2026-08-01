@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABRP EV Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-hover: #243044;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-light: #60a5fa;
+  --green: #10b981;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --shadow: rgba(0,0,0,0.3);
+  --chart-bg: 'rgba(59,130,246,0.15)';
+  --chart-border: '#3b82f6';
+  --chart-grid: '#1a2538';
+}
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --card-hover: #f8fafc;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-light: #2563eb;
+  --green: #10b981;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --shadow: rgba(0,0,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; padding:20px; transition:background .2s,color .2s; }
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px; }
+.header h1 { font-size:1.6rem; font-weight:700; } .header h1 span { color:var(--accent-light); }
+.header-sub { color:var(--text-muted); font-size:.85rem; margin-top:4px; }
+.toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.btn { padding:10px 18px; border-radius:8px; border:none; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:6px; }
+.btn-primary { background:var(--accent); color:#fff; } .btn-primary:hover { background:var(--accent-light); }
+.btn-secondary { background:var(--card); color:var(--text); border:1px solid var(--border); } .btn-secondary:hover { background:var(--card-hover); }
+.btn-icon { width:40px; height:40px; padding:0; justify-content:center; font-size:1.2rem; }
+.filters { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.filter-group { display:flex; background:var(--card); border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.filter-btn { padding:8px 16px; background:transparent; border:none; color:var(--text-muted); font-size:.8rem; font-weight:600; cursor:pointer; transition:all .2s; }
+.filter-btn.active { background:var(--accent); color:#fff; } .filter-btn:hover:not(.active) { color:var(--text); background:var(--card-hover); }
+.date-range { color:var(--text-muted); font-size:.8rem; margin-left:auto; }
+.section-title { font-size:1.1rem; font-weight:700; margin:28px 0 16px; padding-bottom:8px; border-bottom:2px solid var(--border); }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:24px; }
+.kpi-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; transition:transform .2s,border-color .2s; }
+.kpi-card:hover { transform:translateY(-2px); border-color:var(--accent); }
+.kpi-icon { font-size:1.5rem; margin-bottom:8px; } .kpi-label { color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; }
+.kpi-value { font-size:1.6rem; font-weight:700; margin-top:4px; } .kpi-unit { font-size:.85rem; color:var(--text-muted); font-weight:400; }
+.kpi-sub { font-size:.7rem; color:var(--text-muted); margin-top:4px; }
+.charts-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:20px; margin-bottom:24px; }
+.chart-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.chart-card.full { grid-column:1/-1; } .chart-title { font-size:.95rem; font-weight:600; margin-bottom:16px; }
+.chart-canvas-wrap { position:relative; height:280px; } .chart-canvas-wrap.tall { height:340px; }
+.table-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; overflow:hidden; margin-bottom:24px; }
+.table-title { font-size:.95rem; font-weight:600; margin-bottom:16px; }
+.table-wrap { overflow-x:auto; max-height:400px; overflow-y:auto; } table { width:100%; border-collapse:collapse; font-size:.82rem; }
+th { text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; font-size:.7rem; letter-spacing:.5px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--card); z-index:1; }
+td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { background:var(--card-hover); }
+.badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:.7rem; font-weight:600; }
+.badge-drive { background:rgba(59,130,246,.2); color:var(--accent-light); } .badge-charge { background:rgba(16,185,129,.2); color:var(--green); }
+.provider-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:.72rem; font-weight:600; }
+.provider-DATS24{background:rgba(245,158,11,.2);color:var(--orange)} .provider-Fastned{background:rgba(6,182,212,.2);color:var(--cyan)} .provider-Allego{background:rgba(59,130,246,.2);color:var(--accent-light)} .provider-ShellRecharge{background:rgba(239,68,68,.2);color:var(--red)} .provider-Other{background:rgba(139,92,246,.2);color:var(--purple)}
+#fileInput { display:none; }
+/* Settings modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9000; display:none; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:520px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px var(--shadow); }
+.modal h2 { font-size:1.3rem; margin-bottom:20px; }
+.setting-section { margin-bottom:24px; }
+.setting-label { font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; letter-spacing:.5px; }
+.setting-input { width:100%; padding:10px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.9rem; font-family:monospace; }
+.setting-input:focus { outline:none; border-color:var(--accent); }
+.setting-hint { font-size:.72rem; color:var(--text-muted); margin-top:6px; }
+.theme-toggle-group { display:flex; gap:8px; }
+.theme-btn { flex:1; padding:12px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; font-size:.85rem; font-weight:600; transition:all .2s; }
+.theme-btn.active { border-color:var(--accent); background:rgba(59,130,246,.1); color:var(--accent-light); }
+.palette-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+.palette-option { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:8px; border:2px solid var(--border); background:var(--bg); cursor:pointer; font-size:.82rem; transition:all .2s; }
+.palette-option.active { border-color:var(--accent); }
+.palette-swatches { display:flex; gap:2px; } .palette-swatches span { width:14px; height:14px; border-radius:3px; }
+.btn-row { display:flex; gap:8px; margin-top:8px; }
+.btn-danger { background:rgba(239,68,68,.15); color:var(--red); border:1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background:rgba(239,68,68,.25); }
+.toast { position:fixed; bottom:24px; right:24px; background:var(--card); border:1px solid var(--border); border-left:4px solid var(--green); border-radius:8px; padding:14px 20px; color:var(--text); font-size:.85rem; z-index:9999; display:none; box-shadow:0 4px 20px var(--shadow); }
+.toast.error { border-left-color:var(--red); } .toast.show { display:block; animation:slideIn .3s ease; }
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.charts-grid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}}
+@media(max-width:768px){body{padding:12px}.header{flex-direction:column;align-items:flex-start}.toolbar{width:100%}.btn{flex:1;justify-content:center;padding:12px 14px;min-height:44px;font-size:.9rem}.filter-group{flex-wrap:wrap;width:100%}.filter-btn{flex:1;text-align:center;padding:10px 8px;min-height:40px}.date-range{margin-left:0;width:100%;font-size:.78rem}.kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}.kpi-card{padding:14px}.kpi-value{font-size:1.25rem}.kpi-icon{font-size:1.3rem;margin-bottom:4px}.kpi-label{font-size:.65rem}.kpi-sub{font-size:.65rem}.charts-grid{grid-template-columns:1fr;gap:14px}.chart-card{padding:14px}.chart-canvas-wrap{height:240px}.chart-canvas-wrap.tall{height:260px}.section-title{font-size:1rem;margin:20px 0 12px}.table-card{padding:12px;margin-bottom:16px}.table-wrap{max-height:350px;-webkit-overflow-scrolling:touch}.table-wrap table{min-width:720px}.charge-loc-table-wrap table{min-width:480px}.toast{left:12px;right:12px;bottom:12px;text-align:center}}
+@media(max-width:400px){body{padding:8px}.header h1{font-size:1.1rem}.kpi-value{font-size:1.05rem}.kpi-sub{display:none}.btn{font-size:.8rem;padding:10px 8px}.filter-btn{font-size:.75rem}}
+</style>
+</head>
+<body>
+<div id="dashboard-content">
+<div class="header">
+  <div><h1>🚗 ABRP <span>Rijdashboard</span></h1><div class="header-sub" id="vehicleInfo">EV — kilometerstatistieken, laadgedrag & providers</div></div>
+  <div class="toolbar">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple>
+    <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📂 Upload</button>
+    <button class="btn btn-primary" onclick="exportPDF()">📄 PDF</button>
+    <button class="btn btn-secondary btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
+</div>
+<div class="filters">
+  <div class="filter-group">
+    <button class="filter-btn" data-period="day">Dag</button>
+    <button class="filter-btn" data-period="week">Week</button>
+    <button class="filter-btn active" data-period="month">Maand</button>
+    <button class="filter-btn" data-period="year">Jaar</button>
+    <button class="filter-btn" data-period="all">Alles</button>
+  </div>
+  <div class="date-range" id="dateRangeInfo"></div>
+</div>
+<div class="kpi-grid" id="kpiGrid"></div>
+<div class="section-title">⚡ Laadstatistieken & Providers</div>
+<div class="charts-grid">
+  <div class="chart-card"><div class="chart-title">🔌 Laadsessies per provider</div><div class="chart-canvas-wrap"><canvas id="providerChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">⚡ Energie per provider (kWh)</div><div class="chart-canvas-wrap"><canvas id="providerEnergyChart"></canvas></div></div>
+</div>
+<div class="table-card">
+  <div class="table-title">📍 Laadlocaties</div>
+  <div class="table-wrap charge-loc-table-wrap" style="max-height:350px;">
+    <table><thead><tr><th>Provider</th><th>Locatie</th><th>Sessies</th><th>Energie (kWh)</th><th>Laatste bezoek</th></tr></thead><tbody id="chargeLocationsBody"></tbody></table>
+  </div>
+</div>
+<div class="section-title">📊 Rijstatistieken</div>
+<div class="charts-grid">
+  <div class="chart-card full"><div class="chart-title">📊 Afstand per periode (km)</div><div class="chart-canvas-wrap tall"><canvas id="distanceChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">⚡ Energie bijgeladen (kWh)</div><div class="chart-canvas-wrap"><canvas id="energyChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🔋 Gemiddeld batterijverbruik (SoC)</div><div class="chart-canvas-wrap"><canvas id="socChart"></canvas></div></div>
+  <div class="chart-card full"><div class="chart-title">🏁 Kilometerteller (cumulatief, km)</div><div class="chart-canvas-wrap"><canvas id="odoChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">📅 Ritten per weekdag</div><div class="chart-canvas-wrap"><canvas id="weekdayChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🛣️ Afstand verdeling</div><div class="chart-canvas-wrap"><canvas id="distributionChart"></canvas></div></div>
+</div>
+<div class="table-card">
+  <div class="table-title">📋 Alle activiteiten</div>
+  <div class="table-wrap">
+    <table><thead><tr><th>Datum</th><th>Tijd</th><th>Type</th><th>Duur</th><th>Afstand (km)</th><th>SoC</th><th>Bijgeladen</th><th>Provider</th><th>Locatie</th></tr></thead><tbody id="dataTableBody"></tbody></table>
+  </div>
+</div>
+</div>
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>⚙️ Instellingen</h2>
+
+    <div class="setting-section">
+      <div class="setting-label">🎨 Thema</div>
+      <div class="theme-toggle-group">
+        <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')">🌙 Donker</button>
+        <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Licht</button>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <div class="setting-label">🌈 Kleurenpalet</div>
+      <div class="palette-grid" id="paletteGrid"></div>
+    </div>
+
+    <div class="setting-section">
+      <div class="setting-label">🔑 ABRP API Token</div>
+      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+      <div class="setting-hint">Je ABRP API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Lokaal opgeslagen in je browser.</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveToken()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
+        <button class="btn btn-danger" onclick="deleteToken()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
+        <button class="btn btn-secondary" onclick="testToken()" style="font-size:.8rem;padding:8px 16px;">Test verbinding</button>
+      </div>
+      <div id="tokenStatus" style="margin-top:8px;font-size:.78rem;"></div>
+    </div>
+
+    <div class="setting-section">
+      <div class="setting-label">ℹ️ Systeem</div>
+      <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="closeSettings()" style="width:100%;margin-top:8px;">Sluiten</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═════════════════════════════════════════════════════════════════
+// STATE
+// ═════════════════════════════════════════════════════════════════
+let RAW_DATA = [];
+let charts = {};
+let currentPeriod = 'month';
+let currentPalette = 'default';
+
+// ─── Color Palettes ──────────────────────────────────────────────
+const PALETTES = {
+  default: { primary:'#3b82f6', green:'#10b981', orange:'#f59e0b', purple:'#8b5cf6', cyan:'#06b6d4', red:'#ef4444' },
+  warm:    { primary:'#f97316', green:'#84cc16', orange:'#facc15', purple:'#ec4899', cyan:'#14b8a6', red:'#ef4444' },
+  ocean:   { primary:'#0ea5e9', green:'#22c55e', orange:'#eab308', purple:'#6366f1', cyan:'#06b6d4', red:'#f43f5e' },
+  forest:  { primary:'#16a34a', green:'#65a30d', orange:'#ca8a04', purple:'#7c3aed', cyan:'#0891b2', red:'#dc2626' },
+  sunset:  { primary:'#e11d48', green:'#059669', orange:'#ea580c', purple:'#9333ea', cyan:'#0d9488', red:'#dc2626' },
+  mono:    { primary:'#64748b', green:'#475569', orange:'#94a3b8', purple:'#334155', cyan:'#94a3b8', red:'#475569' },
+};
+
+const PROVIDER_COLORS_DEFAULT = { 'DATS 24':'#f59e0b','Fastned':'#06b6d4','Allego':'#3b82f6','Shell Recharge':'#ef4444','T-Line':'#8b5cf6','PluginCompany':'#10b981','Ionity':'#6366f1','Electra':'#14b8a6','Onbekend':'#64748b' };
+
+function getPalette() { return PALETTES[currentPalette] || PALETTES.default; }
+function providerColor(p) {
+  const pal = getPalette();
+  const map = { 'DATS 24':pal.orange, 'Fastned':pal.cyan, 'Allego':pal.primary, 'Shell Recharge':pal.red, 'T-Line':pal.purple, 'PluginCompany':pal.green, 'Ionity':pal.purple, 'Electra':pal.cyan, 'Onbekend':'#64748b' };
+  return map[p] || '#64748b';
+}
+function providerClass(p) { if(!p) return 'provider-Other'; const k=p.replace(/\s/g,''); if(k.includes('DATS')) return 'provider-DATS24'; if(k.includes('Fastned')) return 'provider-Fastned'; if(k.includes('Allego')) return 'provider-Allego'; if(k.includes('Shell')) return 'provider-ShellRecharge'; return 'provider-Other'; }
+
+// ─── Date helpers ────────────────────────────────────────────────
+const MONTHS_NL = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const WEEKDAYS_SHORT_NL = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+
+// ═════════════════════════════════════════════════════════════════
+// DATA LOADING
+// ═════════════════════════════════════════════════════════════════
+async function loadData() {
+  // Try server API first, fall back to embedded data
+  try {
+    const resp = await fetch('/api/data');
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.length > 0) {
+        RAW_DATA = data.map(r => ({ ...r, timestamp: new Date(r.datetime).getTime(), weekdayIdx: new Date(r.datetime).getDay()===0?6:new Date(r.datetime).getDay()-1 }));
+        return;
+      }
+    }
+  } catch(e) { /* offline mode — use embedded */ }
+
+  // Embedded fallback
+  if (typeof EMBEDDED_DATA !== 'undefined' && EMBEDDED_DATA.length > 0) {
+    RAW_DATA = EMBEDDED_DATA.map(r => ({ ...r, timestamp: new Date(r.datetime).getTime(), weekdayIdx: new Date(r.datetime).getDay()===0?6:new Date(r.datetime).getDay()-1 }));
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// SETTINGS
+// ═════════════════════════════════════════════════════════════════
+function openSettings() {
+  // Load current values
+  const token = localStorage.getItem('abrp_token') || '';
+  document.getElementById('abrpTokenInput').value = token;
+  const theme = localStorage.getItem('theme') || 'dark';
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  currentPalette = localStorage.getItem('palette') || 'default';
+  renderPalettes();
+  // System info
+  fetch('/api/status').then(r => r.json()).then(d => {
+    document.getElementById('systemInfo').innerHTML = `Server: ${d.status}<br>Pi: ${d.pi_model}<br>Records: ${d.total_records}<br>Excel files: ${d.excel_files}`;
+  }).catch(() => {
+    document.getElementById('systemInfo').innerHTML = 'Offline mode (embedded data)';
+  });
+  document.getElementById('settingsModal').classList.add('show');
+}
+
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  // Re-render charts with new theme
+  if (RAW_DATA.length > 0) renderCharts(RAW_DATA, currentPeriod);
+  showToast(`Thema: ${theme === 'dark' ? '🌙 Donker' : '☀️ Licht'}`);
+}
+
+function renderPalettes() {
+  const grid = document.getElementById('paletteGrid');
+  grid.innerHTML = Object.entries(PALETTES).map(([name, pal]) => `
+    <div class="palette-option ${name === currentPalette ? 'active' : ''}" onclick="setPalette('${name}')">
+      <div class="palette-swatches">
+        <span style="background:${pal.primary}"></span><span style="background:${pal.green}"></span><span style="background:${pal.orange}"></span><span style="background:${pal.purple}"></span><span style="background:${pal.cyan}"></span>
+      </div>
+      <span>${name}</span>
+    </div>
+  `).join('');
+}
+
+function setPalette(name) {
+  currentPalette = name;
+  localStorage.setItem('palette', name);
+  renderPalettes();
+  if (RAW_DATA.length > 0) renderCharts(RAW_DATA, currentPeriod);
+  showToast(`Palet: ${name}`);
+}
+
+function saveToken() {
+  const token = document.getElementById('abrpTokenInput').value.trim();
+  if (!token) { showToast('Vul een token in', true); return; }
+  localStorage.setItem('abrp_token', token);
+  document.getElementById('tokenStatus').innerHTML = '✅ Token opgeslagen in browser';
+  showToast('Token opgeslagen');
+}
+
+function deleteToken() {
+  localStorage.removeItem('abrp_token');
+  document.getElementById('abrpTokenInput').value = '';
+  document.getElementById('tokenStatus').innerHTML = '🗑️ Token verwijderd';
+  showToast('Token verwijderd');
+}
+
+async function testToken() {
+  const token = document.getElementById('abrpTokenInput').value.trim();
+  if (!token) { showToast('Vul eerst een token in', true); return; }
+  document.getElementById('tokenStatus').innerHTML = '⏳ Testen...';
+  try {
+    const resp = await fetch('/api/abrp/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: '', password: '', api_key: token })
+    });
+    const data = await resp.json();
+    if (data.error && data.error.includes('session')) {
+      document.getElementById('tokenStatus').innerHTML = '⚠️ Token geldig maar mist "session" feature (premium vereist). Excel upload werkt wel.';
+    } else if (data.error) {
+      document.getElementById('tokenStatus').innerHTML = '❌ ' + data.error.substring(0, 100);
+    } else {
+      document.getElementById('tokenStatus').innerHTML = '✅ Verbinding succesvol!';
+    }
+  } catch(e) {
+    document.getElementById('tokenStatus').innerHTML = '⚠️ Server niet bereikbaar — token lokaal opgeslagen';
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// FILE UPLOAD
+// ═════════════════════════════════════════════════════════════════
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const files = e.target.files;
+  if (!files.length) return;
+
+  // Try server upload first
+  try {
+    const formData = new FormData();
+    for (const file of files) formData.append('files', file);
+    const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+    if (resp.ok) {
+      const result = await resp.json();
+      await loadData();
+      renderDashboard();
+      showToast(result.message);
+      e.target.value = '';
+      return;
+    }
+  } catch(err) { /* fall through to client-side */ }
+
+  // Client-side fallback (offline mode)
+  let newData = [];
+  for (const file of files) {
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+      newData = newData.concat(parseABRPSheet(wb));
+    } catch(err2) { showToast(`Fout: ${err2.message}`, true); }
+  }
+  if (newData.length > 0) {
+    const seen = new Set();
+    RAW_DATA = [...RAW_DATA, ...newData].filter(r => {
+      const k = r.datetime + '|' + r.activity; if (seen.has(k)) return false; seen.add(k); return true;
+    }).sort((a, b) => a.timestamp - b.timestamp);
+    renderDashboard();
+    showToast(`${newData.length} records toegevoegd`);
+  }
+  e.target.value = '';
+});
+
+function parseABRPSheet(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range: 3 });
+  const records = [];
+  const PROVIDERS = ['DATS 24','Dats 24','DATS24','Allego','Fastned','Shell Recharge','Shell','Ionity','IONITY','PluginCompany','Plugin Company','T-Line','Electra','EVBox','Lidl'];
+  function extractProvider(t) { if(!t) return null; const low=t.toLowerCase(); for(const p of PROVIDERS){ if(low.includes(p.toLowerCase())){ if(low.includes('dats')) return 'DATS 24'; if(low.includes('allego')) return 'Allego'; if(low.includes('fastned')) return 'Fastned'; if(low.includes('shell')) return 'Shell Recharge'; if(low.includes('ionity')) return 'Ionity'; if(low.includes('plugin')) return 'PluginCompany'; if(low.includes('t-line')) return 'T-Line'; return p; } } return null; }
+  function extractLoc(t) { if(!t) return null; const parts=t.trim().split('\n',1); if(parts.length>1) return parts[0].trim().replace(/^\((.+)\)$/,'$1'); return null; }
+  for (const row of rows) {
+    if (!row[0]) continue;
+    let startRaw = row[1], startDt;
+    if (startRaw instanceof Date) startDt = startRaw;
+    else if (typeof startRaw === 'string') { const m = startRaw.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/); if(!m) continue; startDt = new Date(+m[3],+m[1]-1,+m[2],+m[4],+m[5]); }
+    else continue;
+    if (isNaN(startDt.getTime())) continue;
+    const distMi = row[4]?parseFloat(row[4]):null;
+    const distKm = distMi?Math.round(distMi*1.609344*10)/10:null;
+    const allLoc = (row[5]||'')+' '+(row[6]||'');
+    records.push({ date:startDt.toISOString().slice(0,10), datetime:startDt.toISOString().slice(0,16), timestamp:startDt.getTime(), weekdayIdx:startDt.getDay()===0?6:startDt.getDay()-1, activity:row[0], duration:row[3]||'', distance_km:distKm, distance_mi:distMi, start_soc:row[7]!=null?Math.round(parseFloat(row[7])*100):null, end_soc:row[8]!=null?Math.round(parseFloat(row[8])*100):null, energy_kwh:row[9]?parseFloat(row[9]):null, start_odo_mi:row[10]?parseFloat(row[10]):null, end_odo_mi:row[11]?parseFloat(row[11]):null, vehicle:row[12]||'EV', charge_provider:row[0]==='Laad op'?extractProvider(allLoc):null, charge_location:row[0]==='Laad op'?(extractLoc(row[5])||extractLoc(row[6])||extractProvider(allLoc)||'Onbekend'):null });
+  }
+  return records;
+}
+
+// ═════════════════════════════════════════════════════════════════
+// CHARTS & RENDERING
+// ═════════════════════════════════════════════════════════════════
+function getPeriodKey(dt,period){const d=new Date(dt);if(period==='day')return d.toISOString().slice(0,10);else if(period==='week'){const j=new Date(d.getFullYear(),0,1);const w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);return d.getFullYear()+'-W'+String(w).padStart(2,'0');}else if(period==='month')return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');else if(period==='year')return ''+d.getFullYear();return 'Alles';}
+function fmtPeriod(key,period){if(period==='month'){const[y,m]=key.split('-');return MONTHS_NL[+m-1]+' '+y;}if(period==='day'){const d=new Date(key+'T00:00:00');return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}return key;}
+function aggregateData(data,period){const g={};for(const r of data){const k=getPeriodKey(r.datetime,period);if(!g[k])g[k]={period:k,distance_km:0,energy_kwh:0,drive_count:0,charge_count:0,soc_start_sum:0,soc_count:0,max_odo:0};const x=g[k];if(r.distance_km)x.distance_km+=r.distance_km;if(r.energy_kwh)x.energy_kwh+=r.energy_kwh;if(r.activity==='Rijd')x.drive_count++;if(r.activity==='Laad op')x.charge_count++;if(r.start_soc!=null){x.soc_start_sum+=r.start_soc;x.soc_count++;}if(r.end_odo_mi!=null)x.max_odo=Math.max(x.max_odo,r.end_odo_mi*1.609344);}return Object.values(g).sort((a,b)=>a.period.localeCompare(b.period)).map(x=>{x.distance_km=Math.round(x.distance_km);x.energy_kwh=Math.round(x.energy_kwh*10)/10;x.avg_soc=x.soc_count>0?Math.round(x.soc_start_sum/x.soc_count):0;x.max_odo=Math.round(x.max_odo);return x;});}
+function calcKPIs(data){const dr=data.filter(r=>r.activity==='Rijd');const ch=data.filter(r=>r.activity==='Laad op');const tKm=dr.reduce((s,r)=>s+(r.distance_km||0),0);const tKwh=ch.reduce((s,r)=>s+(r.energy_kwh||0),0);const uDays=new Set(data.map(r=>r.date)).size;const uDriveDays=new Set(dr.map(r=>r.date));const avgDay=uDriveDays.size>0?Math.round(tKm/uDriveDays.size):0;const avgCh=ch.filter(r=>r.energy_kwh).length>0?Math.round(tKwh/ch.filter(r=>r.energy_kwh).length*10)/10:0;const eff=tKm>0?Math.round(tKwh/tKm*1000)/10:0;const longest=dr.reduce((m,r)=>Math.max(m,r.distance_km||0),0);const dates=data.map(r=>r.timestamp).sort();const dRange=dates.length>0?new Date(dates[0]).toLocaleDateString('nl-BE')+' – '+new Date(dates[dates.length-1]).toLocaleDateString('nl-BE'):'';const provCount={};ch.forEach(r=>{const p=r.charge_provider||'Onbekend';provCount[p]=(provCount[p]||0)+1;});const topProv=Object.entries(provCount).sort((a,b)=>b[1]-a[1])[0];return{totalKm:Math.round(tKm),totalKwh:Math.round(tKwh*10)/10,driveCount:dr.length,chargeCount:ch.length,uniqueDays:uDays,avgDay,avgCh,eff,longest,dRange,topProv:topProv?topProv[0]:'-',topProvCount:topProv?topProv[1]:0};}
+function renderKPIs(k){const g=document.getElementById('kpiGrid');const cards=[{icon:'🛣️',label:'Totaal gereden',val:k.totalKm.toLocaleString('nl-BE'),unit:'km',sub:k.driveCount+' ritten'},{icon:'⚡',label:'Totaal bijgeladen',val:k.totalKwh.toLocaleString('nl-BE'),unit:'kWh',sub:k.chargeCount+' sessies'},{icon:'📊',label:'Verbruik',val:k.eff,unit:'kWh/100km',sub:'gemiddeld'},{icon:'📅',label:'Actieve dagen',val:k.uniqueDays,unit:'dagen',sub:'gem. '+k.avgDay+' km/dag'},{icon:'🔌',label:'Top provider',val:k.topProv,unit:'',sub:k.topProvCount+'x geladen'},{icon:'🏆',label:'Langste rit',val:k.longest,unit:'km',sub:'enkele rit'}];g.innerHTML=cards.map(c=>'<div class="kpi-card"><div class="kpi-icon">'+c.icon+'</div><div class="kpi-label">'+c.label+'</div><div class="kpi-value">'+c.val+(c.unit?' <span class="kpi-unit">'+c.unit+'</span>':'')+'</div><div class="kpi-sub">'+c.sub+'</div></div>').join('');document.getElementById('dateRangeInfo').textContent=k.dRange;}
+
+function chartOpts(){
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const textColor = isDark ? '#e2e8f0' : '#1e293b';
+  const mutedColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? '#1a2538' : '#e2e8f0';
+  const tooltipBg = isDark ? '#1e293b' : '#ffffff';
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:textColor,font:{size:11}}},tooltip:{backgroundColor:tooltipBg,borderColor:isDark?'#334155':'#e2e8f0',borderWidth:1,titleColor:textColor,bodyColor:textColor}},
+    scales:{x:{ticks:{color:mutedColor,font:{size:11}},grid:{color:gridColor}},y:{ticks:{color:mutedColor,font:{size:11}},grid:{color:gridColor},beginAtZero:true}}
+  };
+}
+
+function renderCharts(data,period){
+  Object.values(charts).forEach(c=>c&&c.destroy());charts={};
+  const pal=getPalette();
+  const agg=aggregateData(data,period);const labels=agg.map(a=>fmtPeriod(a.period,period));
+  const barBg = (color) => color + (document.documentElement.getAttribute('data-theme') !== 'light' ? '26' : '33'); // hex alpha
+  charts.distance=new Chart(document.getElementById('distanceChart'),{type:'bar',data:{labels,datasets:[{label:'Afstand (km)',data:agg.map(a=>a.distance_km),backgroundColor:barBg(pal.primary),borderColor:pal.primary,borderWidth:2,borderRadius:6}]},options:chartOpts()});
+  charts.energy=new Chart(document.getElementById('energyChart'),{type:'bar',data:{labels,datasets:[{label:'Energie (kWh)',data:agg.map(a=>a.energy_kwh),backgroundColor:barBg(pal.green),borderColor:pal.green,borderWidth:2,borderRadius:6}]},options:chartOpts()});
+  charts.soc=new Chart(document.getElementById('socChart'),{type:'line',data:{labels,datasets:[{label:'Gem. start SoC (%)',data:agg.map(a=>a.avg_soc),borderColor:pal.orange,backgroundColor:barBg(pal.orange),borderWidth:2,fill:true,tension:0.3,pointRadius:4}]},options:chartOpts()});
+  charts.odo=new Chart(document.getElementById('odoChart'),{type:'line',data:{labels,datasets:[{label:'Kilometerteller (km)',data:agg.map(a=>Math.round(a.max_odo)),borderColor:pal.purple,backgroundColor:barBg(pal.purple),borderWidth:2,fill:true,tension:0.2,pointRadius:4}]},options:chartOpts()});
+  const wd=[0,0,0,0,0,0,0];data.filter(r=>r.activity==='Rijd').forEach(r=>{if(r.weekdayIdx>=0&&r.weekdayIdx<7)wd[r.weekdayIdx]++;});
+  charts.weekday=new Chart(document.getElementById('weekdayChart'),{type:'bar',data:{labels:WEEKDAYS_SHORT_NL,datasets:[{label:'Aantal ritten',data:wd,backgroundColor:barBg(pal.primary),borderColor:pal.primary,borderWidth:2,borderRadius:6}]},options:chartOpts()});
+  const bk=[{l:'0–10',mn:0,mx:10,c:0},{l:'10–50',mn:10,mx:50,c:0},{l:'50–100',mn:50,mx:100,c:0},{l:'100–200',mn:100,mx:200,c:0},{l:'200+',mn:200,mx:Infinity,c:0}];data.filter(r=>r.activity==='Rijd'&&r.distance_km).forEach(r=>{for(const b of bk){if(r.distance_km>=b.mn&&r.distance_km<b.mx){b.c++;break;}}});
+  charts.distribution=new Chart(document.getElementById('distributionChart'),{type:'doughnut',data:{labels:bk.map(b=>b.l+' km ('+b.c+')'),datasets:[{data:bk.map(b=>b.c),backgroundColor:[pal.primary,pal.green,pal.orange,pal.purple,pal.red],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartOpts().plugins.legend.labels.color,font:{size:11},padding:12}}}}});
+  renderProviderCharts(data);
+}
+
+function renderProviderCharts(data){
+  const charges=data.filter(r=>r.activity==='Laad op');const provData={};charges.forEach(r=>{const p=r.charge_provider||'Onbekend';if(!provData[p])provData[p]={count:0,kwh:0};provData[p].count++;provData[p].kwh+=r.energy_kwh||0;});const sorted=Object.entries(provData).sort((a,b)=>b[1].count-a[1].count);const labels=sorted.map(s=>s[0]);const counts=sorted.map(s=>s[1].count);const kwhs=sorted.map(s=>Math.round(s[1].kwh*10)/10);const colors=labels.map(l=>providerColor(l));
+  const opts2=chartOpts();
+  if(charts.provider)charts.provider.destroy();charts.provider=new Chart(document.getElementById('providerChart'),{type:'doughnut',data:{labels:labels.map((l,i)=>l+' ('+counts[i]+'x)'),datasets:[{data:counts,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:opts2.plugins.legend.labels.color,font:{size:11},padding:10}}}}});
+  if(charts.providerEnergy)charts.providerEnergy.destroy();charts.providerEnergy=new Chart(document.getElementById('providerEnergyChart'),{type:'bar',data:{labels,datasets:[{label:'Energie (kWh)',data:kwhs,backgroundColor:colors.map(c=>c+'33'),borderColor:colors,borderWidth:2,borderRadius:6}]},options:opts2});
+}
+
+function renderChargeLocations(data){
+  const charges=data.filter(r=>r.activity==='Laad op');const locs={};charges.forEach(r=>{const p=r.charge_provider||'Onbekend';const l=r.charge_location||'Onbekend';const key=p+'|'+l;if(!locs[key])locs[key]={provider:p,location:l,count:0,kwh:0,lastDate:''};locs[key].count++;locs[key].kwh+=r.energy_kwh||0;if(r.date>locs[key].lastDate)locs[key].lastDate=r.date;});const sorted=Object.values(locs).sort((a,b)=>b.count-a.count);
+  document.getElementById('chargeLocationsBody').innerHTML=sorted.map(l=>'<tr><td><span class="provider-badge '+providerClass(l.provider)+'">'+l.provider+'</span></td><td>'+l.location+'</td><td>'+l.count+'</td><td>'+Math.round(l.kwh*10)/10+'</td><td>'+l.lastDate+'</td></tr>').join('');
+}
+
+function renderTable(data){
+  document.getElementById('dataTableBody').innerHTML=data.slice().reverse().map(r=>'<'+'tr><td>'+r.date+'</td><td>'+r.datetime.slice(11,16)+'</td><td><span class="badge '+(r.activity==='Rijd'?'badge-drive':'badge-charge')+'">'+(r.activity==='Rijd'?'🚗 Rijden':'⚡ Laden')+'</span></td><td>'+r.duration+'</td><td>'+(r.distance_km!=null?r.distance_km:'—')+'</td><td>'+(r.start_soc!=null?r.start_soc+'%':'—')+'</td><td>'+(r.energy_kwh!=null?r.energy_kwh+' kWh':'—')+'</td><td>'+(r.charge_provider?'<span class="provider-badge '+providerClass(r.charge_provider)+'">'+r.charge_provider+'</span>':'—')+'</td><td style="font-size:.78rem;color:var(--text-muted)">'+(r.charge_location||'—')+'</td></tr>').join('');
+}
+
+function renderDashboard(){
+  if(RAW_DATA.length===0){showToast('Geen data geladen.',true);return;}
+  const k=calcKPIs(RAW_DATA);renderKPIs(k);renderCharts(RAW_DATA,currentPeriod);renderChargeLocations(RAW_DATA);renderTable(RAW_DATA);
+  // Update vehicle info
+  const v=RAW_DATA[0]?.vehicle||'EV';document.getElementById('vehicleInfo').textContent=v+' — kilometerstatistieken, laadgedrag & providers';
+}
+
+// ─── Filters ─────────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentPeriod=btn.dataset.period;if(RAW_DATA.length>0)renderCharts(RAW_DATA,currentPeriod);}));
+
+// ─── PDF Export ──────────────────────────────────────────────────
+async function exportPDF(){
+  showToast('PDF genereren...');
+  const{jsPDF}=window.jspdf;const el=document.getElementById('dashboard-content');
+  try{
+    const canvas=await html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,useCORS:true,logging:false});
+    const imgData=canvas.toDataURL('image/png');const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth();const ph=pdf.internal.pageSize.getHeight();
+    const iw=pw;const ih=(canvas.height*iw)/canvas.width;let hl=ih;let pos=0;
+    pdf.addImage(imgData,'PNG',0,pos,iw,ih);hl-=ph;
+    while(hl>0){pos=hl-ih;pdf.addPage();pdf.addImage(imgData,'PNG',0,pos,iw,ih);hl-=ph;}
+    pdf.save('ABRP-dashboard-'+new Date().toISOString().slice(0,10)+'.pdf');showToast('PDF opgeslagen!');
+  }catch(err){showToast('PDF fout: '+err.message,true);}
+}
+
+// ─── Toast ───────────────────────────────────────────────────────
+function showToast(msg,isError){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(isError?' error':'');setTimeout(()=>t.classList.remove('show'),3500);}
+
+// ═════════════════════════════════════════════════════════════════
+// INIT
+// ═════════════════════════════════════════════════════════════════
+async function init(){
+  // Restore settings
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  currentPalette = localStorage.getItem('palette') || 'default';
+
+  // Load data
+  await loadData();
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>

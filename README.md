@@ -1,185 +1,154 @@
-# 🚗 ABRP EV Dashboard
+# ABRP EV Dashboard — Raspberry Pi Edition
 
-> A beautiful, self-contained dashboard for visualizing **ABRP** (A Better Routeplanner) Excel exports — track distance driven, charging sessions, battery SoC, and charger provider breakdowns.
+> 🚗 Self-hosted EV dashboard for Raspberry Pi 4/5. Serves a beautiful analytics dashboard for ABRP (A Better Routeplanner) Excel exports, with optional live ABRP API integration.
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Type: Single File HTML](https://img.shields.io/badge/Type-Single%20File%20HTML-orange.svg)
-![No Server Required](https://img.shields.io/badge/Server-Not%20Required-green.svg)
-![Charts: Chart.js](https://img.shields.io/badge/Charts-Chart.js-purple.svg)
-![PDF Export](https://img.shields.io/badge/Export-PDF-red.svg)
-![Responsive](https://img.shields.io/badge/Responsive-Mobile%20First-brightgreen.svg)
-
-## 🔗 Live Demo
-
-**[Open the live demo →](https://jphermans.github.io/abrp-ev-dashboard/)**
+![Platform: Raspberry Pi](https://img.shields.io/badge/Platform-Raspberry%20Pi%204%2F5-c51a4a.svg)
+![Server: Flask](https://img.shields.io/badge/Server-Flask-000000.svg)
+![Autostart: systemd](https://img.shields.io/badge/Autostart-systemd-blue.svg)
+![Rate Limited](https://img.shields.io/badge/ABRP%20API-Rate%20Limited-orange.svg)
 
 ---
 
-## ✨ Features
+## 🚀 Quick Install (2 minutes)
 
-### 📊 Interactive Visualizations
-- **6 KPI Cards** — total distance, energy charged, consumption (kWh/100km), active days, top charging provider, longest trip
-- **Distance Chart** — bar chart per day / week / month / year
-- **Energy Charged** — bar chart of kWh per period
-- **Battery SoC** — line chart of average state-of-charge over time
-- **Odometer Tracking** — cumulative kilometer stand
-- **Trip Distribution** — doughnut chart of distance buckets (0–10km, 10–50km, etc.)
-- **Weekday Activity** — rides per day of the week
-
-### ⚡ Charging Analytics
-- **Provider Breakdown** — doughnut chart of charging sessions per provider (DATS 24, Fastned, Allego, Shell Recharge, Ionity, etc.)
-- **Energy per Provider** — bar chart of kWh charged per provider
-- **Charge Locations Table** — all charging locations with session count, energy, and last visit date
-
-### 🔀 Flexible Time Filters
-Switch between views with one click:
-
-| Filter | Granularity |
-|--------|------------|
-| 📅 **Day** | Individual driving days |
-| 📆 **Week** | ISO week numbers |
-| 📊 **Month** | Monthly aggregation (default) |
-| 🗓️ **Year** | Yearly totals |
-| 🌐 **All** | Everything combined |
-
-### 🎨 Provider Color Coding
-Each charging provider gets a consistent color throughout the dashboard:
-
-| Provider | Color | Hex |
-|----------|-------|-----|
-| 🟠 DATS 24 | Orange | `#f59e0b` |
-| 🔵 Fastned | Cyan | `#06b6d4` |
-| 🔷 Allego | Blue | `#3b82f6` |
-| 🔴 Shell Recharge | Red | `#ef4444` |
-| 🟣 T-Line / Other | Purple | `#8b5cf6` |
-| 🟢 PluginCompany | Green | `#10b981` |
-
-### 📱 Fully Responsive
-- **Mobile-first design** — works great on phones, tablets, and desktops
-- **KPI cards** reflow from 6 columns (desktop) → 2 columns (mobile)
-- **Charts** stack vertically on small screens
-- **Tables** stay fully accessible with touch-scrolling — no data is ever hidden
-- **Touch-friendly** buttons (44px min) and filters
-- **No data is lost** at any screen size — everything scales or scrolls
-
-### 📂 Upload Your Own Data
-Click **"Upload Excel"** to load your own ABRP exports. The dashboard automatically:
-- Parses `.xlsx` files with Dutch or English ABRP column headers
-- Converts miles → kilometers (× 1.609344)
-- Detects charger providers from location names and GPS coordinates
-- Merges and deduplicates records across multiple files
-- Updates all charts and KPIs instantly
-
-### 📄 PDF Export
-Click **"Export PDF"** to save the entire dashboard (KPIs + charts + tables) as a multi-page PDF report.
-
----
-
-## 🖼️ Screenshots
-
-### Dashboard Overview — KPIs & Provider Section
-![Dashboard Overview](screenshots/dashboard-overview.png)
-
-### Charts Section — Distance, Energy, SoC, Odometer
-![Dashboard Charts](screenshots/dashboard-charts.png)
-
-### Day Filter View — Granular Daily Data
-![Day Filter](screenshots/dashboard-day-filter.png)
-
-### Mobile View — Top (KPIs & Provider Charts)
-![Mobile Top](screenshots/mobile-top.png)
-
-### Mobile View — Charts Section
-![Mobile Charts](screenshots/mobile-charts.png)
-
-### Full Dashboard
-![Full Dashboard](screenshots/dashboard-full.png)
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Just open the file (easiest)
 ```bash
-# Download or clone this repo, then:
-open index.html        # macOS
-xdg-open index.html    # Linux
-start index.html       # Windows
+# Clone or copy this folder to your Pi
+git clone https://github.com/jphermans/abrp-ev-dashboard.git
+cd abrp-ev-dashboard/pi
+
+# Run the installer
+chmod +x scripts/install.sh
+./scripts/install.sh
 ```
 
-That's it. The dashboard loads with demo data and all charts render instantly. No server, no dependencies, no build step.
+That's it. The installer will:
+1. ✅ Copy files to `~/abrp-dashboard/`
+2. ✅ Create a Python virtual environment
+3. ✅ Install Flask + openpyxl
+4. ✅ Register a systemd service (autostart on boot)
+5. ✅ Start the dashboard
 
-### Option 2: Local server (optional)
+**Open** `http://<pi-ip>:8000` in your browser.
+
+---
+
+## 📋 Requirements
+
+| Item | Minimum | Recommended |
+|------|---------|-------------|
+| Raspberry Pi | Pi 4 (2GB) | Pi 5 (4GB+) |
+| OS | Raspberry Pi OS 64-bit | Bookworm/Debian 12 |
+| SD Card | 8GB Class 10 | 32GB A2-rated |
+| Python | 3.9+ | 3.11+ |
+| Network | WiFi | Ethernet |
+
+---
+
+## 🎛️ Features
+
+### Dashboard
+- 📊 **8 interactive charts** — distance, energy, SoC, odometer, weekday, distribution, provider breakdown
+- 📋 **Full data tables** — all activities, charge locations with providers
+- 🔀 **Time filters** — Day / Week / Month / Year / All
+- 📂 **Excel upload** — drag your ABRP exports, auto-parsed and merged
+- 📄 **PDF export** — full dashboard as multi-page PDF
+
+### Settings Panel (⚙️ button)
+- 🌙 **Light / Dark mode** — instant toggle, saved in browser
+- 🌈 **6 color palettes** — default, warm, ocean, forest, sunset, mono
+- 🔑 **ABRP API token** — securely stored in browser localStorage
+- 🔗 **Test connection** — verify your API key works
+- ℹ️ **System info** — Pi model, record count, server status
+
+### Server
+- 🐍 **Flask backend** — lightweight, perfect for Pi
+- ⚡ **Rate limiting** — max 2 ABRP API calls/second (as required)
+- 💾 **Auto-caching** — parsed data cached as JSON (5 min TTL)
+- 🔄 **Auto-import** — Excel files in `data/` auto-imported on startup
+- 🏠 **Autostart on boot** — systemd service, auto-restart on crash
+
+---
+
+## 🔧 Manual Operations
+
 ```bash
-python3 -m http.server 8000
-# Open http://localhost:8000
+# Start / stop / restart
+sudo systemctl start abrp-dashboard
+sudo systemctl stop abrp-dashboard
+sudo systemctl restart abrp-dashboard
+
+# Check status
+sudo systemctl status abrp-dashboard
+
+# View live logs
+sudo journalctl -u abrp-dashboard -f
+
+# Change port
+sudo systemctl edit abrp-dashboard
+# Add: [Service]\nEnvironment=PORT=8080
+sudo systemctl restart abrp-dashboard
 ```
 
 ---
 
-## 📥 Using Your Own ABRP Data
+## 📂 Adding Your Data
 
-1. Open the [ABRP web app](https://abetterrouteplanner.com)
-2. Go to **Activities** → select a date range → **Export to Excel**
-3. Open this dashboard and click **"Upload Excel"**
-4. Select one or more `.xlsx` files — they'll be merged automatically
+### Option 1: Upload button
+Click 📂 Upload in the dashboard → select your ABRP `.xlsx` files.
 
-### Supported Column Format
-The parser expects the standard ABRP export layout (row 3 = headers):
+### Option 2: Copy to data folder
+```bash
+cp your-abrp-export.xlsx ~/abrp-dashboard/data/
+sudo systemctl restart abrp-dashboard
+```
 
-| Column | Description |
-|--------|-------------|
-| Activiteit / Activity | "Rijd" (Drive) or "Laad op" (Charge) |
-| Starttijd | Start timestamp (M/D/Y H:MM) |
-| Afstand [mi] | Distance in miles (auto-converted to km) |
-| Energie bijgeladen [kWh] | Energy charged |
-| Start/Eind SoC | Battery state of charge (0–1) |
-| Kilometerteller [mi] | Odometer in miles (auto-converted to km) |
+### Option 3: ABRP API (requires premium API key)
+1. Get an API key at [iternio.com/api](https://www.iternio.com/api)
+2. Open the dashboard → click ⚙️ Settings → paste your token
+3. Click "Test verbinding"
 
----
-
-## 🛠️ Tech Stack
-
-| Tool | Purpose |
-|------|---------|
-| [Chart.js 4](https://chartjs.org) | Interactive charts (bar, line, doughnut) |
-| [SheetJS (xlsx)](https://sheetjs.com) | In-browser Excel parsing |
-| [html2canvas](https://html2canvas.hertzen.com) | DOM → canvas for PDF export |
-| [jsPDF](https://parall.ax/products/jspdf) | PDF generation |
-| **Vanilla HTML/CSS/JS** | No frameworks, no build tools |
+> ⚠️ **Note:** Fetching activities (trips/charges) via the API requires a key with the `session` feature, which needs a premium plan. The free API key works for planning endpoints only. Excel upload works with any key tier.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-abrp-dashboard/
-├── index.html              # The entire dashboard (self-contained)
-├── screenshots/            # README screenshots
-│   ├── dashboard-overview.png
-│   ├── dashboard-charts.png
-│   ├── dashboard-day-filter.png
-│   ├── dashboard-full.png
-│   ├── dashboard-table.png
-│   ├── mobile-top.png
-│   └── mobile-charts.png
-├── sample-data/            # Example ABRP export format
-│   └── sample-export.xlsx  # (add your own here)
-├── .gitignore
-└── README.md
+pi/
+├── server.py                    # Flask server (ABRP proxy, rate limiter, data API)
+├── templates/
+│   └── dashboard.html           # Full dashboard (responsive, settings panel)
+├── scripts/
+│   ├── install.sh               # One-command installer
+│   └── abrp-dashboard.service.template  # systemd template
+├── data/                        # Excel files + cached JSON
+└── README.md                    # This file
 ```
 
 ---
 
-## 🔒 Privacy
+## 🔒 Privacy & Security
 
-- **100% client-side** — no data ever leaves your browser
-- **No tracking, no analytics, no cookies**
-- The demo data embedded in `index.html` is randomly generated and contains no real-world information
-- Your uploaded Excel files are processed entirely in-browser and never sent anywhere
+- **100% local** — all data stays on your Pi
+- **No external calls** unless you use the ABRP API token feature
+- **API token** stored in browser localStorage (never sent to third parties)
+- **Rate limited** — the server enforces max 2 requests/second to ABRP
+- **No HTTPS** by default — for local network use. Add a reverse proxy (nginx/caddy) for HTTPS
+
+---
+
+## 🛠️ Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Port 8000 in use | `sudo systemctl edit abrp-dashboard` → set `PORT=8080` |
+| Blank dashboard | Check: `sudo journalctl -u abrp-dashboard -f` |
+| No data | Put `.xlsx` files in `~/abrp-dashboard/data/` and restart |
+| ABRP API 403 | Your API key needs the `session` feature (premium plan) |
+| SD card full | Check `~/abrp-dashboard/data/` for old Excel files |
 
 ---
 
 ## 📄 License
 
-MIT License — feel free to use, modify, and distribute.
+MIT

@@ -13,9 +13,17 @@ Thumbs.db
 exports/
 *.xlsx
 !sample-data/*.xlsx
+!pi/data/.gitkeep
 
 # Python
 __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Pi runtime
+pi/data/*.json
+pi/data/*.xlsx
+pi/venv/
+pi/*.log
+pi/*.pid

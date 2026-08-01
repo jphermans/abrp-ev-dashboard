@@ -34,7 +34,7 @@ class VolkswagenConnector(BaseConnector):
     @property
     def is_available(self) -> bool:
         try:
-            import weconnect  # noqa: F401
+            from weconnect.weconnect import WeConnect  # noqa: F401
             return True
         except ImportError:
             return False
@@ -48,7 +48,7 @@ class VolkswagenConnector(BaseConnector):
             return {"status": "error", "message": f"Library niet geïnstalleerd: {self.install_hint}"}
 
         try:
-            from weconnect import WeConnect
+            from weconnect.weconnect import WeConnect
             from weconnect.domain import Domain
 
             wc = WeConnect(
@@ -76,7 +76,7 @@ class VolkswagenConnector(BaseConnector):
         if not self.is_available:
             raise RuntimeError(f"weconnect library not installed: {self.install_hint}")
 
-        from weconnect import WeConnect
+        from weconnect.weconnect import WeConnect
         from weconnect.domain import Domain
 
         token_file = self.credentials.get("_token_file")

@@ -77,11 +77,14 @@ The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, 
 
 - **8 interactive charts** — distance, energy, battery SoC, odometer, weekday distribution, distance buckets, provider breakdown
 - **6 KPI cards** — total km, total kWh, consumption (kWh/100km), active days, top provider, longest trip
+- **Vehicle info bar** — shows vehicle name, odometer, battery SoC, total km, trip/charge counts. Uses live connector data or falls back to Excel data automatically
 - **Time filters** — Day / Week / Month / Year / All — all charts update instantly
+- **Date range picker** — select a custom from/to date range to filter all data. Works in combination with time filters
 - **Full data tables** — every trip and charging session with provider detection
 - **Charge location analytics** — per-provider session counts, total kWh, last visit
 - **PDF export** — save the entire dashboard as a multi-page report
 - **Fully responsive** — works on phones, tablets, and desktops (all data accessible at every screen size)
+- **Centered button text** — all buttons have centered labels on every screen size
 
 ### 🚗 Multi-Brand Vehicle Connectors (Plugin System)
 
@@ -213,6 +216,7 @@ templates/
 | `GET /api/connector/<brand>/status` | Check if connector is configured |
 | `POST /api/connector/<brand>/test` | Test connector connection |
 | `POST /api/connector/<brand>/sync` | Fetch trips + charging from manufacturer |
+| `GET /api/connector/<brand>/vehicle-info` | Fetch vehicle details (model, odometer, battery) |
 | `GET /api/locales` | List available languages |
 | `GET /api/locales/<code>` | Get a language file |
 | `GET /api/locales/template` | Download translation template |
@@ -268,7 +272,7 @@ Login → click 📂 Upload → select `.xlsx` files. Auto-parsed, miles→km co
 ### Manufacturer sync (VW)
 Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + password → click 🔄 Sync.
 
-> **VW Note:** As of May 2026, VW changed their auth flow. The connector is patched to use the hybrid OIDC flow. If login fails, check the server logs — VW may require accepting updated terms in the VW app first.
+> **VW Note:** As of May 2026, VW changed their auth flow (BFF endpoints deprecated). The connector detects this and shows a clear message suggesting Excel upload instead. The `weconnect` and `carconnectivity` libraries are being updated by their maintainers. Excel upload works independently.
 
 ### ABRP API
 Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requires a premium API key with the `session` feature.
@@ -281,7 +285,7 @@ Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requir
 |---------|----------|
 | Can't access dashboard | Check firewall / port forwarding |
 | Port 8000 in use | Set `PORT=8080` in systemd or docker-compose |
-| VW login fails | Accept WeConnect terms in the VW app, check server logs |
+| VW login fails | VW changed auth flow (May 2026). Use Excel upload until library is updated |
 | ABRP API 403 | Free-tier keys lack the `session` feature — use Excel upload |
 | Blank dashboard | Upload data or run a manufacturer sync |
 | No data after sync | Vehicle may not expose trip history via WeConnect |
@@ -295,10 +299,11 @@ Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requir
 - **100% local** — all data stays on your Pi/server
 - **Multi-user isolation** — each user's data in separate directories
 - **PBKDF2 password hashing** (100,000 iterations SHA-256 + salt) — GPU-resistant
-- **Random admin password** on first boot (printed to console) — not `admin/admin`
+- **Default admin**: `admin` / `admin123` — forced to change on first login
 - **Forced password change** on first login — admin must set a new password before accessing the dashboard
 - **Password change** available in Settings for all users (current + new + confirm)
-- **Session cookie**: `SameSite=Strict`, `HttpOnly`, persisted secret key (survives restarts)
+- **Auto-logout on browser close** — session cookies are non-persistent; closing the browser logs you out
+- **Session cookie**: `SameSite=Strict`, `HttpOnly`, persisted secret key (survives server restarts)
 - **Path traversal protection**: `secure_filename` on uploads, regex-validated locale codes
 - **All API endpoints require authentication** (including locale management and ABRP proxy)
 - **Upload size limit**: 50 MB max

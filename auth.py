@@ -22,11 +22,21 @@ _USERNAME_RE = re.compile(r'^[a-z0-9._-]{3,32}$')
 
 
 def init_db():
-    """Create the users table if it doesn't exist."""
+    """Create the users table if it doesn't exist. Thread/process safe with retry."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=5000")
+    # Retry loop: handles concurrent init from multiple gunicorn workers
+    for attempt in range(5):
+        try:
+            conn = sqlite3.connect(str(DB_PATH), timeout=10)
+            conn.execute("PRAGMA busy_timeout=10000")
+            conn.execute("PRAGMA journal_mode=WAL")
+            break
+        except sqlite3.OperationalError as e:
+            if "locked" in str(e) and attempt < 4:
+                import time as _time
+                _time.sleep(0.5 * (attempt + 1))
+                continue
+            raise
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,8 +74,8 @@ def init_db():
         _create_user(conn, "admin", "admin@local", admin_pw, "Administrator", is_admin=1)
         conn.execute("UPDATE users SET must_change_password = 1 WHERE username = 'admin'")
         conn.commit()
-        print(f"   ⚠️  Default admin created — password: {admin_pw}")
-        print(f"   ⚠️  You will be forced to change this password on first login!")
+        print(f"   Default admin created — password: {admin_pw}")
+        print(f"   You will be forced to change this password on first login!")
 
     conn.close()
 
@@ -95,10 +105,10 @@ def _create_user(conn, username, email, password, display_name="", is_admin=0):
 def get_db():
     """Get a DB connection for the current request."""
     if 'db' not in g:
-        g.db = sqlite3.connect(str(DB_PATH))
+        g.db = sqlite3.connect(str(DB_PATH), timeout=10)
         g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA busy_timeout=10000")
         g.db.execute("PRAGMA journal_mode=WAL")
-        g.db.execute("PRAGMA busy_timeout=5000")
     return g.db
 
 

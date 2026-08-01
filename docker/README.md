@@ -13,7 +13,7 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/jphermans/abrp-ev-dashboard.git
+git clone https://github.com/YOUR_USERNAME/abrp-ev-dashboard.git
 cd abrp-ev-dashboard/docker
 
 # (Optional) Copy your ABRP Excel exports

@@ -13,7 +13,7 @@
 
 ```bash
 # Clone or copy this folder to your Pi
-git clone https://github.com/jphermans/abrp-ev-dashboard.git
+git clone https://github.com/YOUR_USERNAME/abrp-ev-dashboard.git
 cd abrp-ev-dashboard/pi
 
 # Run the installer

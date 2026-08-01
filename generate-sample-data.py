@@ -73,7 +73,7 @@ def generate():
                 (dt + timedelta(minutes=int(dist_km))).strftime("%m/%d/%Y %H:%M"),
                 f"{dist_km // 60} u {int((dist_km % 60) / 60 * 60)} min" if dist_km > 60 else f"{int(dist_km)} min",
                 dist_mi,
-                f"50.94, 4.05\n(Start Location)",
+                f"48.13, 11.58\n(Start Location)",
                 f"51.40, 5.40\n(End Location)",
                 soc_start / 100,
                 soc_end / 100,

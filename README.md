@@ -7,6 +7,11 @@
 ![No Server Required](https://img.shields.io/badge/Server-Not%20Required-green.svg)
 ![Charts: Chart.js](https://img.shields.io/badge/Charts-Chart.js-purple.svg)
 ![PDF Export](https://img.shields.io/badge/Export-PDF-red.svg)
+![Responsive](https://img.shields.io/badge/Responsive-Mobile%20First-brightgreen.svg)
+
+## 🔗 Live Demo
+
+**[Open the live demo →](https://jphermans.github.io/abrp-ev-dashboard/)**
 
 ---
 

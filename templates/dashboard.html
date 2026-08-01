@@ -885,11 +885,11 @@ function renderProviderCharts(data){
 
 function renderChargeLocations(data){
   const charges=data.filter(r=>r.activity==='Laad op');const locs={};charges.forEach(r=>{const p=r.charge_provider||'Onbekend';const l=r.charge_location||'Onbekend';const key=p+'|'+l;if(!locs[key])locs[key]={provider:p,location:l,count:0,kwh:0,lastDate:''};locs[key].count++;locs[key].kwh+=r.energy_kwh||0;if(r.date>locs[key].lastDate)locs[key].lastDate=r.date;});const sorted=Object.values(locs).sort((a,b)=>b.count-a.count);
-  document.getElementById('chargeLocationsBody').innerHTML=sorted.map(l=>'<tr><td><span class="provider-badge '+providerClass(l.provider)+'">'+l.provider+'</span></td><td>'+l.location+'</td><td>'+l.count+'</td><td>'+Math.round(l.kwh*10)/10+'</td><td>'+l.lastDate+'</td></tr>').join('');
+  document.getElementById('chargeLocationsBody').innerHTML=sorted.map(l=>'<tr><td><span class="provider-badge '+providerClass(l.provider)+'">'+esc(l.provider)+'</span></td><td>'+esc(l.location)+'</td><td>'+esc(l.count)+'</td><td>'+Math.round(l.kwh*10)/10+'</td><td>'+esc(l.lastDate)+'</td></tr>').join('');
 }
 
 function renderTable(data){
-  document.getElementById('dataTableBody').innerHTML=data.slice().reverse().map(r=>'<'+'tr><td>'+r.date+'</td><td>'+r.datetime.slice(11,16)+'</td><td><span class="badge '+(r.activity==='Rijd'?'badge-drive':'badge-charge')+'">'+(r.activity==='Rijd'?'🚗 Rijden':'⚡ Laden')+'</span></td><td>'+r.duration+'</td><td>'+(r.distance_km!=null?r.distance_km:'—')+'</td><td>'+(r.start_soc!=null?r.start_soc+'%':'—')+'</td><td>'+(r.energy_kwh!=null?r.energy_kwh+' kWh':'—')+'</td><td>'+(r.charge_provider?'<span class="provider-badge '+providerClass(r.charge_provider)+'">'+r.charge_provider+'</span>':'—')+'</td><td style="font-size:.78rem;color:var(--text-muted)">'+(r.charge_location||'—')+'</td></tr>').join('');
+  document.getElementById('dataTableBody').innerHTML=data.slice().reverse().map(r=>'<'+'tr><td>'+esc(r.date)+'</td><td>'+esc(r.datetime.slice(11,16))+'</td><td><span class="badge '+(r.activity==='Rijd'?'badge-drive':'badge-charge')+'">'+(r.activity==='Rijd'?'🚗 Rijden':'⚡ Laden')+'</span></td><td>'+esc(r.duration)+'</td><td>'+(r.distance_km!=null?r.distance_km:'—')+'</td><td>'+(r.start_soc!=null?r.start_soc+'%':'—')+'</td><td>'+(r.energy_kwh!=null?r.energy_kwh+' kWh':'—')+'</td><td>'+(r.charge_provider?'<span class="provider-badge '+providerClass(r.charge_provider)+'">'+esc(r.charge_provider)+'</span>':'—')+'</td><td style="font-size:.78rem;color:var(--text-muted)">'+esc(r.charge_location||'—')+'</td></tr>').join('');
 }
 
 function renderDashboard(){
@@ -919,6 +919,10 @@ async function exportPDF(){
 }
 
 // ─── Toast ───────────────────────────────────────────────────────
+// ─── XSS prevention ─────────────────────────────────────────────
+function escapeHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function esc(s){return escapeHtml(s);} // shorthand
+
 function showToast(msg,isError){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(isError?' error':'');setTimeout(()=>t.classList.remove('show'),3500);}
 
 // ═════════════════════════════════════════════════════════════════

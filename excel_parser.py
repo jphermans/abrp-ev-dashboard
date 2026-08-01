@@ -1,6 +1,5 @@
 """ABRP Excel export parser — converts .xlsx to dashboard records."""
 
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -16,6 +15,9 @@ PROVIDERS = [
     ("EVBox", ["evbox"]),
     ("Lidl", ["lidl"]),
 ]
+
+WEEKDAYS_NL = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
+WEEKDAYS_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def _extract_provider(text):
@@ -38,21 +40,39 @@ def _extract_location(loc_text):
     return None
 
 
+def _safe_float(val):
+    """Safely convert a cell value to float, returning None on failure."""
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_int_pct(val):
+    """Safely convert a 0-1 fraction to an integer percentage."""
+    f = _safe_float(val)
+    if f is None:
+        return None
+    return round(f * 100)
+
+
 def parse_excel_to_records(filepath):
     """Parse ABRP Excel export to dashboard records."""
-    try:
-        import openpyxl
-    except ImportError:
-        os.system("pip3 install openpyxl")
-        import openpyxl
+    import openpyxl
 
-    wb = openpyxl.load_workbook(filepath, data_only=True)
+    wb = openpyxl.load_workbook(filepath, data_only=True, read_only=True)
     ws = wb.active
     records = []
 
     for row in ws.iter_rows(min_row=4, max_row=ws.max_row, values_only=True):
-        if not row[0]:
+        # Guard against short/malformed rows (M2)
+        if not row or row[0] is None:
             continue
+        if len(row) < 13:
+            continue
+
         activity = row[0]
         start_raw = row[1]
 
@@ -66,29 +86,30 @@ def parse_excel_to_records(filepath):
         else:
             continue
 
-        distance_mi = row[4]
-        distance_km = round(float(distance_mi) * 1.609344, 1) if distance_mi else None
-        energy = float(row[9]) if row[9] else None
+        distance_mi = _safe_float(row[4])
+        distance_km = round(distance_mi * 1.609344, 1) if distance_mi is not None else None
+        energy = _safe_float(row[9])
         all_loc = f"{row[5] or ''} {row[6] or ''}"
 
         records.append({
             "date": dt.strftime("%Y-%m-%d"),
             "time": dt.strftime("%H:%M"),
             "datetime": dt.strftime("%Y-%m-%dT%H:%M"),
-            "weekday": ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"][dt.weekday()],
+            "weekday": WEEKDAYS_NL[dt.weekday()],
             "activity": activity,
-            "duration": row[3] or "",
+            "duration": str(row[3] or ""),
             "distance_km": distance_km,
-            "distance_mi": float(distance_mi) if distance_mi else None,
-            "start_soc": round(float(row[7]) * 100) if row[7] is not None else None,
-            "end_soc": round(float(row[8]) * 100) if row[8] is not None else None,
+            "distance_mi": distance_mi,
+            "start_soc": _safe_int_pct(row[7]),
+            "end_soc": _safe_int_pct(row[8]),
             "energy_kwh": energy,
-            "start_odo_mi": float(row[10]) if row[10] else None,
-            "end_odo_mi": float(row[11]) if row[11] else None,
-            "vehicle": row[12] or "EV",
+            "start_odo_mi": _safe_float(row[10]),
+            "end_odo_mi": _safe_float(row[11]),
+            "vehicle": str(row[12] or "EV"),
             "charge_provider": _extract_provider(all_loc) if activity == "Laad op" else None,
             "charge_location": _extract_location(row[5] or row[6]) if activity == "Laad op" else None,
         })
+    wb.close()
     return records
 
 

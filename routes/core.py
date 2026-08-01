@@ -3,10 +3,12 @@
 import json
 import time
 from pathlib import Path
+from werkzeug.utils import secure_filename
 from flask import send_file, request, jsonify, session
 from config import DATA_DIR, DASHBOARD_HTML, _cache, CACHE_TTL
 from excel_parser import parse_excel_to_records, get_data_file
 from auth import login_required, get_current_user_id, get_current_username, get_user_data_dir
+from data_utils import merge_and_save_records
 
 LOGIN_HTML = Path(__file__).parent.parent / "templates" / "login.html"
 
@@ -14,7 +16,6 @@ LOGIN_HTML = Path(__file__).parent.parent / "templates" / "login.html"
 def register(app):
     @app.route("/")
     def index():
-        """Gate: show dashboard if logged in, else redirect to login."""
         if "user_id" not in session:
             return send_file(LOGIN_HTML)
         return send_file(DASHBOARD_HTML)
@@ -37,8 +38,11 @@ def register(app):
         if not data_file:
             return jsonify([])
         if str(data_file).endswith(".json"):
-            with open(data_file) as f:
-                data = json.load(f)
+            try:
+                with open(data_file) as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return jsonify([])
         elif str(data_file).endswith(".xlsx"):
             data = parse_excel_to_records(data_file)
             with open(user_dir / "activities.json", "w") as f:
@@ -57,34 +61,32 @@ def register(app):
             return jsonify({"error": "No files provided"}), 400
         files = request.files.getlist("files")
         all_records = []
-        existing_json = user_dir / "activities.json"
-        if existing_json.exists():
-            with open(existing_json) as f:
-                all_records = json.load(f)
         uploaded = 0
         for file in files:
             if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
                 continue
-            filepath = user_dir / file.filename
+            # C1: sanitize filename to prevent path traversal
+            fname = secure_filename(file.filename)
+            if not fname:
+                continue
+            filepath = user_dir / fname
             file.save(filepath)
-            all_records.extend(parse_excel_to_records(filepath))
-            uploaded += 1
-        seen = set()
-        deduped = []
-        for r in all_records:
-            key = f"{r['datetime']}|{r['activity']}"
-            if key not in seen:
-                seen.add(key)
-                deduped.append(r)
-        deduped.sort(key=lambda x: x["datetime"])
-        with open(existing_json, "w") as f:
-            json.dump(deduped, f, ensure_ascii=False)
+            try:
+                parsed = parse_excel_to_records(filepath)
+                all_records.extend(parsed)
+                uploaded += 1
+            except Exception as e:
+                # Don't let one bad file kill the whole upload
+                pass
+        if uploaded == 0:
+            return jsonify({"error": "No valid Excel files uploaded"}), 400
+        total = merge_and_save_records(user_dir, all_records)
         _cache.pop(f"data_{uid}", None)
         return jsonify({
             "status": "ok",
             "uploaded": uploaded,
-            "total_records": len(deduped),
-            "message": f"{uploaded} file(s) processed, {len(deduped)} total records"
+            "total_records": total,
+            "message": f"{uploaded} file(s) processed, {total} total records"
         })
 
     @app.route("/api/status")
@@ -98,15 +100,16 @@ def register(app):
             try:
                 with open(json_file) as f:
                     record_count = len(json.load(f))
-            except:
+            except (json.JSONDecodeError, IOError):
                 pass
         connected = []
         for b in ["vw", "tesla", "bmw", "hyundai_kia", "mercedes"]:
             if (user_dir / f"connector_{b}.json").exists():
                 connected.append(b)
+        data_file = get_data_file(user_dir)
         return jsonify({
             "status": "running",
-            "data_source": str(get_data_file(user_dir)) if get_data_file(user_dir) else "none",
+            "data_source": str(data_file) if data_file else "none",
             "excel_files": len(list(user_dir.glob("*.xlsx"))),
             "total_records": record_count,
             "connectors": connected,

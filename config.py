@@ -29,5 +29,5 @@ def get_pi_model():
     try:
         with open("/proc/device-tree/model") as f:
             return f.read().strip().strip("\x00")
-    except:
+    except (FileNotFoundError, PermissionError, OSError):
         return "unknown"

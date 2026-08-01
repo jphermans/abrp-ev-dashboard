@@ -173,7 +173,8 @@ A comprehensive help modal (❓ button) explains every chart, KPI card, filter, 
 server.py              Entry point + startup (64 lines)
 config.py              Paths, rate limiter, cache
 excel_parser.py        ABRP Excel parsing + provider detection
-auth.py                SQLite users DB, sessions, login/register/logout
+data_utils.py          Shared merge/dedup helper (atomic writes)
+auth.py                SQLite users DB, PBKDF2 auth, sessions, login/register/logout
 routes/
   core.py              Dashboard page, data API, upload, status
   abrp.py              ABRP API proxy (requires premium key)
@@ -293,10 +294,17 @@ Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requir
 
 - **100% local** — all data stays on your Pi/server
 - **Multi-user isolation** — each user's data in separate directories
+- **PBKDF2 password hashing** (100,000 iterations SHA-256 + salt) — GPU-resistant
+- **Random admin password** on first boot (printed to console) — not `admin/admin`
+- **Session cookie**: `SameSite=Strict`, `HttpOnly`, persisted secret key (survives restarts)
+- **Path traversal protection**: `secure_filename` on uploads, regex-validated locale codes
+- **All API endpoints require authentication** (including locale management and ABRP proxy)
+- **Upload size limit**: 50 MB max
+- **Atomic JSON writes**: temp file + `os.replace()` prevents corruption on crash
+- **XSS prevention**: all user-facing data escaped via `escapeHtml()` before rendering
 - **Credentials** stored in `data/users/<id>/connector_<brand>.json` (local only)
 - **Rate limited** — max 2 external API requests/second
 - **No HTTPS by default** — for LAN use. Add nginx/caddy reverse proxy for HTTPS
-- **Default admin password** — change `admin/admin` immediately after first login
 
 ---
 

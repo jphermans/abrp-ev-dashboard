@@ -111,12 +111,12 @@ class BaseConnector(ABC):
     @staticmethod
     def km_to_mi(km: float) -> float:
         """Convert kilometers to miles."""
-        return round(km / 1.609344, 1) if km else None
+        return round(km / 1.609344, 1) if km is not None else None
 
     @staticmethod
     def mi_to_km(mi: float) -> float:
         """Convert miles to kilometers."""
-        return round(mi * 1.609344, 1) if mi else None
+        return round(mi * 1.609344, 1) if mi is not None else None
 
     @staticmethod
     def make_record(
@@ -136,20 +136,29 @@ class BaseConnector(ABC):
         charge_location: str = None,
     ) -> Dict:
         """Create a dashboard-format record with auto-conversions."""
+        # Compute weekday from date if provided
+        weekday = ""
+        if date:
+            try:
+                from datetime import datetime as _dt
+                d = _dt.strptime(date[:10], "%Y-%m-%d")
+                weekday = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"][d.weekday()]
+            except (ValueError, IndexError):
+                pass
         return {
             "date": date,
             "time": time,
             "datetime": datetime,
-            "weekday": "",
+            "weekday": weekday,
             "activity": activity,
             "duration": duration,
-            "distance_km": round(distance_km, 1) if distance_km else None,
-            "distance_mi": round(distance_km / 1.609344, 1) if distance_km else None,
+            "distance_km": round(distance_km, 1) if distance_km is not None else None,
+            "distance_mi": round(distance_km / 1.609344, 1) if distance_km is not None else None,
             "start_soc": start_soc,
             "end_soc": end_soc,
             "energy_kwh": energy_kwh,
-            "start_odo_mi": round(start_odo_km / 1.609344, 1) if start_odo_km else None,
-            "end_odo_mi": round(end_odo_km / 1.609344, 1) if end_odo_km else None,
+            "start_odo_mi": round(start_odo_km / 1.609344, 1) if start_odo_km is not None else None,
+            "end_odo_mi": round(end_odo_km / 1.609344, 1) if end_odo_km is not None else None,
             "vehicle": vehicle,
             "charge_provider": charge_provider,
             "charge_location": charge_location,

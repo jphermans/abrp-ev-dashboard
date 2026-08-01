@@ -2,6 +2,7 @@
 
 import json
 import sys
+import re
 from pathlib import Path
 from datetime import datetime
 from flask import request, jsonify
@@ -10,27 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from connectors import list_connectors, get_connector_class
 from config import rate_limited, _cache
 from auth import login_required, get_current_user_id, get_user_data_dir
-
-
-def _merge_records(records, user_dir):
-    """Merge new records into the user's activities.json."""
-    existing_json = user_dir / "activities.json"
-    all_records = []
-    if existing_json.exists():
-        with open(existing_json) as f:
-            all_records = json.load(f)
-    all_records.extend(records)
-    seen = set()
-    deduped = []
-    for r in all_records:
-        key = f"{r.get('datetime', '')}|{r.get('activity', '')}"
-        if key and key not in seen:
-            seen.add(key)
-            deduped.append(r)
-    deduped.sort(key=lambda x: x.get("datetime", ""))
-    with open(existing_json, "w") as f:
-        json.dump(deduped, f, ensure_ascii=False)
-    return len(deduped)
+from data_utils import merge_and_save_records
 
 
 def register(app):
@@ -81,8 +62,11 @@ def register(app):
         user_dir = get_user_data_dir(get_current_user_id())
         config_file = user_dir / f"connector_{brand}.json"
         if config_file.exists():
-            with open(config_file) as f:
-                config = json.load(f)
+            try:
+                with open(config_file) as f:
+                    config = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return jsonify({"configured": False})
             creds = config.get("credentials", {})
             instance = cls()
             masked = {}
@@ -100,13 +84,16 @@ def register(app):
         if not cls:
             return jsonify({"error": f"Unknown connector: {brand}"}), 404
         data = request.json or {}
-        credentials = data.get("credentials", {})
+        credentials = dict(data.get("credentials", {}))
         if not credentials:
             user_dir = get_user_data_dir(get_current_user_id())
             config_file = user_dir / f"connector_{brand}.json"
             if config_file.exists():
-                with open(config_file) as f:
-                    credentials = json.load(f).get("credentials", {})
+                try:
+                    with open(config_file) as f:
+                        credentials = json.load(f).get("credentials", {})
+                except (json.JSONDecodeError, IOError):
+                    pass
         if not credentials:
             return jsonify({"error": "No credentials configured"}), 400
         rate_limited()
@@ -124,17 +111,23 @@ def register(app):
         credentials = {}
         config_data = None
         if config_file.exists():
-            with open(config_file) as f:
-                config_data = json.load(f)
-                credentials = config_data.get("credentials", {})
+            try:
+                with open(config_file) as f:
+                    config_data = json.load(f)
+                    credentials = dict(config_data.get("credentials", {}))
+            except (json.JSONDecodeError, IOError):
+                pass
         else:
-            credentials = (request.json or {}).get("credentials", {})
+            req_data = request.json or {}
+            credentials = dict(req_data.get("credentials", {}))
         if not credentials:
             return jsonify({"error": "No credentials configured. Save settings first."}), 400
         rate_limited()
-        credentials["_token_file"] = str(user_dir / f"token_{brand}.json")
+        # Build runtime credentials with token file path
+        runtime_creds = dict(credentials)
+        runtime_creds["_token_file"] = str(user_dir / f"token_{brand}.json")
         try:
-            records = cls(credentials=credentials).sync()
+            records = cls(credentials=runtime_creds).sync()
         except NotImplementedError as e:
             return jsonify({"error": str(e)}), 501
         except Exception as e:
@@ -144,10 +137,13 @@ def register(app):
             return jsonify({"error": msg[:500]}), 500
         if not records:
             return jsonify({"status": "ok", "message": "Login OK but no trip data found.", "fetched": 0, "total": 0})
-        total = _merge_records(records, user_dir)
+        total = merge_and_save_records(user_dir, records)
+        # Update last_sync — don't persist _token_file (M5)
         if config_data is None:
             config_data = {"credentials": credentials}
         config_data["last_sync"] = datetime.now().isoformat()
+        # Ensure _token_file is NOT in saved credentials
+        config_data["credentials"] = {k: v for k, v in config_data.get("credentials", {}).items() if not k.startswith("_")}
         with open(config_file, "w") as f:
             json.dump(config_data, f, ensure_ascii=False)
         _cache.pop(f"data_{uid}", None)

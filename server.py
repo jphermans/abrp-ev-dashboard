@@ -18,6 +18,7 @@ from flask import Flask
 from config import DATA_DIR, get_pi_model
 from excel_parser import parse_excel_to_records
 from auth import register_auth, init_db
+from data_utils import merge_and_save_records
 
 app = Flask(__name__)
 
@@ -63,7 +64,6 @@ def startup_import():
         recs = parse_excel_to_records(ef)
         all_records.extend(recs)
         print(f"   → {ef.name}: {len(recs)} records")
-        # Move file into admin's directory so it's owned by admin
         dest = admin_dir / ef.name
         if not dest.exists():
             ef.rename(dest)
@@ -71,34 +71,9 @@ def startup_import():
     if not all_records:
         return 0
 
-    seen = set()
-    deduped = []
-    for r in all_records:
-        k = f"{r['datetime']}|{r['activity']}"
-        if k not in seen:
-            seen.add(k)
-            deduped.append(r)
-    deduped.sort(key=lambda x: x["datetime"])
-
-    # Merge with any existing admin data
-    json_file = admin_dir / "activities.json"
-    existing = []
-    if json_file.exists():
-        with open(json_file) as f:
-            existing = json.load(f)
-    existing.extend(deduped)
-    seen2 = set()
-    final = []
-    for r in existing:
-        k = f"{r['datetime']}|{r['activity']}"
-        if k not in seen2:
-            seen2.add(k)
-            final.append(r)
-    final.sort(key=lambda x: x["datetime"])
-    with open(json_file, "w") as f:
-        json.dump(final, f, ensure_ascii=False)
-    print(f"   ✅ {len(final)} records loaded for admin user")
-    return len(final)
+    total = merge_and_save_records(admin_dir, all_records)
+    print(f"   ✅ {total} records loaded for admin user")
+    return total
 
 
 if __name__ == "__main__":

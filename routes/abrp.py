@@ -3,10 +3,12 @@
 import json
 from flask import request, jsonify
 from config import rate_limited
+from auth import login_required
 
 
 def register(app):
     @app.route("/api/abrp/login", methods=["POST"])
+    @login_required
     def abrp_login():
         data = request.json or {}
         email = data.get("email", "")
@@ -31,4 +33,4 @@ def register(app):
                 return jsonify({"error": "No access_token in response"}), 502
             return jsonify({"status": "ok", "session_token": token})
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": str(e)[:200]}), 500

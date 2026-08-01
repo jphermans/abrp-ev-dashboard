@@ -29,6 +29,7 @@ COPY connectors/ connectors/
 RUN mkdir -p /app/data
 COPY locales/ locales/
 
+COPY data_utils.py ./
 # Expose port
 EXPOSE 8000
 

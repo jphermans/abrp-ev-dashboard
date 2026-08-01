@@ -14,3 +14,5 @@ test-*
 exports/
 sample-data/*.xlsx
 !sample-data/.gitkeep
+data/users.db
+data/users/

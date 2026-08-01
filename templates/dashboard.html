@@ -132,6 +132,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <button class="btn btn-primary" onclick="exportPDF()">📄 PDF</button>
     <button class="btn btn-secondary btn-icon" onclick="openHelp()" title="Help">❓</button>
     <button class="btn btn-secondary btn-icon" onclick="openSettings()" title="Instellingen">⚙️</button>
+    <button class="btn btn-secondary btn-icon" onclick="doLogout()" title="Uitloggen" id="logoutBtn">🚪</button>
   </div>
 </div>
 <div class="filters">
@@ -314,6 +315,32 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <div class="toast" id="toast"></div>
 
 <script>
+// ═════════════════════════════════════════════════════════════════
+// AUTH
+// ═════════════════════════════════════════════════════════════════
+async function doLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+async function checkAuth() {
+  try {
+    const resp = await fetch('/api/auth/me');
+    const d = await resp.json();
+    if (!d.authenticated) {
+      window.location.href = '/login';
+      return false;
+    }
+    // Show username in header
+    const hdr = document.querySelector('.header-sub');
+    if (hdr) hdr.dataset.username = d.display_name || d.username;
+    return true;
+  } catch(e) {
+    window.location.href = '/login';
+    return false;
+  }
+}
+
 // ═════════════════════════════════════════════════════════════════
 // I18N — INTERNATIONALIZATION
 // ═════════════════════════════════════════════════════════════════
@@ -869,6 +896,10 @@ function showToast(msg,isError){const t=document.getElementById('toast');t.textC
 // INIT
 // ═════════════════════════════════════════════════════════════════
 async function init(){
+  // Check auth first
+  const authed = await checkAuth();
+  if (!authed) return;
+
   // Restore settings
   const savedTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);

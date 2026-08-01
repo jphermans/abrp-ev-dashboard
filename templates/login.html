@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABRP Dashboard — Login</title>
+<style>
+:root {
+  --bg: #0f172a; --card: #1e293b; --border: #334155; --text: #e2e8f0;
+  --text-muted: #94a3b8; --accent: #3b82f6; --accent-light: #60a5fa;
+  --green: #10b981; --red: #ef4444;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #1e293b;
+  --text-muted: #64748b; --accent: #3b82f6; --accent-light: #2563eb;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:36px; max-width:400px; width:100%; }
+.login-card h1 { font-size:1.5rem; margin-bottom:6px; }
+.login-card .subtitle { color:var(--text-muted); font-size:.85rem; margin-bottom:24px; }
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:.78rem; color:var(--text-muted); margin-bottom:6px; font-weight:600; }
+.field input { width:100%; padding:12px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.9rem; }
+.field input:focus { outline:none; border-color:var(--accent); }
+.btn { width:100%; padding:14px; border:none; border-radius:8px; font-size:.9rem; font-weight:700; cursor:pointer; margin-top:4px; }
+.btn-primary { background:var(--accent); color:#fff; } .btn-primary:hover { background:var(--accent-light); }
+.btn-secondary { background:transparent; color:var(--text-muted); border:1px solid var(--border); } .btn-secondary:hover { color:var(--text); }
+.error-msg { color:var(--red); font-size:.82rem; margin-top:8px; min-height:1.2em; }
+.tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--border); }
+.tab { flex:1; padding:10px; text-align:center; cursor:pointer; font-size:.9rem; font-weight:600; color:var(--text-muted); border-bottom:2px solid transparent; margin-bottom:-2px; }
+.tab.active { color:var(--accent-light); border-bottom-color:var(--accent); }
+#registerFields { display:none; }
+.demo-hint { margin-top:16px; padding:10px 12px; background:var(--bg); border-radius:8px; font-size:.75rem; color:var(--text-muted); text-align:center; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1>🚗 ABRP Dashboard</h1>
+  <div class="subtitle">EV rijstatistieken & laadgedrag</div>
+
+  <div class="tabs">
+    <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+    <div class="tab" id="registerTab" onclick="switchTab('register')">Nieuw account</div>
+  </div>
+
+  <form onsubmit="return doSubmit(event)">
+    <div id="registerFields">
+      <div class="field">
+        <label>Weergavenaam</label>
+        <input type="text" id="displayName" placeholder="Je naam">
+      </div>
+    </div>
+    <div class="field">
+      <label>Gebruikersnaam of e-mail</label>
+      <input type="text" id="username" required placeholder="gebruiker of je@email.nl">
+    </div>
+    <div id="registerEmail">
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" id="email" placeholder="je@email.nl">
+      </div>
+    </div>
+    <div class="field">
+      <label>Wachtwoord</label>
+      <input type="password" id="password" required placeholder="••••••••">
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <button type="submit" class="btn btn-primary" id="submitBtn">Login</button>
+  </form>
+
+  <div class="demo-hint">Default admin: <strong>admin</strong> / <strong>admin</strong></div>
+</div>
+
+<script>
+let mode = 'login';
+
+function switchTab(m) {
+  mode = m;
+  document.getElementById('loginTab').classList.toggle('active', m === 'login');
+  document.getElementById('registerTab').classList.toggle('active', m === 'register');
+  document.getElementById('registerFields').style.display = m === 'register' ? 'block' : 'none';
+  document.getElementById('registerEmail').style.display = m === 'register' ? 'block' : 'none';
+  document.getElementById('submitBtn').textContent = m === 'register' ? 'Account aanmaken' : 'Login';
+  document.getElementById('errorMsg').textContent = '';
+}
+
+async function doSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errEl = document.getElementById('errorMsg');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const body = {
+    username: document.getElementById('username').value.trim(),
+    password: document.getElementById('password').value,
+  };
+
+  try {
+    let url, payload = body;
+    if (mode === 'register') {
+      url = '/api/auth/register';
+      payload = {
+        ...body,
+        email: document.getElementById('email').value.trim() || body.username + '@local',
+        display_name: document.getElementById('displayName').value.trim(),
+      };
+    } else {
+      url = '/api/auth/login';
+    }
+
+    const resp = await fetch(url, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await resp.json();
+
+    if (d.status === 'ok') {
+      window.location.href = '/';
+    } else {
+      errEl.textContent = d.error || 'Er ging iets mis';
+      btn.disabled = false;
+      btn.textContent = mode === 'register' ? 'Account aanmaken' : 'Login';
+    }
+  } catch(err) {
+    errEl.textContent = 'Verbindingsfout';
+    btn.disabled = false;
+    btn.textContent = mode === 'register' ? 'Account aanmaken' : 'Login';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

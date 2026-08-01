@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from flask import request, jsonify, send_file
 from config import BASE_DIR
+from auth import login_required, get_current_user_id, get_user_data_dir
 
 LOCALES_DIR = BASE_DIR / "locales"
 CUSTOM_LOCALES_DIR = BASE_DIR / "data" / "locales"
@@ -82,8 +83,9 @@ def register(app):
         return jsonify({"error": "Template not found"}), 404
 
     @app.route("/api/locales/upload", methods=["POST"])
+    @login_required
     def locale_upload():
-        """Upload a custom language file."""
+        """Upload a custom language file (per-user)."""
         if "file" not in request.files:
             return jsonify({"error": "No file provided"}), 400
 

@@ -24,7 +24,9 @@ from routes.core import register as register_core
 from routes.abrp import register as register_abrp
 from routes.connectors import register as register_connectors
 from routes.locales import register as register_locales
+from auth import register_auth, init_db, get_current_username
 
+register_auth(app)
 register_core(app)
 register_abrp(app)
 register_connectors(app)
@@ -62,5 +64,7 @@ if __name__ == "__main__":
     print(f"🚗 ABRP Dashboard starting on http://{host}:{port}")
     print(f"   Pi: {get_pi_model()}")
     print(f"   Data: {DATA_DIR}")
+    init_db()  # Ensure user database exists
+    print(f"   Auth: multi-user enabled")
     startup_import()
     app.run(host=host, port=port, debug=False)

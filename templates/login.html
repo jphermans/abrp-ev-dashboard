@@ -25,7 +25,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .field input:focus { outline:none; border-color:var(--accent); }
 .btn { width:100%; padding:14px; border:none; border-radius:8px; font-size:.9rem; font-weight:700; cursor:pointer; margin-top:4px; }
 .btn-primary { background:var(--accent); color:#fff; } .btn-primary:hover { background:var(--accent-light); }
-.btn-secondary { background:transparent; color:var(--text-muted); border:1px solid var(--border); } .btn-secondary:hover { color:var(--text); }
+.btn-secondary { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+.btn-secondary:hover { color:var(--text); }
 .error-msg { color:var(--red); font-size:.82rem; margin-top:8px; min-height:1.2em; }
 .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--border); }
 .tab { flex:1; padding:10px; text-align:center; cursor:pointer; font-size:.9rem; font-weight:600; color:var(--text-muted); border-bottom:2px solid transparent; margin-bottom:-2px; }
@@ -45,25 +46,25 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   </div>
 
   <form onsubmit="return doSubmit(event)">
+    <!-- Login: 2 fields (user/email + password) -->
+    <!-- Register: adds display name + email above -->
     <div id="registerFields">
       <div class="field">
-        <label>Weergavenaam</label>
+        <label>Weergavenaam (optioneel)</label>
         <input type="text" id="displayName" placeholder="Je naam">
       </div>
-    </div>
-    <div class="field">
-      <label>Gebruikersnaam of e-mail</label>
-      <input type="text" id="username" required placeholder="gebruiker of je@email.nl">
-    </div>
-    <div id="registerEmail">
       <div class="field">
         <label>E-mail</label>
         <input type="email" id="email" placeholder="je@email.nl">
       </div>
     </div>
     <div class="field">
+      <label>Gebruikersnaam of e-mail</label>
+      <input type="text" id="username" required placeholder="gebruiker of je@email.nl" autocomplete="username">
+    </div>
+    <div class="field">
       <label>Wachtwoord</label>
-      <input type="password" id="password" required placeholder="••••••••">
+      <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
     </div>
     <div class="error-msg" id="errorMsg"></div>
     <button type="submit" class="btn btn-primary" id="submitBtn">Login</button>
@@ -80,9 +81,18 @@ function switchTab(m) {
   document.getElementById('loginTab').classList.toggle('active', m === 'login');
   document.getElementById('registerTab').classList.toggle('active', m === 'register');
   document.getElementById('registerFields').style.display = m === 'register' ? 'block' : 'none';
-  document.getElementById('registerEmail').style.display = m === 'register' ? 'block' : 'none';
   document.getElementById('submitBtn').textContent = m === 'register' ? 'Account aanmaken' : 'Login';
   document.getElementById('errorMsg').textContent = '';
+  // Update label and placeholder for the main field
+  const mainLabel = document.querySelector('label[for="username"]') || document.querySelectorAll('.field label')[2];
+  const mainInput = document.getElementById('username');
+  if (m === 'register') {
+    mainInput.placeholder = 'kies een gebruikersnaam';
+    mainInput.autocomplete = 'username';
+  } else {
+    mainInput.placeholder = 'gebruiker of je@email.nl';
+    mainInput.autocomplete = 'username';
+  }
 }
 
 async function doSubmit(e) {
@@ -102,9 +112,11 @@ async function doSubmit(e) {
     let url, payload = body;
     if (mode === 'register') {
       url = '/api/auth/register';
+      const emailVal = document.getElementById('email').value.trim();
       payload = {
-        ...body,
-        email: document.getElementById('email').value.trim() || body.username + '@local',
+        username: body.username,
+        password: body.password,
+        email: emailVal || body.username + '@local',
         display_name: document.getElementById('displayName').value.trim(),
       };
     } else {

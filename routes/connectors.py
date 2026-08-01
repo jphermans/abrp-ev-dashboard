@@ -153,6 +153,36 @@ def register(app):
             "fetched": len(records), "total": total
         })
 
+    @app.route("/api/connector/<brand>/vehicle-info")
+    @login_required
+    def connector_vehicle_info(brand):
+        """Fetch vehicle details (model, VIN, odometer, battery)."""
+        cls = get_connector_class(brand)
+        if not cls:
+            return jsonify({"error": f"Unknown connector: {brand}"}), 404
+        user_dir = get_user_data_dir(get_current_user_id())
+        config_file = user_dir / f"connector_{brand}.json"
+        if not config_file.exists():
+            return jsonify({"error": "No credentials configured"}), 400
+        try:
+            with open(config_file) as f:
+                credentials = json.load(f).get("credentials", {})
+        except (json.JSONDecodeError, IOError):
+            return jsonify({"error": "Config file corrupt"}), 500
+        rate_limited()
+        credentials["_token_file"] = str(user_dir / f"token_{brand}.json")
+        instance = cls(credentials=credentials)
+        if hasattr(instance, "get_vehicle_info"):
+            try:
+                info = instance.get_vehicle_info()
+                return jsonify({"status": "ok", "vehicles": info})
+            except Exception as e:
+                msg = str(e)
+                if "location" in msg:
+                    return jsonify({"error": "VW authenticatie tijdelijk niet beschikbaar (mei 2026 update). Gebruik Excel upload."}), 503
+                return jsonify({"error": msg[:200]}), 500
+        return jsonify({"error": "Vehicle info not supported for this connector"}), 501
+
     # Legacy VW routes
     @app.route("/api/vw/sync", methods=["POST"])
     @login_required

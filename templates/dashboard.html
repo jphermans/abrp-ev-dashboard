@@ -145,6 +145,12 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
   </div>
   <div class="date-range" id="dateRangeInfo"></div>
 </div>
+
+<!-- Vehicle Info Bar -->
+<div id="vehicleInfoBar" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+  <div id="vehicleInfoContent"></div>
+</div>
+
 <div class="kpi-grid" id="kpiGrid"></div>
 <div class="section-title" id="chargingSection" data-i18n="sections.charging">⚡ Laadstatistieken & Providers</div>
 <div class="charts-grid">
@@ -763,27 +769,31 @@ async function renderConnectors() {
   // For each connector, check if it's already configured
   const html = [];
   for (const c of _connectors) {
-    let status = '';
     let isConfigured = false;
+    let savedCreds = {};
     try {
-      const sr = await fetch(`/api/connector/${c.brand}/status`);
+      const sr = await fetch('/api/connector/' + c.brand + '/status');
       const sd = await sr.json();
       isConfigured = sd.configured;
+      savedCreds = sd.credentials || {};
     } catch(e) {}
 
     const badge = c.available
       ? (isConfigured ? '<span style="color:var(--green);font-size:.72rem;">' + t('settings.connected') + '</span>' : '<span style="color:var(--text-muted);font-size:.72rem;">' + t('settings.not_connected') + '</span>')
       : '<span style="color:var(--orange);font-size:.72rem;">' + t('settings.not_installed') + ' (' + esc(c.install_hint) + ')</span>';
 
-    // Build input fields dynamically — escape all user-facing text
+    // Build input fields — pre-fill with saved non-password values
     const fields = c.credential_fields.map(f => {
       const reqMark = f.required ? ' *' : '';
       const safeLabel = esc(f.label) + reqMark;
+      const savedVal = savedCreds[f.key];
+      // For password fields: show dots if saved, leave empty if not
+      const valAttr = (f.type === 'password') ? (savedVal ? ' value="••••••••"' : '') : (savedVal ? ' value="' + esc(savedVal) + '"' : '');
       if (f.type === 'select') {
-        const opts = (f.options || []).map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('');
+        const opts = (f.options || []).map(o => '<option value="' + esc(o) + '"' + (o === savedVal ? ' selected' : '') + '>' + esc(o) + '</option>').join('');
         return '<select class="setting-input connector-field" data-brand="' + esc(c.brand) + '" data-key="' + esc(f.key) + '" data-type="' + esc(f.type) + '" style="margin-bottom:6px;"><option value="">' + safeLabel + '</option>' + opts + '</select>';
       }
-      return '<input type="' + esc(f.type) + '" class="setting-input connector-field" data-brand="' + esc(c.brand) + '" data-key="' + esc(f.key) + '" data-type="' + esc(f.type) + '" placeholder="' + safeLabel + '" style="margin-bottom:6px;">';
+      return '<input type="' + esc(f.type) + '" class="setting-input connector-field" data-brand="' + esc(c.brand) + '" data-key="' + esc(f.key) + '" data-type="' + esc(f.type) + '" placeholder="' + safeLabel + '"' + valAttr + ' style="margin-bottom:6px;">';
     }).join('');
 
     const syncBtn = c.available
@@ -826,8 +836,8 @@ async function connectorAction(brand, action) {
 
   // Collect field values from inputs
   const creds = {};
-  document.querySelectorAll(`.connector-field[data-brand="${brand}"]`).forEach(el => {
-    if (el.value) creds[el.dataset.key] = el.value.trim();
+  document.querySelectorAll('.connector-field[data-brand="' + brand + '"]').forEach(el => {
+    if (el.value && el.value !== '••••••••') creds[el.dataset.key] = el.value.trim();
   });
 
   if (action === 'save') {
@@ -1022,6 +1032,41 @@ function showToast(msg,isError){const t=document.getElementById('toast');t.textC
 // ═════════════════════════════════════════════════════════════════
 // INIT
 // ═════════════════════════════════════════════════════════════════
+// ─── Vehicle Info ───────────────────────────────────────────────
+async function loadVehicleInfo() {
+  // Try each configured connector for vehicle info
+  const brands = ['vw', 'tesla', 'bmw', 'hyundai_kia', 'mercedes'];
+  for (const brand of brands) {
+    try {
+      const resp = await fetch('/api/connector/' + brand + '/vehicle-info');
+      const d = await resp.json();
+      if (d.status === 'ok' && d.vehicles && d.vehicles.length > 0) {
+        renderVehicleInfo(d.vehicles);
+        return;
+      }
+    } catch(e) {}
+  }
+}
+
+function renderVehicleInfo(vehicles) {
+  const bar = document.getElementById('vehicleInfoBar');
+  const content = document.getElementById('vehicleInfoContent');
+  if (!bar || !content) return;
+
+  const v = vehicles[0]; // Show first vehicle
+  const items = [];
+
+  items.push('<span style="font-size:1.1rem;">🚗 <strong>' + esc(v.nickname || v.vin || 'My Vehicle') + '</strong></span>');
+  if (v.model) items.push('<span style="color:var(--text-muted);font-size:.85rem;">' + esc(v.model) + '</span>');
+  if (v.odometer_km != null) items.push('<span style="font-size:.85rem;">🏁 <strong>' + Math.round(v.odometer_km).toLocaleString() + '</strong> km</span>');
+  if (v.battery_soc != null) items.push('<span style="font-size:.85rem;">🔋 <strong>' + v.battery_soc + '%</strong></span>');
+  if (v.charging_state) items.push('<span style="font-size:.78rem;color:var(--text-muted);">' + esc(v.charging_state) + '</span>');
+  if (v.charge_type) items.push('<span style="font-size:.78rem;color:var(--text-muted);">' + esc(v.charge_type) + '</span>');
+
+  content.innerHTML = items.join('<span style="color:var(--border);margin:0 4px;">|</span>');
+  bar.style.display = 'flex';
+}
+
 async function init(){
   // Check auth first
   const authed = await checkAuth();
@@ -1032,10 +1077,11 @@ async function init(){
   document.documentElement.setAttribute('data-theme', savedTheme);
   currentPalette = localStorage.getItem('palette') || 'default';
 
-  // Load language first, then data
+  // Load language first, then data, then vehicle info
   await initLanguage();
   await loadData();
   renderDashboard();
+  loadVehicleInfo(); // Non-blocking — loads in background
 }
 
 init();

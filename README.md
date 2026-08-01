@@ -1,11 +1,11 @@
 # 🚗 ABRP EV Dashboard
 
-> A self-hosted analytics dashboard for electric vehicle data. Import ABRP (A Better Routeplanner) Excel exports, sync directly from your car manufacturer's servers, and get rich insights into driving habits, charging sessions, and energy consumption.
+> A self-hosted analytics dashboard for electric vehicle data. Runs anywhere — Raspberry Pi, Intel/AMD, NAS, cloud. Import ABRP (A Better Routeplanner) Excel exports, sync directly from your car manufacturer's servers, and get rich insights into driving habits, charging sessions, and energy consumption.
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Platform: Raspberry Pi](https://img.shields.io/badge/Platform-Raspberry%20Pi%204%2F5-c51a4a.svg)
+![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi%20%7C%20Intel%2FAMD%20%7C%20ARM64%20%7C%20x86--c51a4a.svg)
 ![Server: Flask](https://img.shields.io/badge/Server-Flask-000000.svg)
-![Docker](https://img.shields.io/badge/Docker-✓-2496ED.svg)
+![Docker](https://img.shields.io/badge/Docker-Multi--arch-2496ED.svg)
 ![Multi-user](https://img.shields.io/badge/Multi--user-✓-green.svg)
 ![i18n](https://img.shields.io/badge/i18n-4%2B%20languages-purple.svg)
 ![Responsive](https://img.shields.io/badge/Responsive-Mobile%20First-brightgreen.svg)
@@ -29,7 +29,7 @@ docker compose up -d --build
 
 Open `http://<host-ip>:8000` — login with `admin` / `admin`.
 
-### Option B: Bare metal (Raspberry Pi)
+### Option B: Bare metal (any Linux)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/abrp-ev-dashboard.git
@@ -39,6 +39,8 @@ chmod +x scripts/install.sh
 ```
 
 The installer creates a venv, installs dependencies, registers a systemd service (autostart on boot), and starts the dashboard.
+
+Works on Raspberry Pi (ARM64), Intel NUC, AMD server, NAS, or any Debian/Ubuntu-based system.
 
 ### Option C: Standalone HTML (no server)
 
@@ -55,13 +57,17 @@ start index.html      # Windows
 
 ## 📋 Requirements
 
+The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, NUCs, NAS devices, VMs, or cloud instances. Docker image supports both **ARM64** (Pi, Mac M-series) and **AMD64** (Intel/AMD) architectures.
+
 | Item | Minimum | Recommended |
 |------|---------|-------------|
-| Hardware | Raspberry Pi 4 (2GB) | Raspberry Pi 5 (4GB+) |
-| OS | Raspberry Pi OS 64-bit | Bookworm / Debian 12 |
+| Hardware | Raspberry Pi 4, Intel NUC, or any x86/ARM box | Pi 5, NUC, or dedicated mini-PC |
+| Architecture | ARM64 or x86_64 (AMD64) | Same |
+| RAM | 512 MB free | 1 GB free |
+| OS | Any Linux (Debian, Ubuntu, Alpine, etc.) | Debian 12 / Ubuntu 24.04 |
 | Python | 3.9+ | 3.11+ |
 | Docker | 20.10+ (Docker mode only) | Latest |
-| SD Card | 8GB Class 10 | 32GB A2-rated |
+| Storage | 1 GB | 8 GB (Excel files accumulate over time) |
 
 ---
 

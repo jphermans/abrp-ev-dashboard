@@ -220,6 +220,15 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
+      <div class="setting-label">🔑 Wachtwoord wijzigen</div>
+      <input type="password" class="setting-input" id="oldPassword" placeholder="Huidig wachtwoord" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="newPassword" placeholder="Nieuw wachtwoord (min. 8 tekens)" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="confirmPassword" placeholder="Herhaal nieuw wachtwoord" style="margin-bottom:6px;">
+      <button class="btn btn-primary" onclick="changePassword()" style="width:100%;font-size:.85rem;padding:10px;">Wachtwoord wijzigen</button>
+      <div id="pwChangeStatus" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>
+    </div>
+
+    <div class="setting-section">
       <div class="setting-label">ℹ️ Systeem</div>
       <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
     </div>
@@ -320,6 +329,21 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
   </div>
 </div>
 
+<!-- Force Password Change Modal (first login) -->
+<div class="modal-overlay" id="forceChangeModal">
+  <div class="modal">
+    <h2 style="color:var(--accent);">🔑 Wachtwoord wijzigen vereist</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;">
+      Dit is je eerste login met het standaardwachtwoord. Kies een nieuw wachtwoord om door te gaan.
+    </p>
+    <input type="password" class="setting-input" id="forceOldPw" placeholder="Huidig wachtwoord" style="margin-bottom:8px;">
+    <input type="password" class="setting-input" id="forceNewPw" placeholder="Nieuw wachtwoord (min. 8 tekens)" style="margin-bottom:8px;">
+    <input type="password" class="setting-input" id="forceConfPw" placeholder="Herhaal nieuw wachtwoord" style="margin-bottom:8px;">
+    <button class="btn btn-primary" onclick="forceChangePassword()" style="width:100%;">Wachtwoord wijzigen</button>
+    <div id="forceChangeStatus" style="margin-top:10px;font-size:.78rem;min-height:1.2em;"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -352,6 +376,40 @@ async function deleteAccount() {
   } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
 }
 
+// ─── Password change ───────────────────────────────────────────
+async function changePassword() {
+  const oldPw = document.getElementById('oldPassword').value;
+  const newPw = document.getElementById('newPassword').value;
+  const confPw = document.getElementById('confirmPassword').value;
+  const status = document.getElementById('pwChangeStatus');
+  if (!oldPw || !newPw) { status.innerHTML = '⚠️ Vul alle velden in'; return; }
+  if (newPw.length < 8) { status.innerHTML = '⚠️ Nieuw wachtwoord moet minstens 8 tekens zijn'; return; }
+  if (newPw !== confPw) { status.innerHTML = '⚠️ Nieuwe wachtwoorden komen niet overeen'; return; }
+  if (oldPw === newPw) { status.innerHTML = '⚠️ Kies een ander wachtwoord dan het huidige'; return; }
+  status.innerHTML = '💾 Opslaan...';
+  try {
+    const resp = await fetch('/api/auth/change-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ old_password: oldPw, new_password: newPw })
+    });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      status.innerHTML = '✅ Wachtwoord gewijzigd';
+      document.getElementById('oldPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+      // If we were in force-change mode, reload to dashboard
+      if (document.getElementById('forceChangeModal')?.classList.contains('show')) {
+        document.getElementById('forceChangeModal').classList.remove('show');
+        showToast('✅ Wachtwoord gewijzigd! Welkom.');
+        setTimeout(() => location.reload(), 1500);
+      }
+    } else {
+      status.innerHTML = '❌ ' + (d.error || 'Fout');
+    }
+  } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
+}
+
 async function checkAuth() {
   try {
     const resp = await fetch('/api/auth/me');
@@ -359,6 +417,11 @@ async function checkAuth() {
     if (!d.authenticated) {
       window.location.href = '/login';
       return false;
+    }
+    // Check if user must change password (first login with default password)
+    if (d.must_change_password) {
+      showForceChangeModal();
+      return false; // Block dashboard loading until password is changed
     }
     // Show username in header
     const hdr = document.querySelector('.header-sub');
@@ -368,6 +431,36 @@ async function checkAuth() {
     window.location.href = '/login';
     return false;
   }
+}
+
+function showForceChangeModal() {
+  const modal = document.getElementById('forceChangeModal');
+  if (modal) modal.classList.add('show');
+}
+
+async function forceChangePassword() {
+  const oldPw = document.getElementById('forceOldPw').value;
+  const newPw = document.getElementById('forceNewPw').value;
+  const confPw = document.getElementById('forceConfPw').value;
+  const status = document.getElementById('forceChangeStatus');
+  if (!oldPw || !newPw) { status.innerHTML = '⚠️ Vul alle velden in'; return; }
+  if (newPw.length < 8) { status.innerHTML = '⚠️ Minstens 8 tekens'; return; }
+  if (newPw !== confPw) { status.innerHTML = '⚠️ Wachtwoorden komen niet overeen'; return; }
+  status.innerHTML = '💾 Opslaan...';
+  try {
+    const resp = await fetch('/api/auth/change-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ old_password: oldPw, new_password: newPw })
+    });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      status.innerHTML = '✅ Gewijzigd! Dashboard laden...';
+      showToast('✅ Wachtwoord gewijzigd!');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      status.innerHTML = '❌ ' + (d.error || 'Fout');
+    }
+  } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
 }
 
 // ═════════════════════════════════════════════════════════════════

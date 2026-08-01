@@ -27,7 +27,7 @@ cp ~/Downloads/*.xlsx data/
 docker compose up -d --build
 ```
 
-Open `http://<host-ip>:8000` — login with `admin` / `admin`.
+Open `http://<host-ip>:8765` — login with `admin` / `admin123` (you'll be asked to change it immediately).
 
 ### Option B: Bare metal (any Linux)
 
@@ -134,7 +134,7 @@ CONNECTORS["polestar"] = PolestarConnector
   data/users/<id>/locales/              ← custom language files
   ```
   No user can ever see, access, or overwrite another user's data. All API endpoints are scoped to the authenticated user's directory.
-- **Default admin** — auto-created on first run (`admin` / `admin`)
+- **Default admin** — auto-created on first run (`admin` / `admin123`, forced to change on first login)
 - **Startup auto-import** — Excel files placed in `data/` before first boot are moved into the admin's directory automatically
 - **Per-user connectors** — User A's VW credentials are invisible to User B
 - **Per-user language uploads** — custom language files stored per user
@@ -296,6 +296,8 @@ Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requir
 - **Multi-user isolation** — each user's data in separate directories
 - **PBKDF2 password hashing** (100,000 iterations SHA-256 + salt) — GPU-resistant
 - **Random admin password** on first boot (printed to console) — not `admin/admin`
+- **Forced password change** on first login — admin must set a new password before accessing the dashboard
+- **Password change** available in Settings for all users (current + new + confirm)
 - **Session cookie**: `SameSite=Strict`, `HttpOnly`, persisted secret key (survives restarts)
 - **Path traversal protection**: `secure_filename` on uploads, regex-validated locale codes
 - **All API endpoints require authentication** (including locale management and ABRP proxy)

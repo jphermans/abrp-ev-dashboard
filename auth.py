@@ -40,6 +40,12 @@ def init_db():
             is_admin INTEGER DEFAULT 0
         )
     """)
+    # Migration: add must_change_password column for existing databases
+    try:
+        conn.execute("SELECT must_change_password FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0")
+        print("   DB migrated: added must_change_password column")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_settings (
             user_id INTEGER NOT NULL,
@@ -54,10 +60,12 @@ def init_db():
     # Create default admin if no users exist
     count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     if count == 0:
-        admin_pw = secrets.token_urlsafe(12)
+        admin_pw = "admin123"  # Fixed default — forced to change on first login
         _create_user(conn, "admin", "admin@local", admin_pw, "Administrator", is_admin=1)
+        conn.execute("UPDATE users SET must_change_password = 1 WHERE username = 'admin'")
+        conn.commit()
         print(f"   ⚠️  Default admin created — password: {admin_pw}")
-        print(f"   ⚠️  Please change this password immediately after first login!")
+        print(f"   ⚠️  You will be forced to change this password on first login!")
 
     conn.close()
 
@@ -171,11 +179,13 @@ def register_auth(app):
         session["user_id"] = user["id"]
         session["username"] = user["username"]
         session["is_admin"] = user["is_admin"]
+        must_change = bool(user["must_change_password"]) if "must_change_password" in user.keys() else False
         return jsonify({
             "status": "ok",
             "username": user["username"],
             "display_name": user["display_name"] or user["username"],
-            "is_admin": bool(user["is_admin"])
+            "is_admin": bool(user["is_admin"]),
+            "must_change_password": must_change
         })
 
     @app.route("/api/auth/logout", methods=["POST"])
@@ -192,11 +202,13 @@ def register_auth(app):
         if not user:
             session.clear()
             return jsonify({"authenticated": False})
+        must_change = bool(user["must_change_password"]) if "must_change_password" in user.keys() else False
         return jsonify({
             "authenticated": True,
             "username": user["username"],
             "display_name": user["display_name"] or user["username"],
-            "is_admin": bool(user["is_admin"])
+            "is_admin": bool(user["is_admin"]),
+            "must_change_password": must_change
         })
 
     @app.route("/api/auth/change-password", methods=["POST"])
@@ -215,7 +227,7 @@ def register_auth(app):
 
         salt = secrets.token_hex(16)
         pw_hash = _hash_password(new_password, salt)
-        conn.execute("UPDATE users SET password_hash = ?, salt = ?, iterations = ? WHERE id = ?",
+        conn.execute("UPDATE users SET password_hash = ?, salt = ?, iterations = ?, must_change_password = 0 WHERE id = ?",
                      (pw_hash, salt, PBKDF2_ITERATIONS, session["user_id"]))
         conn.commit()
         return jsonify({"status": "ok", "message": "Password changed"})

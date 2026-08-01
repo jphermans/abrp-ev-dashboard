@@ -1,0 +1,49 @@
+# ═════════════════════════════════════════════════════════════════
+# ABRP EV Dashboard — Docker Compose
+# Low-resource config for Raspberry Pi 4/5
+# ═════════════════════════════════════════════════════════════════
+
+services:
+  abrp-dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: abrp-dashboard
+    restart: unless-stopped
+
+    ports:
+      - "${ABRP_PORT:-8000}:8000"
+
+    # Persistent data (Excel uploads + cached JSON)
+    volumes:
+      - ./data:/app/data
+
+    # Resource limits — keep it light on the Pi
+    deploy:
+      resources:
+        limits:
+          memory: 256M        # 256MB max (gunicorn 2 workers ~80MB each)
+          cpus: "0.5"         # Half a core max
+        reservations:
+          memory: 64M         # Guarantee 64MB available
+
+    # Environment
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - PYTHONUNBUFFERED=1
+
+    # Health check — verify the server responds
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/status')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Logging — prevent log files from growing unbounded
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "3"

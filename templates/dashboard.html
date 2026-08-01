@@ -1034,36 +1034,93 @@ function showToast(msg,isError){const t=document.getElementById('toast');t.textC
 // ═════════════════════════════════════════════════════════════════
 // ─── Vehicle Info ───────────────────────────────────────────────
 async function loadVehicleInfo() {
-  // Try each configured connector for vehicle info
+  // 1. Try live connector data first
   const brands = ['vw', 'tesla', 'bmw', 'hyundai_kia', 'mercedes'];
   for (const brand of brands) {
     try {
       const resp = await fetch('/api/connector/' + brand + '/vehicle-info');
       const d = await resp.json();
       if (d.status === 'ok' && d.vehicles && d.vehicles.length > 0) {
-        renderVehicleInfo(d.vehicles);
+        renderVehicleInfo(d.vehicles, 'live');
         return;
       }
     } catch(e) {}
   }
+  // 2. Fallback: derive vehicle info from loaded Excel data
+  if (RAW_DATA.length > 0) {
+    const v = deriveVehicleFromData(RAW_DATA);
+    if (v) { renderVehicleInfo([v], 'data'); return; }
+  }
 }
 
-function renderVehicleInfo(vehicles) {
+function deriveVehicleFromData(data) {
+  if (!data || data.length === 0) return null;
+  // Vehicle name from first record
+  const vehicleName = data[0].vehicle || 'EV';
+  // Last odometer reading (max end_odo_mi converted to km)
+  let maxOdo = 0;
+  data.forEach(r => {
+    if (r.end_odo_mi != null) {
+      const km = r.end_odo_mi * 1.609344;
+      if (km > maxOdo) maxOdo = km;
+    }
+  });
+  // Latest battery SoC from most recent charge record
+  let lastCharge = null;
+  const charges = data.filter(r => r.activity === 'Laad op');
+  if (charges.length > 0) {
+    lastCharge = charges.reduce((a, b) => a.datetime > b.datetime ? a : b);
+  }
+  // Total km driven
+  const totalKm = data.filter(r => r.distance_km).reduce((s, r) => s + r.distance_km, 0);
+  // Date range
+  const dates = data.map(r => r.date).sort();
+  const firstDate = dates[0] || '';
+  const lastDate = dates[dates.length - 1] || '';
+
+  return {
+    nickname: vehicleName,
+    model: '',
+    odometer_km: Math.round(maxOdo),
+    battery_soc: lastCharge ? lastCharge.end_soc : null,
+    total_km: Math.round(totalKm),
+    trips: data.filter(r => r.activity === 'Rijd').length,
+    charges: charges.length,
+    first_date: firstDate,
+    last_date: lastDate,
+    source: 'data',
+  };
+}
+
+function renderVehicleInfo(vehicles, source) {
   const bar = document.getElementById('vehicleInfoBar');
   const content = document.getElementById('vehicleInfoContent');
   if (!bar || !content) return;
 
-  const v = vehicles[0]; // Show first vehicle
+  const v = vehicles[0];
   const items = [];
+  const sep = '<span style="color:var(--border);margin:0 6px;">|</span>';
 
-  items.push('<span style="font-size:1.1rem;">🚗 <strong>' + esc(v.nickname || v.vin || 'My Vehicle') + '</strong></span>');
+  items.push('<span style="font-size:1.05rem;">🚗 <strong>' + esc(v.nickname || v.vin || 'My Vehicle') + '</strong></span>');
   if (v.model) items.push('<span style="color:var(--text-muted);font-size:.85rem;">' + esc(v.model) + '</span>');
-  if (v.odometer_km != null) items.push('<span style="font-size:.85rem;">🏁 <strong>' + Math.round(v.odometer_km).toLocaleString() + '</strong> km</span>');
-  if (v.battery_soc != null) items.push('<span style="font-size:.85rem;">🔋 <strong>' + v.battery_soc + '%</strong></span>');
-  if (v.charging_state) items.push('<span style="font-size:.78rem;color:var(--text-muted);">' + esc(v.charging_state) + '</span>');
-  if (v.charge_type) items.push('<span style="font-size:.78rem;color:var(--text-muted);">' + esc(v.charge_type) + '</span>');
 
-  content.innerHTML = items.join('<span style="color:var(--border);margin:0 4px;">|</span>');
+  if (v.odometer_km != null) {
+    items.push('<span style="font-size:.85rem;">🏁 <strong>' + Math.round(v.odometer_km).toLocaleString() + '</strong> km</span>');
+  }
+  if (v.battery_soc != null) {
+    items.push('<span style="font-size:.85rem;">🔋 <strong>' + v.battery_soc + '%</strong></span>');
+  }
+  if (v.charging_state) items.push('<span style="font-size:.78rem;color:var(--text-muted);">' + esc(v.charging_state) + '</span>');
+
+  // Excel-data source: show extra stats
+  if (source === 'data' || v.source === 'data') {
+    if (v.total_km != null) items.push('<span style="font-size:.85rem;color:var(--text-muted);">📊 ' + v.total_km.toLocaleString() + ' km gereden</span>');
+    if (v.trips != null) items.push('<span style="font-size:.78rem;color:var(--text-muted);">🛣️ ' + v.trips + ' ritten</span>');
+    if (v.charges != null) items.push('<span style="font-size:.78rem;color:var(--text-muted);">⚡ ' + v.charges + ' laadsessies</span>');
+    if (v.first_date && v.last_date) items.push('<span style="font-size:.78rem;color:var(--text-muted);">📅 ' + esc(v.first_date) + ' — ' + esc(v.last_date) + '</span>');
+  }
+
+  content.innerHTML = items.join(sep);
   bar.style.display = 'flex';
 }
 

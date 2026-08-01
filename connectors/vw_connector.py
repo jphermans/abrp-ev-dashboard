@@ -32,7 +32,6 @@ class VolkswagenConnector(BaseConnector):
         return [
             {"key": "username", "label": "VW account e-mail", "type": "email", "required": True, "placeholder": "you@example.com"},
             {"key": "password", "label": "VW wachtwoord", "type": "password", "required": True, "placeholder": ""},
-            {"key": "spin", "label": "S-PIN (optioneel)", "type": "password", "required": False, "placeholder": ""},
             {"key": "abrp_token", "label": "ABRP Live Data token (optioneel)", "type": "text", "required": False, "placeholder": "van abetterrouteplanner.com → Live Data → Generic"},
         ]
 

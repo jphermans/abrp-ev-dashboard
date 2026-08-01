@@ -133,6 +133,7 @@ CONNECTORS["polestar"] = PolestarConnector
 - **Per-user connectors** — User A's VW credentials are invisible to User B
 - **Per-user language uploads** — custom language files stored per user
 - **Per-user caching** — cache keys include user ID to prevent cross-user data leaks
+- **Account deletion** — users can delete their own account from Settings (🗑️ section). Requires password confirmation. Removes: the user record, all uploaded Excel files, `activities.json`, connector credentials, auth tokens, custom locales, and settings. The last admin account cannot be deleted. Deleted users' stale session cookies are rejected (`user_exists` guard).
 
 ### 🌐 Internationalization (i18n)
 
@@ -196,6 +197,7 @@ templates/
 | `POST /api/auth/login` | Login |
 | `POST /api/auth/logout` | Logout |
 | `GET /api/auth/me` | Current user info |
+| `POST /api/auth/delete-account` | Permanently delete account + all data (password required) |
 | `GET /api/data` | Get all activity records (per-user) |
 | `POST /api/upload` | Upload ABRP Excel files (per-user) |
 | `GET /api/status` | Server health + user info |

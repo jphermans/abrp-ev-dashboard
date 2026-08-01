@@ -179,15 +179,64 @@ def register_auth(app):
         conn.commit()
         return jsonify({"status": "ok", "message": "Password changed"})
 
+    @app.route("/api/auth/delete-account", methods=["POST"])
+    @login_required
+    def auth_delete_account():
+        """Permanently delete the current user's account and ALL associated data."""
+        data = request.json or {}
+        confirm_password = data.get("password", "")
+
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+
+        if not user:
+            session.clear()
+            return jsonify({"error": "Account not found"}), 404
+
+        # Require password confirmation
+        if _hash_password(confirm_password, user["salt"]) != user["password_hash"]:
+            return jsonify({"error": "Password incorrect — account not deleted"}), 401
+
+        # Prevent admin from deleting themselves if they're the only admin
+        if user["is_admin"]:
+            admin_count = conn.execute("SELECT COUNT(*) FROM users WHERE is_admin = 1").fetchone()[0]
+            if admin_count <= 1:
+                return jsonify({"error": "Cannot delete the last admin account"}), 403
+
+        uid = session["user_id"]
+        username = user["username"]
+
+        # 1. Delete user's data directory (Excel files, activities.json, connector configs, tokens, custom locales)
+        user_dir = Path(__file__).parent / "data" / "users" / str(uid)
+        if user_dir.exists():
+            import shutil
+            shutil.rmtree(user_dir)
+
+        # 2. Delete user settings from database
+        conn.execute("DELETE FROM user_settings WHERE user_id = ?", (uid,))
+
+        # 3. Delete the user record
+        conn.execute("DELETE FROM users WHERE id = ?", (uid,))
+        conn.commit()
+
+        # 4. Clear session
+        session.clear()
+
+        return jsonify({"status": "ok", "message": f"Account '{username}' and all associated data permanently deleted"})
+
 
 # ─── Helpers ─────────────────────────────────────────────────────
 
 def login_required(f):
-    """Decorator: redirect to login if not authenticated."""
+    """Decorator: redirect to login if not authenticated or user no longer exists."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
             return jsonify({"error": "Authentication required", "redirect": "/login"}), 401
+        # Verify the user still exists (guards against deleted accounts with stale cookies)
+        if not user_exists(session["user_id"]):
+            session.clear()
+            return jsonify({"error": "Account no longer exists", "redirect": "/login"}), 401
         return f(*args, **kwargs)
     return decorated_function
 
@@ -203,10 +252,16 @@ def get_current_username() -> str:
 
 
 def get_user_data_dir(user_id: int) -> Path:
-    """Get the per-user data directory."""
+    """Get the per-user data directory. Only call after auth verification."""
     d = Path(__file__).parent / "data" / "users" / str(user_id)
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def user_exists(user_id: int) -> bool:
+    """Check if a user ID still exists in the database (guards against deleted users with stale sessions)."""
+    conn = get_db()
+    return conn.execute("SELECT 1 FROM users WHERE id = ?", (user_id,)).fetchone() is not None
 
 
 def get_setting(key: str, default=None):

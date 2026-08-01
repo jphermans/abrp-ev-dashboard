@@ -224,6 +224,14 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
       <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
     </div>
 
+    <div class="setting-section">
+      <div class="setting-label" style="color:var(--red);">🗑️ Account verwijderen</div>
+      <div class="setting-hint" style="margin-bottom:8px;">Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.</div>
+      <input type="password" class="setting-input" id="deleteAccountPassword" placeholder="Typ je wachtwoord om te bevestigen" style="margin-bottom:8px;">
+      <button class="btn btn-danger" onclick="deleteAccount()" style="width:100%;font-size:.85rem;padding:10px;">Account permanent verwijderen</button>
+      <div id="deleteStatus" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>
+    </div>
+
     <button class="btn btn-primary" onclick="closeSettings()" style="width:100%;margin-top:8px;">Sluiten</button>
   </div>
 </div>
@@ -321,6 +329,27 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 async function doLogout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   window.location.href = '/login';
+}
+
+async function deleteAccount() {
+  const pw = document.getElementById('deleteAccountPassword').value;
+  const status = document.getElementById('deleteStatus');
+  if (!pw) { status.innerHTML = '⚠️ Typ je wachtwoord'; return; }
+  if (!confirm('Weet je het zeker? Je account en alle gegevens worden permanent verwijderd.')) return;
+  status.innerHTML = '🗑️ Verwijderen...';
+  try {
+    const resp = await fetch('/api/auth/delete-account', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      status.innerHTML = '✅ ' + d.message;
+      setTimeout(() => window.location.href = '/login', 2000);
+    } else {
+      status.innerHTML = '❌ ' + (d.error || 'Fout');
+    }
+  } catch(e) { status.innerHTML = '❌ Verbindingsfout'; }
 }
 
 async function checkAuth() {

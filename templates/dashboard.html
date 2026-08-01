@@ -156,6 +156,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <!-- Vehicle Info Bar -->
 <div id="vehicleInfoBar" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
   <div id="vehicleInfoContent"></div>
+  <button class="btn btn-secondary" onclick="showVehicleDetails()" style="margin-left:auto;font-size:.78rem;padding:6px 14px;">🔍 Details</button>
 </div>
 
 <div class="kpi-grid" id="kpiGrid"></div>
@@ -358,6 +359,17 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Vehicle Details Modal -->
+<div class="modal-overlay" id="vehicleDetailsModal">
+  <div class="modal wide">
+    <h2>🚗 Voertuig Details</h2>
+    <div id="vehicleDetailsContent">
+      <p style="color:var(--text-muted);text-align:center;padding:40px;">Laden...</p>
+    </div>
+    <button class="btn btn-primary" onclick="closeVehicleDetails()" style="width:100%;margin-top:12px;">Sluiten</button>
+  </div>
+</div>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -1085,6 +1097,196 @@ function showToast(msg,isError){const t=document.getElementById('toast');t.textC
 // INIT
 // ═════════════════════════════════════════════════════════════════
 // ─── Vehicle Info ───────────────────────────────────────────────
+async function showVehicleDetails() {
+  document.getElementById('vehicleDetailsModal').classList.add('show');
+  const content = document.getElementById('vehicleDetailsContent');
+  content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">Laden...</p>';
+
+  // Try live connector data first
+  const brands = ['vw', 'tesla', 'bmw', 'hyundai_kia', 'mercedes'];
+  let vehicleData = null;
+
+  for (const brand of brands) {
+    try {
+      const resp = await fetch('/api/connector/' + brand + '/vehicle-info');
+      const d = await resp.json();
+      if (d.status === 'ok' && d.vehicles && d.vehicles.length > 0) {
+        vehicleData = { vehicles: d.vehicles, source: 'live' };
+        break;
+      }
+    } catch(e) {}
+  }
+
+  // Fallback: use Excel-derived data
+  if (!vehicleData && RAW_DATA.length > 0) {
+    vehicleData = { vehicles: [deriveVehicleFromData(RAW_DATA)], source: 'data' };
+  }
+
+  if (!vehicleData) {
+    content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">Geen voertuigdata beschikbaar. Koppel een voertuig of upload Excel bestanden.</p>';
+    return;
+  }
+
+  renderVehicleDetails(vehicleData.vehicles, vehicleData.source);
+}
+
+function closeVehicleDetails() {
+  document.getElementById('vehicleDetailsModal').classList.remove('show');
+}
+
+function renderVehicleDetails(vehicles, source) {
+  const content = document.getElementById('vehicleDetailsContent');
+  const v = vehicles[0];
+
+  const sections = [];
+  const sourceLabel = source === 'live'
+    ? '<span style="color:var(--green);font-size:.72rem;">● Live</span>'
+    : '<span style="color:var(--text-muted);font-size:.72rem;">● Uit Excel data</span>';
+
+  // Header
+  sections.push('<div style="margin-bottom:16px;">');
+  sections.push('<div style="font-size:1.3rem;font-weight:700;">🚗 ' + esc(v.nickname || v.vin || 'Onbekend') + '</div>');
+  sections.push(sourceLabel);
+  sections.push('</div>');
+
+  // General info
+  const general = [];
+  if (v.manufacturer) general.push(['Fabrikant', esc(v.manufacturer)]);
+  if (v.model) general.push(['Model', esc(v.model)]);
+  if (v.model_year) general.push(['Bouwjaar', esc(v.model_year)]);
+  if (v.license_plate) general.push(['Kenteken', esc(v.license_plate)]);
+  if (v.vin) general.push(['VIN', esc(v.vin)]);
+  if (v.type) general.push(['Type', esc(v.type)]);
+  if (v.state) general.push(['Staat', esc(v.state)]);
+  if (v.connection_state) general.push(['Verbinding', esc(v.connection_state)]);
+
+  if (general.length > 0) {
+    sections.push(buildDetailSection('📋 Algemeen', general));
+  }
+
+  // Odometer
+  if (v.odometer_km != null) {
+    sections.push(buildDetailSection('🏁 Kilometerstand', [
+      ['Stand', Math.round(Number(v.odometer_km)).toLocaleString() + ' km']
+    ]));
+  }
+
+  // Battery & Charging
+  const battery = [];
+  if (v.battery_soc != null) battery.push(['Batterij SoC', v.battery_soc + '%']);
+  if (v.range_km != null) battery.push(['Bereik', Math.round(Number(v.range_km)) + ' km']);
+  if (v.charging_state) battery.push(['Laadstatus', esc(v.charging_state)]);
+  if (v.charge_type) battery.push(['Laadtype', esc(v.charge_type)]);
+  if (v.charge_power_kw != null) battery.push(['Laadvermogen', v.charge_power_kw + ' kW']);
+  if (v.remaining_charge_time != null) battery.push(['Resterende laadtijd', formatTime(v.remaining_charge_time)]);
+
+  if (battery.length > 0) {
+    sections.push(buildDetailSection('🔋 Batterij & Laden', battery));
+  }
+
+  // Climatization
+  const climate = [];
+  if (v.climatisation_state) climate.push(['Klimaatstatus', esc(v.climatisation_state)]);
+  if (v.target_temperature != null) climate.push(['Doeltemperatuur', v.target_temperature + '°C']);
+  if (v.outside_temperature != null) climate.push(['Buitentemperatuur', v.outside_temperature + '°C']);
+  if (v.remaining_climatisation_time != null) climate.push(['Resterende tijd', formatTime(v.remaining_climatisation_time)]);
+
+  if (climate.length > 0) {
+    sections.push(buildDetailSection('🌡️ Klimaat', climate));
+  }
+
+  // Doors
+  if (v.doors && v.doors.length > 0) {
+    const doorRows = v.doors.map(d => [esc(d.name), d.open === true || d.open === 'true' ? '🔓 Open' : '🔒 Gesloten']);
+    sections.push(buildDetailSection('🚪 Deuren', doorRows));
+  }
+
+  // Windows
+  if (v.windows && v.windows.length > 0) {
+    const winRows = v.windows.map(w => [esc(w.name), w.open === true || w.open === 'true' ? '🔓 Open' : '🔒 Gesloten']);
+    sections.push(buildDetailSection('🪟 Ramen', winRows));
+  }
+
+  // Position
+  if (v.position && (v.position.latitude || v.position.longitude)) {
+    sections.push(buildDetailSection('📍 Positie', [
+      ['Latitude', esc(v.position.latitude || '?')],
+      ['Longitude', esc(v.position.longitude || '?')],
+      ['Tijd', esc(v.position.timestamp || '?')]
+    ]));
+  }
+
+  // Software
+  const sw = [];
+  if (v.software_version) sw.push(['Versie', esc(v.software_version)]);
+  if (v.software_update_available != null) sw.push(['Update beschikbaar', v.software_update_available ? '✅ Ja' : '❌ Nee']);
+  if (sw.length > 0) {
+    sections.push(buildDetailSection('💾 Software', sw));
+  }
+
+  // Maintenance
+  const maint = [];
+  if (v.maintenance_inspection_km != null) maint.push(['Keuring over', Math.round(v.maintenance_inspection_km).toLocaleString() + ' km']);
+  if (v.maintenance_inspection_days != null) maint.push(['Keuring over', v.maintenance_inspection_days + ' dagen']);
+  if (maint.length > 0) {
+    sections.push(buildDetailSection('🔧 Onderhoud', maint));
+  }
+
+  // Parking brake
+  if (v.parking_brake != null) {
+    sections.push(buildDetailSection('🅿️ Handrem', [
+      ['Status', v.parking_brake ? '🔒 Aan' : '✅ Uit']
+    ]));
+  }
+
+  // Excel-derived stats
+  if (source === 'data' || v.source === 'data') {
+    const stats = [];
+    if (v.total_km != null) stats.push(['Totaal gereden', v.total_km.toLocaleString() + ' km']);
+    if (v.trips != null) stats.push(['Ritten', v.trips]);
+    if (v.charges != null) stats.push(['Laadsessies', v.charges]);
+    if (v.first_date) stats.push(['Eerste rit', esc(v.first_date)]);
+    if (v.last_date) stats.push(['Laatste rit', esc(v.last_date)]);
+    if (stats.length > 0) {
+      sections.push(buildDetailSection('📊 Statistieken (uit data)', stats));
+    }
+  }
+
+  // Specification
+  if (v.specification && Object.keys(v.specification).length > 0) {
+    const specRows = Object.entries(v.specification)
+      .filter(([k, val]) => val != null && val !== '')
+      .map(([k, val]) => [esc(k), esc(String(val))]);
+    if (specRows.length > 0) {
+      sections.push(buildDetailSection('📋 Specificaties', specRows));
+    }
+  }
+
+  content.innerHTML = sections.join('');
+}
+
+function buildDetailSection(title, rows) {
+  if (!rows || rows.length === 0) return '';
+  const body = rows.map(([label, value]) =>
+    '<tr><td style="color:var(--text-muted);font-size:.8rem;padding:6px 0;width:45%;">' + label + '</td>' +
+    '<td style="font-size:.85rem;padding:6px 0;font-weight:600;">' + value + '</td></tr>'
+  ).join('');
+  return '<div style="margin-bottom:16px;">' +
+    '<div style="font-size:.9rem;font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">' + title + '</div>' +
+    '<table style="width:100%;border-collapse:collapse;">' + body + '</table>' +
+    '</div>';
+}
+
+function formatTime(seconds) {
+  if (seconds == null) return '?';
+  const s = Number(seconds);
+  if (isNaN(s)) return String(seconds);
+  if (s < 60) return s + ' sec';
+  if (s < 3600) return Math.round(s / 60) + ' min';
+  const h = Math.floor(s / 3600);
+  const m = Math.round((s % 3600) / 60);
+  return h + 'u ' + m + 'min';
+}
 async function loadVehicleInfo() {
   // 1. Try live connector data first
   const brands = ['vw', 'tesla', 'bmw', 'hyundai_kia', 'mercedes'];

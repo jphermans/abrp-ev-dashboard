@@ -212,7 +212,7 @@ class VolkswagenConnector(BaseConnector):
         return records
 
     def get_vehicle_info(self) -> List[Dict]:
-        """Fetch static vehicle information."""
+        """Fetch comprehensive vehicle information from CarConnectivity."""
         result = self._connect()
         if result["status"] != "ok":
             return []
@@ -224,62 +224,198 @@ class VolkswagenConnector(BaseConnector):
             garage = cc.get_garage()
             if garage:
                 for vehicle in garage.list_vehicles():
-                    info = {
-                        "vin": vehicle.id or '',
-                        "nickname": getattr(vehicle, 'name', None) or vehicle.id or 'VW',
-                        "model": '',
-                        "capabilities": [],
-                    }
-
-                    # Get vehicle attributes
-                    try:
-                        attrs = vehicle.get_attributes() if hasattr(vehicle, 'get_attributes') else {}
-                        if attrs:
-                            info['model'] = attrs.get('model', attrs.get('name', ''))
-                    except:
-                        pass
-
-                    # Get odometer from drives
-                    try:
-                        drives = vehicle.get_by_path("drives") if hasattr(vehicle, 'get_by_path') else None
-                        if drives:
-                            drive_dict = drives.as_dict() if hasattr(drives, 'as_dict') else {}
-                            odo = drive_dict.get('mileage', drive_dict.get('odometer', 0))
-                            if isinstance(odo, dict):
-                                info['odometer_km'] = odo.get('value', odo.get('km', 0))
-                            elif isinstance(odo, (int, float)):
-                                info['odometer_km'] = odo
-                    except:
-                        pass
-
-                    # Get battery/charging status
-                    try:
-                        charging = vehicle.get_by_path("charging") if hasattr(vehicle, 'get_by_path') else None
-                        if charging:
-                            charge_dict = charging.as_dict() if hasattr(charging, 'as_dict') else {}
-                            soc = charge_dict.get('batteryLevel', {})
-                            if isinstance(soc, dict):
-                                info['battery_soc'] = soc.get('value')
-                            elif isinstance(soc, (int, float)):
-                                info['battery_soc'] = soc
-                            state = charge_dict.get('state', '')
-                            if isinstance(state, dict):
-                                info['charging_state'] = state.get('value', str(state))
-                            else:
-                                info['charging_state'] = str(state) if state else None
-                    except:
-                        pass
-
-                    vehicles_info.append(info)
-
+                    info = self._extract_vehicle_data(vehicle)
+                    if info:
+                        vehicles_info.append(info)
             cc.shutdown()
-        except:
+        except Exception:
             try:
                 cc.shutdown()
             except:
                 pass
 
         return vehicles_info
+
+    def _extract_vehicle_data(self, vehicle) -> Dict:
+        """Extract all available data from a CarConnectivity vehicle object."""
+        def get_attr(obj, attr_name, default=None):
+            """Safely get an attribute value from a CarConnectivity object."""
+            try:
+                attr = getattr(obj, attr_name, None)
+                if attr is None:
+                    return default
+                # CarConnectivity attributes have .value
+                if hasattr(attr, 'value'):
+                    v = attr.value
+                    return v if v is not None else default
+                # Some are EnumAttribute — get the name
+                if hasattr(attr, 'name') and not isinstance(attr, str):
+                    return str(attr)
+                return attr
+            except Exception:
+                return default
+
+        def get_child_dict(obj, path):
+            """Safely get a child object and convert to dict."""
+            try:
+                child = obj.get_by_path(path) if hasattr(obj, 'get_by_path') else None
+                if child:
+                    return child.as_dict() if hasattr(child, 'as_dict') else {}
+            except Exception:
+                pass
+            return {}
+
+        info = {
+            "vin": str(getattr(vehicle, 'id', '') or ''),
+            "nickname": str(get_attr(vehicle, 'name', '') or ''),
+            "manufacturer": str(get_attr(vehicle, 'manufacturer', '') or ''),
+            "model": str(get_attr(vehicle, 'model', '') or ''),
+            "model_year": get_attr(vehicle, 'model_year'),
+            "license_plate": str(get_attr(vehicle, 'license_plate', '') or ''),
+            "type": str(get_attr(vehicle, 'type', '') or ''),
+            "state": str(get_attr(vehicle, 'state', '') or ''),
+            "connection_state": str(get_attr(vehicle, 'connection_state', '') or ''),
+        }
+
+        # Odometer
+        info["odometer_km"] = get_attr(vehicle, 'odometer')
+
+        # Parking brake
+        info["parking_brake"] = get_attr(vehicle, 'parking_brake')
+
+        # Charging & Battery
+        try:
+            charging = getattr(vehicle, 'charging', None)
+            if charging:
+                info["battery_soc"] = get_attr(charging, 'battery_level')
+                info["charging_state"] = str(get_attr(charging, 'state', '') or '')
+                info["charge_type"] = str(get_attr(charging, 'charge_type', '') or '')
+                info["charge_power_kw"] = get_attr(charging, 'charge_power')
+                info["charge_rate_kmh"] = get_attr(charging, 'charge_rate')
+                info["remaining_charge_time"] = get_attr(charging, 'remaining_charging_time')
+        except Exception:
+            pass
+
+        # Range
+        try:
+            # Electric vehicles have range
+            if hasattr(vehicle, 'range'):
+                info["range_km"] = get_attr(vehicle, 'range')
+        except Exception:
+            pass
+
+        # Climatization
+        try:
+            climatization = getattr(vehicle, 'climatization', None)
+            if climatization:
+                info["climatisation_state"] = str(get_attr(climatization, 'state', '') or '')
+                info["target_temperature"] = get_attr(climatization, 'target_temperature')
+                info["remaining_climatisation_time"] = get_attr(climatization, 'remaining_time')
+        except Exception:
+            pass
+
+        # Outside temperature
+        info["outside_temperature"] = get_attr(vehicle, 'outside_temperature')
+
+        # Doors
+        try:
+            doors = getattr(vehicle, 'doors', None)
+            if doors:
+                doors_dict = doors.as_dict() if hasattr(doors, 'as_dict') else {}
+                door_list = []
+                for door_id, door_data in doors_dict.items():
+                    if isinstance(door_data, dict):
+                        door_list.append({
+                            "name": door_id,
+                            "open": door_data.get('open', door_data.get('locked', '')),
+                            "locked": door_data.get('locked', ''),
+                        })
+                if door_list:
+                    info["doors"] = door_list
+        except Exception:
+            pass
+
+        # Windows
+        try:
+            windows = getattr(vehicle, 'windows', None)
+            if windows:
+                windows_dict = windows.as_dict() if hasattr(windows, 'as_dict') else {}
+                win_list = []
+                for win_id, win_data in windows_dict.items():
+                    if isinstance(win_data, dict):
+                        win_list.append({
+                            "name": win_id,
+                            "open": win_data.get('open', win_data.get('state', '')),
+                        })
+                if win_list:
+                    info["windows"] = win_list
+        except Exception:
+            pass
+
+        # Position
+        try:
+            position = getattr(vehicle, 'position', None)
+            if position:
+                pos_dict = position.as_dict() if hasattr(position, 'as_dict') else {}
+                if pos_dict:
+                    info["position"] = {
+                        "latitude": pos_dict.get('latitude', pos_dict.get('lat')),
+                        "longitude": pos_dict.get('longitude', pos_dict.get('lng', pos_dict.get('lon'))),
+                        "timestamp": pos_dict.get('timestamp', pos_dict.get('time', '')),
+                    }
+        except Exception:
+            pass
+
+        # Software
+        try:
+            software = getattr(vehicle, 'software', None)
+            if software:
+                info["software_version"] = str(get_attr(software, 'version', '') or '')
+                info["software_update_available"] = get_attr(software, 'update_available')
+        except Exception:
+            pass
+
+        # Maintenance
+        try:
+            maintenance = getattr(vehicle, 'maintenance', None)
+            if maintenance:
+                info["maintenance_inspection_km"] = get_attr(maintenance, 'inspection_due_km')
+                info["maintenance_inspection_days"] = get_attr(maintenance, 'inspection_due_days')
+                info["maintenance_oil_service_km"] = get_attr(maintenance, 'oil_service_due_km')
+        except Exception:
+            pass
+
+        # Lights
+        try:
+            lights = getattr(vehicle, 'lights', None)
+            if lights:
+                lights_dict = lights.as_dict() if hasattr(lights, 'as_dict') else {}
+                if lights_dict:
+                    info["lights"] = {k: str(v) for k, v in lights_dict.items() if v}
+        except Exception:
+            pass
+
+        # Window heatings
+        try:
+            wh = getattr(vehicle, 'window_heatings', None)
+            if wh:
+                wh_dict = wh.as_dict() if hasattr(wh, 'as_dict') else {}
+                if wh_dict:
+                    info["window_heating"] = {k: str(v) for k, v in wh_dict.items() if v}
+        except Exception:
+            pass
+
+        # Specification
+        try:
+            spec = getattr(vehicle, 'specification', None)
+            if spec:
+                spec_dict = spec.as_dict() if hasattr(spec, 'as_dict') else {}
+                if spec_dict:
+                    info["specification"] = spec_dict
+        except Exception:
+            pass
+
+        return info
 
     @staticmethod
     def _safe_pct(val):

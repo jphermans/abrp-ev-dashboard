@@ -1,29 +1,16 @@
-# OS files
-.DS_Store
-Thumbs.db
-
-# Editor files
-*.swp
-*.swo
-*~
-.vscode/
-.idea/
-
-# Real data (keep only demo/fake data)
-exports/
-*.xlsx
-!sample-data/*.xlsx
-!pi/data/.gitkeep
-
-# Python
 __pycache__/
 *.pyc
-.venv/
+*.pyo
 venv/
-
-# Pi runtime
-pi/data/*.json
-pi/data/*.xlsx
-pi/venv/
-pi/*.log
-pi/*.pid
+data/*.json
+data/*.xlsx
+data/connector_*.json
+data/token_*.json
+data/vw_*.json
+*.log
+*.pid
+.DS_Store
+test-*
+exports/
+sample-data/*.xlsx
+!sample-data/.gitkeep

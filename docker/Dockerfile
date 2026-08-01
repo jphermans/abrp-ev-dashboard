@@ -19,9 +19,11 @@ RUN apt-get update && \
 COPY docker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY server.py .
+# Copy application code (modular structure)
+COPY server.py config.py excel_parser.py ./
 COPY templates/ templates/
+COPY routes/ routes/
+COPY connectors/ connectors/
 
 # Create data directory (will be mounted as volume)
 RUN mkdir -p /app/data

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,11 +38,11 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 <body>
 <div class="login-card">
   <h1>🚗 ABRP Dashboard</h1>
-  <div class="subtitle">EV rijstatistieken & laadgedrag</div>
+  <div class="subtitle">EV driving & charging analytics</div>
 
   <div class="tabs">
     <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
-    <div class="tab" id="registerTab" onclick="switchTab('register')">Nieuw account</div>
+    <div class="tab" id="registerTab" onclick="switchTab('register')">New account</div>
   </div>
 
   <form onsubmit="return doSubmit(event)">
@@ -50,20 +50,20 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <!-- Register: adds display name + email above -->
     <div id="registerFields">
       <div class="field">
-        <label>Weergavenaam (optioneel)</label>
-        <input type="text" id="displayName" placeholder="Je naam">
+        <label>Display name (optional)</label>
+        <input type="text" id="displayName" placeholder="Your name">
       </div>
       <div class="field">
-        <label>E-mail</label>
-        <input type="email" id="email" placeholder="je@email.nl">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@email.com">
       </div>
     </div>
     <div class="field">
-      <label>Gebruikersnaam of e-mail</label>
-      <input type="text" id="username" required placeholder="gebruiker of je@email.nl" autocomplete="username">
+      <label>Username or email</label>
+      <input type="text" id="username" required placeholder="username or you@email.com" autocomplete="username">
     </div>
     <div class="field">
-      <label>Wachtwoord</label>
+      <label>Password</label>
       <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
     </div>
     <div class="error-msg" id="errorMsg"></div>
@@ -81,18 +81,15 @@ function switchTab(m) {
   document.getElementById('loginTab').classList.toggle('active', m === 'login');
   document.getElementById('registerTab').classList.toggle('active', m === 'register');
   document.getElementById('registerFields').style.display = m === 'register' ? 'block' : 'none';
-  document.getElementById('submitBtn').textContent = m === 'register' ? 'Account aanmaken' : 'Login';
+  document.getElementById('submitBtn').textContent = m === 'register' ? 'Create account' : 'Login';
   document.getElementById('errorMsg').textContent = '';
-  // Update label and placeholder for the main field
-  const mainLabel = document.querySelector('label[for="username"]') || document.querySelectorAll('.field label')[2];
   const mainInput = document.getElementById('username');
   if (m === 'register') {
-    mainInput.placeholder = 'kies een gebruikersnaam';
-    mainInput.autocomplete = 'username';
+    mainInput.placeholder = 'choose a username';
   } else {
-    mainInput.placeholder = 'gebruiker of je@email.nl';
-    mainInput.autocomplete = 'username';
+    mainInput.placeholder = 'username or you@email.com';
   }
+  mainInput.autocomplete = 'username';
 }
 
 async function doSubmit(e) {
@@ -132,14 +129,14 @@ async function doSubmit(e) {
     if (d.status === 'ok') {
       window.location.href = '/';
     } else {
-      errEl.textContent = d.error || 'Er ging iets mis';
+      errEl.textContent = d.error || 'Something went wrong';
       btn.disabled = false;
-      btn.textContent = mode === 'register' ? 'Account aanmaken' : 'Login';
+      btn.textContent = mode === 'register' ? 'Create account' : 'Login';
     }
   } catch(err) {
-    errEl.textContent = 'Verbindingsfout';
+    errEl.textContent = 'Connection error';
     btn.disabled = false;
-    btn.textContent = mode === 'register' ? 'Account aanmaken' : 'Login';
+    btn.textContent = mode === 'register' ? 'Create account' : 'Login';
   }
   return false;
 }

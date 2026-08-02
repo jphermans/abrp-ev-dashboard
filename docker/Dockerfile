@@ -33,10 +33,10 @@ COPY scripts/ scripts/
 RUN mkdir -p /app/data
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8765
 
 # Environment defaults
-ENV PORT=8000
+ENV PORT=8765
 ENV HOST=0.0.0.0
 ENV PYTHONUNBUFFERED=1
 
@@ -45,4 +45,4 @@ ENV PYTHONUNBUFFERED=1
 # --threads 2: handle uploads + API calls without blocking
 # --timeout 120: allow slow Excel parsing
 # --max-requests 100: restart workers periodically to free memory
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "2", "--timeout", "120", "--max-requests", "100", "--access-logfile", "-", "server:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 2 --timeout 120 --max-requests 100 --access-logfile - server:app"]

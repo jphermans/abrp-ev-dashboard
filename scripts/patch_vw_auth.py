@@ -54,6 +54,7 @@ def patch_we_connect_session(filepath: Path) -> bool:
         if state is None:
             self.state = __import__('secrets').token_urlsafe(32)
             state = self.state
+        params.append(('state', state))
         auth_url: str = add_params_to_uri(url, params)
         return auth_url"""
 

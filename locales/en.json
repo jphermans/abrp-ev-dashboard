@@ -76,7 +76,8 @@
     "table.drive_opt": "🚗 Drive",
     "table.charge_opt": "⚡ Charge",
     "table.edit_providers": "✏️ Edit provider",
-    "table.edit_hint": "Click the provider dropdown to assign the correct charging provider for each session."
+    "table.edit_hint": "Click the provider dropdown to assign the correct charging provider for each session.",
+    "records_lc": "records"
   },
   "activity": {
     "drive": "🚗 Drive",
@@ -219,7 +220,8 @@
     "enter_name": "Enter a name",
     "date_range_reset": "Date range reset",
     "date_range_select": "Select a date first",
-    "date_range_applied": "records"
+    "date_range_applied": "records",
+    "no_data_period": "No data in this period"
   },
   "help": {
     "title": "❓ Help — How the dashboard works",
@@ -263,7 +265,14 @@
     "privacy_section": "🔒 Privacy",
     "privacy_desc": "All data stays local on your Raspberry Pi. The server sends no data to external servers unless you explicitly use WeConnect or ABRP API.",
     "language_section": "🌐 Language",
-    "language_desc": "The dashboard supports multiple languages. Download a template, translate it, and upload your own language file in Settings."
+    "language_desc": "The dashboard supports multiple languages. Download a template, translate it, and upload your own language file in Settings.",
+    "help.filters_intro": "Choose a period and select the specific day, week, month or year. All data — KPIs, charts, tables — is filtered instantly:",
+    "help.filter_day_desc": "Pick a specific date. Shows all trips and charge sessions for that day.",
+    "help.filter_week_desc": "Pick a week from the dropdown. Filters by ISO week number.",
+    "help.filter_month_desc": "Pick a month (default). Shows all data for that month.",
+    "help.filter_year_desc": "Pick a year. Shows all data for that year.",
+    "help.filter_all_desc": "Shows all data without filtering.",
+    "help.filters_note": "KPIs, charts, charge locations, and activity table all update instantly when changing the period or picker."
   },
   "providers": {
     "DATS 24": "DATS 24",

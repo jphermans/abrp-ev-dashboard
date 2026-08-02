@@ -150,18 +150,17 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 </div>
 <div class="filters">
   <div class="filter-group">
-    <button class="filter-btn" data-period="day">Dag</button>
-    <button class="filter-btn" data-period="week">Week</button>
-    <button class="filter-btn active" data-period="month">Maand</button>
-    <button class="filter-btn" data-period="year">Jaar</button>
-    <button class="filter-btn" data-period="all">Alles</button>
+    <button class="filter-btn" data-period="day" onclick="onPeriodClick('day')">Dag</button>
+    <button class="filter-btn" data-period="week" onclick="onPeriodClick('week')">Week</button>
+    <button class="filter-btn active" data-period="month" onclick="onPeriodClick('month')">Maand</button>
+    <button class="filter-btn" data-period="year" onclick="onPeriodClick('year')">Jaar</button>
+    <button class="filter-btn" data-period="all" onclick="onPeriodClick('all')">Alles</button>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-    <input type="date" id="dateFromInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
-    <span style="color:var(--text-muted);font-size:.78rem;">→</span>
-    <input type="date" id="dateToInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
-    <button class="btn btn-secondary" onclick="applyDateRange()" style="font-size:.75rem;padding:6px 12px;" data-i18n="filters.apply">Toepassen</button>
-    <button class="btn btn-secondary" onclick="clearDateRange()" style="font-size:.75rem;padding:6px 12px;" data-i18n="filters.reset">Reset</button>
+  <div id="periodPickerWrap" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
+    <input type="date" id="dayPicker" style="display:none;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="onPickerChange()">
+    <input type="month" id="monthPicker" style="display:none;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="onPickerChange()">
+    <select id="yearPicker" style="display:none;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="onPickerChange()"></select>
+    <select id="weekPicker" style="display:none;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="onPickerChange()"></select>
   </div>
   <div class="date-range" id="dateRangeInfo"></div>
 </div>
@@ -323,15 +322,15 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 
     <div class="help-section">
       <h3 data-i18n="help.time_filters">🔀 Tijdfilters</h3>
-      <p data-i18n="help.filters_intro">Met de filterknoppen bovenaan kies je hoe de data wordt gegroepeerd:</p>
+      <p data-i18n="help.filters_intro">Kies een periode en selecteer de specifieke dag, week, maand of jaar. Alle data — KPI's, grafieken, tabellen — wordt onmiddellijk gefilterd op je keuze:</p>
       <ul>
-        <li><span class="kbd" data-i18n="filters.day">Dag</span> — <span data-i18n="help.filter_day_desc">Elke individuele dag als aparte kolom/rij</span></li>
-        <li><span class="kbd" data-i18n="filters.week">Week</span> — <span data-i18n="help.filter_week_desc">Gegroepeerd per ISO-weeknummer</span></li>
-        <li><span class="kbd" data-i18n="filters.month">Maand</span> — <span data-i18n="help.filter_month_desc">Gegroepeerd per maand (standaard)</span></li>
-        <li><span class="kbd" data-i18n="filters.year">Jaar</span> — <span data-i18n="help.filter_year_desc">Jaartotalen</span></li>
-        <li><span class="kbd" data-i18n="filters.all">Alles</span> — <span data-i18n="help.filter_all_desc">Alle data samengevoegd als één periode</span></li>
+        <li><span class="kbd" data-i18n="filters.day">Dag</span> — <span data-i18n="help.filter_day_desc">Kies een specifieke datum. Toont alle ritten en laadsessies van die dag.</span></li>
+        <li><span class="kbd" data-i18n="filters.week">Week</span> — <span data-i18n="help.filter_week_desc">Kies een week uit de dropdown. Filtert op ISO-weeknummer.</span></li>
+        <li><span class="kbd" data-i18n="filters.month">Maand</span> — <span data-i18n="help.filter_month_desc">Kies een maand (standaard). Toont alle data van die maand.</span></li>
+        <li><span class="kbd" data-i18n="filters.year">Jaar</span> — <span data-i18n="help.filter_year_desc">Kies een jaar. Toont alle data van dat jaar.</span></li>
+        <li><span class="kbd" data-i18n="filters.all">Alles</span> — <span data-i18n="help.filter_all_desc">Toont alle data zonder filter.</span></li>
       </ul>
-      <p style="margin-top:8px;" data-i18n="help.filters_note">Alle grafieken updaten onmiddellijk bij het wijzigen van filter.</p>
+      <p style="margin-top:8px;" data-i18n="help.filters_note">KPI's, grafieken, laadlocaties en activiteitentabel updaten allemaal onmiddellijk bij het wijzigen van de periode of de picker.</p>
     </div>
 
     <div class="help-section">
@@ -873,7 +872,6 @@ let RAW_DATA = [];
 let charts = {};
 let currentPeriod = 'month';
 let currentPalette = 'default';
-let dateRangeFilter = null; // {from: 'YYYY-MM-DD', to: 'YYYY-MM-DD'} or null
 
 // ─── Color Palettes ──────────────────────────────────────────────
 const PALETTES = {
@@ -1288,6 +1286,110 @@ async function updateProvider(activityId, provider) {
   }
 }
 
+// ─── Period Picker System ────────────────────────────────────────
+let periodFilter = null; // {type:'day'|'week'|'month'|'year'|'all', value: '2026-07', ...}
+
+function getFilteredData() {
+  if (!periodFilter || periodFilter.type === 'all') return RAW_DATA;
+  return RAW_DATA.filter(r => {
+    const d = r.date; // 'YYYY-MM-DD'
+    if (periodFilter.type === 'day') return d === periodFilter.value;
+    if (periodFilter.type === 'week') {
+      return getWeekKey(d) === periodFilter.value;
+    }
+    if (periodFilter.type === 'month') return d.startsWith(periodFilter.value); // 'YYYY-MM'
+    if (periodFilter.type === 'year') return d.startsWith(periodFilter.value);  // 'YYYY'
+    return true;
+  });
+}
+
+function getWeekKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + String(week).padStart(2, '0');
+}
+
+function buildWeekOptions() {
+  const weekSet = new Set();
+  RAW_DATA.forEach(r => weekSet.add(getWeekKey(r.date)));
+  const weeks = [...weekSet].sort().reverse();
+  const sel = document.getElementById('weekPicker');
+  sel.innerHTML = weeks.map(w => {
+    const parts = w.split('-W');
+    return '<option value="' + w + '">' + t('filters.week') + ' ' + parts[1] + ' \u2014 ' + parts[0] + '</option>';
+  }).join('');
+}
+
+function buildYearOptions() {
+  const yearSet = new Set();
+  RAW_DATA.forEach(r => yearSet.add(r.date.slice(0, 4)));
+  const years = [...yearSet].sort().reverse();
+  const sel = document.getElementById('yearPicker');
+  sel.innerHTML = years.map(y => '<option value="' + y + '">' + y + '</option>').join('');
+}
+
+function onPeriodClick(period) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  var btn = document.querySelector('.filter-btn[data-period="' + period + '"]');
+  if (btn) btn.classList.add('active');
+  currentPeriod = period;
+
+  var wrap = document.getElementById('periodPickerWrap');
+  var dayP = document.getElementById('dayPicker');
+  var monthP = document.getElementById('monthPicker');
+  var yearP = document.getElementById('yearPicker');
+  var weekP = document.getElementById('weekPicker');
+
+  wrap.style.display = 'none';
+  dayP.style.display = 'none';
+  monthP.style.display = 'none';
+  yearP.style.display = 'none';
+  weekP.style.display = 'none';
+
+  if (period === 'day') {
+    wrap.style.display = 'flex';
+    dayP.style.display = 'block';
+    var lastDate = RAW_DATA.length > 0 ? RAW_DATA[RAW_DATA.length - 1].date : '';
+    if (!dayP.value) dayP.value = lastDate;
+    periodFilter = { type: 'day', value: dayP.value };
+  } else if (period === 'week') {
+    wrap.style.display = 'flex';
+    weekP.style.display = 'block';
+    buildWeekOptions();
+    periodFilter = { type: 'week', value: weekP.value };
+  } else if (period === 'month') {
+    wrap.style.display = 'flex';
+    monthP.style.display = 'block';
+    var lastDate2 = RAW_DATA.length > 0 ? RAW_DATA[RAW_DATA.length - 1].date : '';
+    if (lastDate2 && !monthP.value) monthP.value = lastDate2.slice(0, 7);
+    periodFilter = { type: 'month', value: monthP.value };
+  } else if (period === 'year') {
+    wrap.style.display = 'flex';
+    yearP.style.display = 'block';
+    buildYearOptions();
+    periodFilter = { type: 'year', value: yearP.value };
+  } else {
+    periodFilter = { type: 'all' };
+  }
+
+  if (RAW_DATA.length > 0) renderDashboard();
+}
+
+function onPickerChange() {
+  var p = currentPeriod;
+  if (p === 'day') {
+    periodFilter = { type: 'day', value: document.getElementById('dayPicker').value };
+  } else if (p === 'week') {
+    periodFilter = { type: 'week', value: document.getElementById('weekPicker').value };
+  } else if (p === 'month') {
+    periodFilter = { type: 'month', value: document.getElementById('monthPicker').value };
+  } else if (p === 'year') {
+    periodFilter = { type: 'year', value: document.getElementById('yearPicker').value };
+  }
+  if (RAW_DATA.length > 0) renderDashboard();
+}
+
 // ─── Table Sort & Filter ────────────────────────────────────────
 let tableSort = { col: 'date', dir: 'desc' };
 let tableFilters = { search: '', type: '', provider: '' };
@@ -1379,59 +1481,24 @@ function renderTableRows() {
   ).join('');
 }
 
-function getFilteredData() {
-  if (!dateRangeFilter) return RAW_DATA;
-  return RAW_DATA.filter(r => {
-    const d = r.date;
-    if (dateRangeFilter.from && d < dateRangeFilter.from) return false;
-    if (dateRangeFilter.to && d > dateRangeFilter.to) return false;
-    return true;
-  });
-}
-
-function applyDateRange() {
-  const from = document.getElementById('dateFromInput').value;
-  const to = document.getElementById('dateToInput').value;
-  if (!from && !to) { showToast('Kies eerst een datum'); return; }
-  dateRangeFilter = { from: from || null, to: to || null };
-  renderDashboard();
-  const range = document.getElementById('dateRangeInfo');
-  if (range) {
-    range.textContent = ' Periode: ' + (from || 'begin') + ' tot ' + (to || 'einde') + ' — ' + getFilteredData().length + ' records';
-    range.style.color = 'var(--accent-light)';
-  }
-  showToast('Datumbereik toegepast: ' + (from || '?') + ' → ' + (to || '?'));
-}
-
-function clearDateRange() {
-  dateRangeFilter = null;
-  document.getElementById('dateFromInput').value = '';
-  document.getElementById('dateToInput').value = '';
-  renderDashboard();
-  const range = document.getElementById('dateRangeInfo');
-  if (range) { range.textContent = ''; range.style.color = ''; }
-  showToast('Datumbereik gereset');
-}
-
 function renderDashboard(){
   if(RAW_DATA.length===0){showToast(t('messages.no_data'),true);return;}
   const data = getFilteredData();
-  if (data.length === 0) { showToast('Geen data in deze periode', true); return; }
+  if (data.length === 0) { showToast(t('messages.no_data_period'), true); return; }
   const k=calcKPIs(data);renderKPIs(k);renderCharts(data,currentPeriod);renderChargeLocations(data);renderTable(data);
   // Update vehicle info using translated subtitle
   document.getElementById('vehicleInfo').textContent = t('ui.subtitle');
-  // Update date range info if filter is active
-  if (dateRangeFilter) {
-    const range = document.getElementById('dateRangeInfo');
-    if (range) {
-      range.textContent = ' Periode: ' + (dateRangeFilter.from || 'begin') + ' tot ' + (dateRangeFilter.to || 'einde') + ' — ' + data.length + ' records';
-      range.style.color = 'var(--accent-light)';
-    }
+  // Update date range info
+  const range = document.getElementById('dateRangeInfo');
+  if (range && periodFilter && periodFilter.type !== 'all') {
+    const cnt = data.length;
+    range.textContent = '\u2705 ' + cnt + ' ' + t('table.records_lc') + ' \u2014 ' + periodFilter.value;
+    range.style.color = 'var(--accent-light)';
+  } else if (range) {
+    range.textContent = '\u2705 ' + (RAW_DATA.length) + ' ' + t('table.records_lc') + ' \u2014 ' + t('filters.all');
+    range.style.color = '';
   }
 }
-
-// ─── Filters ─────────────────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentPeriod=btn.dataset.period;if(RAW_DATA.length>0)renderDashboard();}));
 
 // ─── PDF Export ──────────────────────────────────────────────────
 async function exportPDF(){
@@ -1764,7 +1831,8 @@ async function init(){
     // Legacy mode: single data directory
     await loadData();
   }
-  renderDashboard();
+  // Activate default period (month) — this sets periodFilter and renders
+  onPeriodClick('month');
   loadVehicleInfo();
 }
 

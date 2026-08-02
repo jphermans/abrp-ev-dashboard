@@ -76,7 +76,8 @@
     "table.drive_opt": "🚗 Rijden",
     "table.charge_opt": "⚡ Laden",
     "table.edit_providers": "✏️ Provider aanpassen",
-    "table.edit_hint": "Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie."
+    "table.edit_hint": "Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie.",
+    "records_lc": "records"
   },
   "activity": {
     "drive": "🚗 Rijden",
@@ -219,7 +220,8 @@
     "enter_name": "Voer een naam in",
     "date_range_reset": "Datumbereik gereset",
     "date_range_select": "Kies eerst een datum",
-    "date_range_applied": "records"
+    "date_range_applied": "records",
+    "no_data_period": "Geen data in deze periode"
   },
   "help": {
     "title": "❓ Help — Hoe het dashboard werkt",
@@ -263,7 +265,14 @@
     "privacy_section": "🔒 Privacy",
     "privacy_desc": "Alle data blijft lokaal op je Raspberry Pi. De server stuurt geen data naar externe servers, tenzij je expliciet WeConnect of ABRP API gebruikt.",
     "language_section": "🌐 Taal",
-    "language_desc": "Het dashboard ondersteunt meerdere talen. Download een template, vertaal deze, en upload je eigen taalbestand in de Instellingen."
+    "language_desc": "Het dashboard ondersteunt meerdere talen. Download een template, vertaal deze, en upload je eigen taalbestand in de Instellingen.",
+    "help.filters_intro": "Kies een periode en selecteer de specifieke dag, week, maand of jaar. Alle data — KPI's, grafieken, tabellen — wordt onmiddellijk gefilterd op je keuze:",
+    "help.filter_day_desc": "Kies een specifieke datum. Toont alle ritten en laadsessies van die dag.",
+    "help.filter_week_desc": "Kies een week uit de dropdown. Filtert op ISO-weeknummer.",
+    "help.filter_month_desc": "Kies een maand (standaard). Toont alle data van die maand.",
+    "help.filter_year_desc": "Kies een jaar. Toont alle data van dat jaar.",
+    "help.filter_all_desc": "Toont alle data zonder filter.",
+    "help.filters_note": "KPI's, grafieken, laadlocaties en activiteitentabel updaten allemaal onmiddellijk bij het wijzigen van de periode of de picker."
   },
   "providers": {
     "DATS 24": "DATS 24",

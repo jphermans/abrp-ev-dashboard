@@ -81,6 +81,7 @@ The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, 
 - **Vehicle details page** — 🔍 button opens full vehicle info: general specs, battery & charging, climate, doors, windows, GPS position, software version, maintenance schedule, parking brake. Shows live data when connector works, Excel-derived stats as fallback
 - **Time filters** — Day / Week / Month / Year / All — all charts update instantly
 - **Date range picker** — select a custom from/to date range to filter all data. Works in combination with time filters
+- **Date range picker** — select a day, week, month, or year from a picker. All KPIs, charts, tables, and charge locations update instantly to match the selected period
 - **Full data tables** — every trip and charging session with provider detection. Sortable by any column (click header ⬆⬇), searchable across all columns, filterable by type (drive/charge) and provider
 - **Charge location analytics** — per-provider session counts, total kWh, last visit
 - **PDF export** — save the entire dashboard as a multi-page report

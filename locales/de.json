@@ -76,7 +76,8 @@
     "table.drive_opt": "🚗 Fahrt",
     "table.charge_opt": "⚡ Laden",
     "table.edit_providers": "✏️ Anbieter ändern",
-    "table.edit_hint": "Klicken Sie auf das Dropdown-Menü, um den richtigen Anbieter zuzuweisen."
+    "table.edit_hint": "Klicken Sie auf das Dropdown-Menü, um den richtigen Anbieter zuzuweisen.",
+    "records_lc": "Einträge"
   },
   "activity": {
     "drive": "🚗 Fahrt",
@@ -219,7 +220,8 @@
     "enter_name": "Namen eingeben",
     "date_range_reset": "Datumsbereich zurückgesetzt",
     "date_range_select": "Zuerst ein Datum auswählen",
-    "date_range_applied": "Datensätze"
+    "date_range_applied": "Datensätze",
+    "no_data_period": "Keine Daten in diesem Zeitraum"
   },
   "help": {
     "title": "❓ Hilfe — So funktioniert das Dashboard",
@@ -263,7 +265,14 @@
     "privacy_section": "🔒 Datenschutz",
     "privacy_desc": "Alle Daten bleiben lokal auf Ihrem Raspberry Pi.",
     "language_section": "🌐 Sprache",
-    "language_desc": "Das Dashboard unterstützt mehrere Sprachen. Laden Sie eine Vorlage herunter, übersetzen Sie diese und laden Sie Ihre Sprachdatei hoch."
+    "language_desc": "Das Dashboard unterstützt mehrere Sprachen. Laden Sie eine Vorlage herunter, übersetzen Sie diese und laden Sie Ihre Sprachdatei hoch.",
+    "help.filters_intro": "Wählen Sie einen Zeitraum und dann den spezifischen Tag, die Woche, den Monat oder das Jahr. Alle Daten werden sofort gefiltert:",
+    "help.filter_day_desc": "Wählen Sie ein Datum. Zeigt alle Fahrten und Ladevorgänge dieses Tages.",
+    "help.filter_week_desc": "Wählen Sie eine Woche aus dem Menü. Filtert nach ISO-Wochennummer.",
+    "help.filter_month_desc": "Wählen Sie einen Monat (Standard). Zeigt alle Daten dieses Monats.",
+    "help.filter_year_desc": "Wählen Sie ein Jahr. Zeigt alle Daten dieses Jahres.",
+    "help.filter_all_desc": "Zeigt alle Daten ohne Filter.",
+    "help.filters_note": "KPIs, Diagramme, Ladestationen und Aktivitätstabelle aktualisieren sich sofort."
   },
   "providers": {
     "DATS 24": "DATS 24",

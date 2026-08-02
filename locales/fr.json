@@ -76,7 +76,8 @@
     "table.drive_opt": "🚗 Conduite",
     "table.charge_opt": "⚡ Charge",
     "table.edit_providers": "✏️ Modifier fournisseur",
-    "table.edit_hint": "Cliquez sur le menu déroulant pour assigner le bon fournisseur de charge."
+    "table.edit_hint": "Cliquez sur le menu déroulant pour assigner le bon fournisseur de charge.",
+    "records_lc": "enregistrements"
   },
   "activity": {
     "drive": "🚗 Conduite",
@@ -219,7 +220,8 @@
     "enter_name": "Entrez un nom",
     "date_range_reset": "Plage de dates réinitialisée",
     "date_range_select": "Sélectionnez d'abord une date",
-    "date_range_applied": "enregistrements"
+    "date_range_applied": "enregistrements",
+    "no_data_period": "Aucune donnée dans cette période"
   },
   "help": {
     "title": "❓ Aide — Comment fonctionne le tableau de bord",
@@ -263,7 +265,14 @@
     "privacy_section": "🔒 Confidentialité",
     "privacy_desc": "Toutes les données restent locales sur votre Raspberry Pi.",
     "language_section": "🌐 Langue",
-    "language_desc": "Le tableau de bord prend en charge plusieurs langues. Téléchargez un modèle, traduisez-le et importez-le."
+    "language_desc": "Le tableau de bord prend en charge plusieurs langues. Téléchargez un modèle, traduisez-le et importez-le.",
+    "help.filters_intro": "Choisissez une période et sélectionnez le jour, la semaine, le mois ou l'année. Toutes les données sont filtrées instantanément :",
+    "help.filter_day_desc": "Choisissez une date spécifique. Affiche tous les trajets et sessions de charge de ce jour.",
+    "help.filter_week_desc": "Choisissez une semaine dans le menu. Filtre par numéro de semaine ISO.",
+    "help.filter_month_desc": "Choisissez un mois (par défaut). Affiche toutes les données de ce mois.",
+    "help.filter_year_desc": "Choisissez une année. Affiche toutes les données de cette année.",
+    "help.filter_all_desc": "Affiche toutes les données sans filtre.",
+    "help.filters_note": "KPI, graphiques, lieux de charge et tableau d'activités se mettent à jour instantanément."
   },
   "providers": {
     "DATS 24": "DATS 24",

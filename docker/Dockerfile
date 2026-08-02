@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (modular structure)
 COPY server.py config.py excel_parser.py auth.py data_utils.py ./
+COPY db.py ./
 COPY templates/ templates/
 COPY routes/ routes/
 COPY connectors/ connectors/

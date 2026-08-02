@@ -9,6 +9,7 @@ from config import DATA_DIR, DASHBOARD_HTML, _cache, CACHE_TTL
 from excel_parser import parse_excel_to_records, get_data_file
 from auth import login_required, get_current_user_id, get_current_username, get_user_data_dir
 from data_utils import merge_and_save_records
+from db import get_db_path, init_db, import_excel_to_db, get_all_activities, get_charge_summary, get_kpi_summary
 
 LOGIN_HTML = Path(__file__).parent.parent / "templates" / "login.html"
 STATIC_DIR = Path(__file__).parent.parent / "static"
@@ -47,26 +48,17 @@ def register(app):
     def get_data():
         uid = get_current_user_id()
         user_dir = get_user_data_dir(uid)
+        db_path = get_db_path(user_dir)
+
         cache_key = f"data_{uid}"
         cached = _cache.get(cache_key)
         if cached and time.time() - cached["time"] < CACHE_TTL:
             return jsonify(cached["data"])
 
-        data_file = get_data_file(user_dir)
-        if not data_file:
+        if not db_path.exists():
             return jsonify([])
-        if str(data_file).endswith(".json"):
-            try:
-                with open(data_file) as f:
-                    data = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                return jsonify([])
-        elif str(data_file).endswith(".xlsx"):
-            data = parse_excel_to_records(data_file)
-            with open(user_dir / "activities.json", "w") as f:
-                json.dump(data, f, ensure_ascii=False)
-        else:
-            data = []
+
+        data = get_all_activities(db_path)
         _cache[cache_key] = {"time": time.time(), "data": data}
         return jsonify(data)
 
@@ -75,36 +67,52 @@ def register(app):
     def upload_excel():
         uid = get_current_user_id()
         user_dir = get_user_data_dir(uid)
+        db_path = get_db_path(user_dir)
+
         if "files" not in request.files:
             return jsonify({"error": "No files provided"}), 400
+
+        init_db(db_path)
+
         files = request.files.getlist("files")
-        all_records = []
+        total_imported = 0
+        total_dups = 0
         uploaded = 0
+
         for file in files:
             if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
                 continue
-            # C1: sanitize filename to prevent path traversal
             fname = secure_filename(file.filename)
             if not fname:
                 continue
             filepath = user_dir / fname
             file.save(filepath)
             try:
-                parsed = parse_excel_to_records(filepath)
-                all_records.extend(parsed)
-                uploaded += 1
-            except Exception as e:
-                # Don't let one bad file kill the whole upload
+                result = import_excel_to_db(db_path, filepath, fname)
+                total_imported += result["imported"]
+                total_dups += result["duplicates"]
+                if result["imported"] > 0 or result["duplicates"] > 0:
+                    uploaded += 1
+            except Exception:
                 pass
+
         if uploaded == 0:
             return jsonify({"error": "No valid Excel files uploaded"}), 400
-        total = merge_and_save_records(user_dir, all_records)
+
         _cache.pop(f"data_{uid}", None)
+
+        # Get final total from DB
+        from db import get_all_activities
+        all_data = get_all_activities(db_path)
+        total = len(all_data)
+
         return jsonify({
             "status": "ok",
             "uploaded": uploaded,
+            "imported": total_imported,
+            "duplicates": total_dups,
             "total_records": total,
-            "message": f"{uploaded} file(s) processed, {total} total records"
+            "message": f"{uploaded} file(s) processed — {total_imported} new, {total_dups} duplicates skipped, {total} total"
         })
 
     @app.route("/api/status")
@@ -112,24 +120,34 @@ def register(app):
     def status():
         uid = get_current_user_id()
         user_dir = get_user_data_dir(uid)
-        json_file = user_dir / "activities.json"
+        db_path = get_db_path(user_dir)
+
         record_count = 0
-        if json_file.exists():
-            try:
-                with open(json_file) as f:
-                    record_count = len(json.load(f))
-            except (json.JSONDecodeError, IOError):
-                pass
+        if db_path.exists():
+            all_data = get_all_activities(db_path)
+            record_count = len(all_data)
+
         connected = []
         for b in ["vw", "tesla", "bmw", "hyundai_kia", "mercedes"]:
             if (user_dir / f"connector_{b}.json").exists():
                 connected.append(b)
-        data_file = get_data_file(user_dir)
+
         return jsonify({
             "status": "running",
-            "data_source": str(data_file) if data_file else "none",
+            "data_source": str(db_path) if db_path.exists() else "none",
             "excel_files": len(list(user_dir.glob("*.xlsx"))),
             "total_records": record_count,
             "connectors": connected,
             "user": get_current_username(),
         })
+
+    @app.route("/api/charge-summary")
+    @login_required
+    def charge_summary():
+        """Get charge provider summary from the DB."""
+        uid = get_current_user_id()
+        user_dir = get_user_data_dir(uid)
+        db_path = get_db_path(user_dir)
+        if not db_path.exists():
+            return jsonify([])
+        return jsonify(get_charge_summary(db_path))

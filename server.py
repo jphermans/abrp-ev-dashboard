@@ -14,6 +14,13 @@ from pathlib import Path
 # Ensure local modules are importable
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Apply VW auth patch if the connector is installed
+try:
+    from scripts.patch_vw_auth import main as patch_vw
+    patch_vw()
+except Exception:
+    pass  # No patch needed or connector not installed
+
 from flask import Flask
 from config import DATA_DIR, get_pi_model
 from excel_parser import parse_excel_to_records

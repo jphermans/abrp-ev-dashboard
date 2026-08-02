@@ -273,7 +273,7 @@ Login → click 📂 Upload → select `.xlsx` files. Auto-parsed, miles→km co
 ### Manufacturer sync (VW)
 Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + password → click 🔄 Sync.
 
-> **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library (successor to WeConnect-python). As of July 2026, VW's BFF auth endpoints are still being adapted. The connector handles errors gracefully and suggests Excel upload as fallback. CarConnectivity also supports Skoda, Audi, Seat/Cupra and Tronity through the same plugin architecture.
+> **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library. As of August 2026, VW changed their OIDC flow — the old hybrid/implicit grant (`response_type=code id_token token`) is rejected with `unauthorized_client`, and the BFF proxy endpoint returns 403. The dashboard ships with an automatic patch (`scripts/patch_vw_auth.py`) that fixes the auth flow at startup by switching to `response_type=code` with plain browser headers. **With your real VW credentials, the sync should now work.**
 
 ### ABRP API
 Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requires a premium API key with the `session` feature.

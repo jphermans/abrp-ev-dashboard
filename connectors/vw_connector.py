@@ -111,16 +111,19 @@ class VolkswagenConnector(BaseConnector):
             return {"status": "ok", "cc": cc}
         except Exception as e:
             msg = str(e)
-            if "400" in msg or "login page was not successful" in msg:
+            if "Login failed with status code: 400" in msg:
+                return {"status": "error", "message": "Login mislukt — controleer e-mail en wachtwoord in je VW account"}
+            if "Login failed with status code: 401" in msg or "401" in msg:
                 return {"status": "error", "message": "Login mislukt — controleer e-mail en wachtwoord"}
-            if "401" in msg or "Unauthorized" in msg:
+            if "Login failed with status code: 403" in msg:
+                return {"status": "error", "message": "VW account geblokkeerd — controleer je account in de VW app"}
+            if "terms" in msg.lower() or "consent" in msg.lower():
+                return {"status": "error", "message": "Accepteer de WeConnect voorwaarden in de VW app eerst"}
+            if "400" in msg or "login page was not successful" in msg:
                 return {"status": "error", "message": "Login mislukt — controleer e-mail en wachtwoord"}
             if "403" in msg or "Forbidden" in msg or "BFF" in msg:
                 return {"status": "error",
-                        "message": "VW authenticatie tijdelijk niet beschikbaar. Volkswagen wijzigt de WeConnect login (sinds mei 2026). "
-                                   "Gebruik ondertussen Excel upload."}
-            if "terms" in msg.lower():
-                return {"status": "error", "message": "Accepteer de WeConnect voorwaarden in de VW app eerst"}
+                        "message": "VW authenticatie tijdelijk niet beschikbaar. Gebruik ondertussen Excel upload."}
             return {"status": "error", "message": msg[:200]}
 
     def test_connection(self) -> Dict:

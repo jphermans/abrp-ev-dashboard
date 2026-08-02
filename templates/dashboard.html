@@ -267,6 +267,9 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <div class="setting-section">
       <div class="setting-label" data-i18n="settings.system">ℹ️ Systeem</div>
       <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
+      <div id="adminBackupSection" style="display:none;margin-top:10px;">
+        <button class="btn btn-primary" onclick="backupDB()" style="width:100%;font-size:.82rem;padding:10px;" data-i18n="settings.backup_db">💾 Database backup downloaden</button>
+      </div>
     </div>
 
     <div class="setting-section">
@@ -358,7 +361,9 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 
     <div class="help-section">
       <h3 data-i18n="help.privacy_section">🔒 Privacy</h3>
-      <p data-i18n="help.privacy_desc">Alle data blijft lokaal op je server. De server stuurt geen data naar externe servers, tenzij je expliciet WeConnect of ABRP API gebruikt.</p>
+      <p data-i18n="help.privacy_desc">Alle data blijft lokaal op je server. De server stuurt geen data naar externe servers, tenzij je expliciet WeConnect gebruikt.</p>
+      <div class="help-card"><div class="help-card-icon">💾</div><div class="help-card-body"><h4 data-i18n="settings.backup_db">Database backup</h4><p data-i18n="help.backup_desc">Admins kunnen een SQLite backup downloaden via ⚙️ Instellingen → Systeem. De backup bevat alle gebruikers, voertuigen, activiteiten en instellingen. Slechts de 3 meest recente backups worden bewaard.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📂</div><div class="help-card-body"><h4 data-i18n="help.excel_cleanup">Excel opschoning</h4><p data-i18n="help.excel_cleanup_desc">Excel bestanden worden automatisch verwijderd na import. De data leeft veilig in de SQLite database — je hoeft de Excel bestanden niet bij te houden.</p></div></div>
     </div>
 
     <div class="help-section">
@@ -931,10 +936,14 @@ function openSettings() {
   renderPalettes();
   // Language dropdown
   refreshLangSelect();
-  // System info
+  // System info + admin backup check
   fetch('/api/status').then(r => r.json()).then(d => {
     const connList = (d.connectors || []).join(', ') || 'geen';
     document.getElementById('systemInfo').innerHTML = `${t('messages.server')}: ${d.status}<br>${d.pi_model}<br>${t('messages.records')}: ${d.total_records}<br>${t('messages.excel_files')}: ${d.excel_files}<br>${t('messages.active_connections')}: ${connList}`;
+    // Show backup button for admins
+    fetch('/api/auth/me').then(r => r.json()).then(me => {
+      if (me.is_admin) document.getElementById('adminBackupSection').style.display = 'block';
+    }).catch(() => {});
   }).catch(() => { document.getElementById('systemInfo').innerHTML = t('messages.offline_mode'); });
   // Render dynamic connector panels
   renderConnectors();
@@ -970,6 +979,12 @@ function setPalette(name) {
   renderPalettes();
   if (RAW_DATA.length > 0) renderCharts(RAW_DATA, currentPeriod);
   showToast('Palet: ${name}');
+}
+
+// ─── Admin: Backup DB ─────────────────────────────────────────────
+function backupDB() {
+  showToast(t('messages.backup_start'));
+  window.location.href = '/api/admin/backup-db';
 }
 
 // ─── Help Modal ──────────────────────────────────────────────────

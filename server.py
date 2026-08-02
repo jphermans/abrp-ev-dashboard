@@ -56,51 +56,73 @@ register_vehicles(app)
 def startup_import():
     """
     Auto-import Excel files found in data/ on startup.
-    In multi-user mode, these are assigned to the admin user (user ID 1).
-    This is a convenience so that files placed in data/ before first boot
-    are not invisible.
+    Assigned to the admin user (user ID 1).
     """
     excel_files = list(DATA_DIR.glob("*.xlsx"))
     if not excel_files:
         return 0
 
-    # Ensure the database exists and get admin user dir
     init_db()
-    db_path = DATA_DIR / "users.db"
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(DATA_DIR / "evdashboard.db"))
     admin = conn.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()
     conn.close()
     if not admin:
         return 0
 
-    admin_dir = DATA_DIR / "users" / str(admin[0])
+    admin_uid = admin[0]
+    admin_dir = DATA_DIR / "users" / str(admin_uid)
     admin_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"   Found {len(excel_files)} Excel file(s) in shared data/, importing to admin user...")
-    all_records = []
+    from db import import_excel
+    total_imported = 0
     for ef in excel_files:
-        recs = parse_excel_to_records(ef)
-        all_records.extend(recs)
-        print(f"   → {ef.name}: {len(recs)} records")
+        result = import_excel(admin_uid, ef, source_name=ef.name)
+        total_imported += result["imported"]
+        print(f"   → {ef.name}: {result['imported']} new, {result['duplicates']} dup")
         dest = admin_dir / ef.name
         if not dest.exists():
             ef.rename(dest)
 
-    if not all_records:
-        return 0
-
-    total = merge_and_save_records(admin_dir, all_records)
-    print(f"   ✅ {total} records loaded for admin user")
-    return total
+    if total_imported > 0:
+        print(f"   ✅ {total_imported} records imported for admin user")
+    return total_imported
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8765))
     host = os.environ.get("HOST", "0.0.0.0")
-    print(f"🚗 ABRP Dashboard starting on http://{host}:{port}")
+    print(f"🚗 EV Dashboard starting on http://{host}:{port}")
     print(f"   Pi: {get_pi_model()}")
     print(f"   Data: {DATA_DIR}")
     init_db()
-    print(f"   Auth: multi-user enabled")
     startup_import()
+
+    # Auto-backup: create weekly backup if last one is >7 days old
+    try:
+        backup_dir = DATA_DIR / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        import time as _bt
+        backups = sorted(backup_dir.glob("evdashboard-backup-*.db"))
+        need_backup = True
+        if backups:
+            age_days = (_bt.time() - backups[-1].stat().st_mtime) / 86400
+            if age_days < 7:
+                need_backup = False
+        if need_backup:
+            from datetime import datetime as _bdt
+            bname = f"evdashboard-backup-{_bdt.now().strftime('%Y%m%d-%H%M%S')}.db"
+            bpath = backup_dir / bname
+            _src = sqlite3.connect(str(DATA_DIR / "evdashboard.db"))
+            _dst = sqlite3.connect(str(bpath))
+            _src.backup(_dst)
+            _dst.close()
+            _src.close()
+            # Keep only 3 most recent
+            for old in sorted(backup_dir.glob("evdashboard-backup-*.db"))[:-3]:
+                old.unlink(missing_ok=True)
+            print(f"   ✅ Auto-backup created (weekly): {bname}")
+    except Exception as e:
+        print(f"   ⚠️ Auto-backup failed: {e}")
+
     app.run(host=host, port=port, debug=False)

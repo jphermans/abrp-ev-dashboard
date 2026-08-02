@@ -119,7 +119,8 @@
     "delete_account_hint": "Supprime votre compte et toutes les données (trajets, sessions de charge, fichiers Excel, connexions). Action irréversible.",
     "delete_password_ph": "Tapez votre mot de passe pour confirmer",
     "delete_account_btn": "Supprimer définitivement le compte",
-    "dark_light": "Thème Sombre / Clair"
+    "dark_light": "Thème Sombre / Clair",
+    "backup_db": "💾 Télécharger sauvegarde BDD"
   },
   "vehicle": {
     "details_title": "🚗 Détails du véhicule",
@@ -225,7 +226,8 @@
     "date_range_select": "Sélectionnez d'abord une date",
     "date_range_applied": "enregistrements",
     "no_data_period": "Aucune donnée dans cette période",
-    "added": "ajouté"
+    "added": "ajouté",
+    "backup_start": "Sauvegarde en cours..."
   },
   "help": {
     "title": "❓ Aide — Comment fonctionne le tableau de bord",
@@ -277,7 +279,10 @@
     "help.filter_year_desc": "Choisissez une année. Affiche toutes les données de cette année.",
     "help.filter_all_desc": "Affiche toutes les données sans filtre.",
     "help.filters_note": "KPI, graphiques, lieux de charge et tableau d'activités se mettent à jour instantanément.",
-    "edit_providers_desc": "Toutes les sessions n'ont pas automatiquement le bon fournisseur. Cliquez sur ✏️ pour choisir le bon fournisseur par session. Un fournisseur manque ? Tapez son nom dans le champ en haut et cliquez sur + pour l'ajouter. Le fournisseur est ensuite disponible pour tous."
+    "edit_providers_desc": "Toutes les sessions n'ont pas automatiquement le bon fournisseur. Cliquez sur ✏️ pour choisir le bon fournisseur par session. Un fournisseur manque ? Tapez son nom dans le champ en haut et cliquez sur + pour l'ajouter. Le fournisseur est ensuite disponible pour tous.",
+    "help.backup_desc": "Les administrateurs peuvent télécharger une sauvegarde SQLite via ⚙️ Paramètres → Système. La sauvegarde contient tous les utilisateurs, véhicules, activités et paramètres. Seules les 3 sauvegardes les plus récentes sont conservées.",
+    "help.excel_cleanup": "Nettoyage Excel",
+    "help.excel_cleanup_desc": "Les fichiers Excel sont automatiquement supprimés après l'import. Les données vivent en toute sécurité dans la base SQLite."
   },
   "providers": {
     "DATS 24": "DATS 24",

@@ -119,7 +119,8 @@
     "delete_account_hint": "Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.",
     "delete_password_ph": "Typ je wachtwoord om te bevestigen",
     "delete_account_btn": "Account permanent verwijderen",
-    "dark_light": "Donker / Licht thema"
+    "dark_light": "Donker / Licht thema",
+    "backup_db": "💾 Database backup downloaden"
   },
   "vehicle": {
     "details_title": "🚗 Voertuig Details",
@@ -225,7 +226,8 @@
     "date_range_select": "Kies eerst een datum",
     "date_range_applied": "records",
     "no_data_period": "Geen data in deze periode",
-    "added": "toegevoegd"
+    "added": "toegevoegd",
+    "backup_start": "Backup wordt gemaakt..."
   },
   "help": {
     "title": "❓ Help — Hoe het dashboard werkt",
@@ -277,7 +279,10 @@
     "help.filter_year_desc": "Kies een jaar. Toont alle data van dat jaar.",
     "help.filter_all_desc": "Toont alle data zonder filter.",
     "help.filters_note": "KPI's, grafieken, laadlocaties en activiteitentabel updaten allemaal onmiddellijk bij het wijzigen van de periode of de picker.",
-    "edit_providers_desc": "Niet alle laadsessies hebben automatisch de juiste provider. Klik op ✏️ om per sessie de correcte provider te kiezen. Ontbreekt een provider? Typ de naam in het veld bovenaan en klik op + om deze toe te voegen. De provider is daarna voor iedereen beschikbaar in de dropdown."
+    "edit_providers_desc": "Niet alle laadsessies hebben automatisch de juiste provider. Klik op ✏️ om per sessie de correcte provider te kiezen. Ontbreekt een provider? Typ de naam in het veld bovenaan en klik op + om deze toe te voegen. De provider is daarna voor iedereen beschikbaar in de dropdown.",
+    "help.backup_desc": "Admins kunnen een SQLite backup downloaden via ⚙️ Instellingen → Systeem. De backup bevat alle gebruikers, voertuigen, activiteiten en instellingen. Slechts de 3 meest recente backups worden bewaard.",
+    "help.excel_cleanup": "Excel opschoning",
+    "help.excel_cleanup_desc": "Excel bestanden worden automatisch verwijderd na import. De data leeft veilig in de SQLite database — je hoeft de Excel bestanden niet bij te houden."
   },
   "providers": {
     "DATS 24": "DATS 24",

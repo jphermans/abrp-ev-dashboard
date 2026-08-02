@@ -13,99 +13,38 @@ from pathlib import Path
 from functools import wraps
 
 from flask import request, jsonify, session, g
+from db import DB_PATH as _UNIFIED_DB_PATH, init_db as _init_unified_db, get_connection
 
-DB_PATH = Path(__file__).parent / "data" / "users.db"
 SECRET_KEY_FILE = Path(__file__).parent / "data" / ".secret_key"
 PBKDF2_ITERATIONS = 100_000  # tuned for Pi (balances security vs. login time)
+
+# Backward compat: DB_PATH points to unified DB
+DB_PATH = _UNIFIED_DB_PATH
 
 _USERNAME_RE = re.compile(r'^[a-z0-9._-]{3,32}$')
 
 
 def init_db():
-    """Create the users table if it doesn't exist. Thread/process safe with retry."""
+    """Initialize the unified database. Schema is defined in db.py."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    # Retry loop: handles concurrent init from multiple gunicorn workers
-    for attempt in range(5):
-        try:
-            conn = sqlite3.connect(str(DB_PATH), timeout=10)
-            conn.execute("PRAGMA busy_timeout=10000")
-            conn.execute("PRAGMA journal_mode=WAL")
-            break
-        except sqlite3.OperationalError as e:
-            if "locked" in str(e) and attempt < 4:
-                import time as _time
-                _time.sleep(0.5 * (attempt + 1))
-                continue
-            raise
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            iterations INTEGER NOT NULL DEFAULT 100000,
-            display_name TEXT DEFAULT '',
-            created_at REAL DEFAULT 0,
-            is_admin INTEGER DEFAULT 0
-        )
-    """)
-    # Migration: add must_change_password column for existing databases
-    try:
-        conn.execute("SELECT must_change_password FROM users LIMIT 1")
-    except sqlite3.OperationalError:
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0")
-            print("   DB migrated: added must_change_password column")
-        except sqlite3.OperationalError:
-            pass  # Another worker already added it
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS user_settings (
-            user_id INTEGER NOT NULL,
-            key TEXT NOT NULL,
-            value TEXT,
-            PRIMARY KEY (user_id, key),
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    """)
-    # Migration: add is_fleet_manager column
-    try:
-        conn.execute("SELECT is_fleet_manager FROM users LIMIT 1")
-    except sqlite3.OperationalError:
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN is_fleet_manager INTEGER DEFAULT 0")
-            print("   DB migrated: added is_fleet_manager column")
-        except sqlite3.OperationalError:
-            pass  # Another worker already added it
-    # Vehicles table — supports multiple vehicles per user
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS vehicles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL DEFAULT 'My Vehicle',
-            vin TEXT,
-            brand TEXT,
-            model TEXT,
-            license_plate TEXT,
-            connector_brand TEXT,
-            created_at REAL DEFAULT 0,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    """)
-    conn.commit()
+    _init_unified_db()
+
+    conn = sqlite3.connect(str(DB_PATH), timeout=10)
+    conn.execute("PRAGMA busy_timeout=10000")
+    conn.execute("PRAGMA journal_mode=WAL")
 
     # Create default admin if no users exist
     count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     if count == 0:
         try:
-            admin_pw = "admin123"  # Fixed default — forced to change on first login
+            admin_pw = "admin123"
             _create_user(conn, "admin", "admin@local", admin_pw, "Administrator", is_admin=1)
             conn.execute("UPDATE users SET must_change_password = 1 WHERE username = 'admin'")
             conn.commit()
             print(f"   Default admin created — password: {admin_pw}")
             print(f"   You will be forced to change this password on first login!")
         except sqlite3.IntegrityError:
-            pass  # Another worker already created the admin
+            pass
 
     conn.close()
 

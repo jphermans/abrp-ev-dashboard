@@ -119,7 +119,8 @@
     "delete_account_hint": "Removes your account and all data (trips, charging sessions, Excel files, connector logins). This cannot be undone.",
     "delete_password_ph": "Type your password to confirm",
     "delete_account_btn": "Permanently delete account",
-    "dark_light": "Dark / Light theme"
+    "dark_light": "Dark / Light theme",
+    "backup_db": "💾 Download database backup"
   },
   "vehicle": {
     "details_title": "🚗 Vehicle Details",
@@ -225,7 +226,8 @@
     "date_range_select": "Select a date first",
     "date_range_applied": "records",
     "no_data_period": "No data in this period",
-    "added": "added"
+    "added": "added",
+    "backup_start": "Creating backup..."
   },
   "help": {
     "title": "❓ Help — How the dashboard works",
@@ -277,7 +279,10 @@
     "help.filter_year_desc": "Pick a year. Shows all data for that year.",
     "help.filter_all_desc": "Shows all data without filtering.",
     "help.filters_note": "KPIs, charts, charge locations, and activity table all update instantly when changing the period or picker.",
-    "edit_providers_desc": "Not all charge sessions have the correct provider automatically. Click ✏️ to choose the right provider per session. Missing a provider? Type the name in the field at the top and click + to add it. The provider is then available for everyone in the dropdown."
+    "edit_providers_desc": "Not all charge sessions have the correct provider automatically. Click ✏️ to choose the right provider per session. Missing a provider? Type the name in the field at the top and click + to add it. The provider is then available for everyone in the dropdown.",
+    "help.backup_desc": "Admins can download a SQLite backup via ⚙️ Settings → System. The backup contains all users, vehicles, activities and settings. Only the 3 most recent backups are kept.",
+    "help.excel_cleanup": "Excel cleanup",
+    "help.excel_cleanup_desc": "Excel files are automatically deleted after import. Data lives safely in the SQLite database — no need to keep the Excel files."
   },
   "providers": {
     "DATS 24": "DATS 24",

@@ -119,7 +119,8 @@
     "delete_account_hint": "Entfernt Ihr Konto und alle Daten (Fahrten, Ladevorgänge, Excel-Dateien, Verbindungen). Kann nicht rückgängig gemacht werden.",
     "delete_password_ph": "Passwort eingeben zur Bestätigung",
     "delete_account_btn": "Konto dauerhaft löschen",
-    "dark_light": "Dunkel / Hell Design"
+    "dark_light": "Dunkel / Hell Design",
+    "backup_db": "💾 Datenbank-Backup herunterladen"
   },
   "vehicle": {
     "details_title": "🚗 Fahrzeugdetails",
@@ -225,7 +226,8 @@
     "date_range_select": "Zuerst ein Datum auswählen",
     "date_range_applied": "Datensätze",
     "no_data_period": "Keine Daten in diesem Zeitraum",
-    "added": "hinzugefügt"
+    "added": "hinzugefügt",
+    "backup_start": "Backup wird erstellt..."
   },
   "help": {
     "title": "❓ Hilfe — So funktioniert das Dashboard",
@@ -277,7 +279,10 @@
     "help.filter_year_desc": "Wählen Sie ein Jahr. Zeigt alle Daten dieses Jahres.",
     "help.filter_all_desc": "Zeigt alle Daten ohne Filter.",
     "help.filters_note": "KPIs, Diagramme, Ladestationen und Aktivitätstabelle aktualisieren sich sofort.",
-    "edit_providers_desc": "Nicht alle Ladevorgänge haben automatisch den richtigen Anbieter. Klicken Sie auf ✏️ um den richtigen Anbieter pro Sitzung zu wählen. Fehlt ein Anbieter? Geben Sie den Namen oben ein und klicken Sie auf + um ihn hinzuzufügen. Der Anbieter ist dann für alle verfügbar."
+    "edit_providers_desc": "Nicht alle Ladevorgänge haben automatisch den richtigen Anbieter. Klicken Sie auf ✏️ um den richtigen Anbieter pro Sitzung zu wählen. Fehlt ein Anbieter? Geben Sie den Namen oben ein und klicken Sie auf + um ihn hinzuzufügen. Der Anbieter ist dann für alle verfügbar.",
+    "help.backup_desc": "Administratoren können ein SQLite-Backup über ⚙️ Einstellungen → System herunterladen. Das Backup enthält alle Benutzer, Fahrzeuge, Aktivitäten und Einstellungen. Nur die 3 neuesten Backups werden behalten.",
+    "help.excel_cleanup": "Excel-Bereinigung",
+    "help.excel_cleanup_desc": "Excel-Dateien werden nach dem Import automatisch gelöscht. Die Daten leben sicher in der SQLite-Datenbank."
   },
   "providers": {
     "DATS 24": "DATS 24",

@@ -2,6 +2,8 @@
 
 > A self-hosted analytics dashboard for electric vehicle data. Runs anywhere — Raspberry Pi, Intel/AMD, NAS, cloud. Import ABRP (A Better Routeplanner) Excel exports, sync directly from your car manufacturer's servers, and get rich insights into driving habits, charging sessions, and energy consumption.
 
+> **All data lives in a single SQLite database** (`data/evdashboard.db`). Users, vehicles, activities, settings, and custom charge providers — all in one file. Easy to backup, easy to migrate.
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi%20%7C%20Intel%2FAMD%20%7C%20ARM64%20%7C%20x86--c51a4a.svg)
 ![Server: Flask](https://img.shields.io/badge/Server-Flask-000000.svg)
@@ -158,7 +160,8 @@ CONNECTORS["polestar"] = PolestarConnector
 | 🌈 **Color palette** | 6 palettes: Default, Warm, Ocean, Forest, Sunset, Mono |
 | 🚗 **Vehicle connections** | Dynamic — auto-renders all registered connector brands |
 | 🔑 **Password change** | Change your password (current + new + confirm) |
-| 🗑️ **Account deletion** | Permanently delete your account and all data |
+| 🗑️ **Account deletion** | Permanently delete account and all data |
+| 💾 **DB Backup** | Admin-only: download SQLite backup. Auto-backup weekly (keeps 3 most recent) |
 | ℹ️ **System** | Server status, Pi model, record count, active connections |
 
 ### ❓ Built-in Help
@@ -176,9 +179,9 @@ server.py              Entry point + startup
 config.py              Paths, rate limiter, cache
 excel_parser.py        ABRP Excel parsing + provider detection
 data_utils.py          Shared merge/dedup helper (atomic writes)
-auth.py                SQLite users DB, PBKDF2 auth, sessions, vehicles, fleet
+auth.py              Authentication (PBKDF2, sessions, user management) — uses unified DB
 routes/
-  core.py              Dashboard page, data API, upload, status
+  core.py              Dashboard page, data API, upload, backup, charge editor
   abrp.py              ABRP routes (deprecated — token is send-only)
   connectors.py        Generic /api/connector/<brand>/* endpoints
   locales.py           Language list, download template, upload, delete
@@ -221,6 +224,7 @@ templates/
 | `PATCH /api/charge-location/<id>` | Update charge_provider for one session |
 | `GET /api/custom-providers` | List all custom charge providers (global) |
 | `POST /api/custom-providers` | Add a custom charge provider (global, shared) |
+| `GET /api/admin/backup-db` | Download SQLite backup (admin only) |
 | `GET /api/data` | Get all activity records (per-user) |
 | `POST /api/upload` | Upload ABRP Excel files (per-user) |
 | `GET /api/status` | Server health + user info |

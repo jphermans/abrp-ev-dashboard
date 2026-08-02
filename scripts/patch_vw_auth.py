@@ -78,6 +78,75 @@ def patch_we_connect_session(filepath: Path) -> bool:
         )
         changed = True
 
+    # 4. Replace fetch_tokens() to use authorization code + PKCE (not hybrid flow)
+    if "self.parse_from_fragment(authorization_response)" in src and "grant_type" not in src:
+        old_start = "    def fetch_tokens("
+        old_end = "    def parse_from_body("
+
+        start_idx = src.find(old_start)
+        end_idx = src.find(old_end)
+
+        if start_idx != -1 and end_idx != -1:
+            new_method = '''    def fetch_tokens(
+        self,
+        token_url,
+        authorization_response=None,
+        **_
+    ):
+        """
+        Exchange authorization code for tokens (authorization code + PKCE flow).
+        """
+        from urllib.parse import urlparse, parse_qs
+        import json as _json
+
+        parsed = urlparse(authorization_response)
+        params = parse_qs(parsed.query)
+        code = params.get('code', [None])[0]
+
+        if not code:
+            LOG.error("No authorization code in response: %s", authorization_response[:200])
+            return None
+
+        token_body = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': self.redirect_uri,
+            'client_id': self.client_id,
+        }
+        if hasattr(self, '_code_verifier') and self._code_verifier:
+            token_body['code_verifier'] = self._code_verifier
+
+        request_headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'accept': 'application/json',
+            'user-agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36',
+        }
+
+        token_response = self.post(
+            token_url,
+            data=token_body,
+            headers=request_headers,
+            allow_redirects=False,
+            access_type=AccessType.ID,
+        )
+
+        if token_response.status_code != requests.codes['ok']:
+            LOG.error("Token exchange failed: %s", token_response.status_code)
+            raise TemporaryAuthenticationError(
+                f'Token exchange failed: {token_response.status_code}'
+            )
+
+        token = _json.loads(token_response.text)
+        self.token = token
+
+        if token:
+            LOG.debug("Tokens fetched. Expires in: %s", token.get('expires_in', 'unknown'))
+        return token
+
+'''
+            src = src[:start_idx] + new_method + src[end_idx:]
+            changed = True
+
     if changed:
         filepath.write_text(src)
     return changed

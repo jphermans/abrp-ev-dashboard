@@ -97,11 +97,11 @@ def parse_excel_to_records(filepath):
         end_loc = str(row[6] or '')
 
         if activity == "Laad op":
-            # Provider: detect from END location ONLY (where the charger is).
-            # Do NOT fall back to START — that's the previous destination,
-            # which may contain a different provider name and cause false attribution.
-            charge_provider = _extract_provider(end_loc)
-            charge_location = _extract_location(end_loc) or _extract_location(start_loc)
+            # For ABRP charge sessions, the CHARGER is at the START location (row[5]).
+            # The car arrives at the charger (Beginlocatie), charges, then departs (Eindlocatie).
+            # So provider and location should be detected from the START location.
+            charge_provider = _extract_provider(start_loc)
+            charge_location = _extract_location(start_loc) or _extract_location(end_loc)
         else:
             charge_provider = None
             charge_location = None

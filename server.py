@@ -14,6 +14,11 @@ from pathlib import Path
 # Ensure local modules are importable
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Allow OAuth2 over plain HTTP (the dashboard runs locally on http://)
+# Without this, oauthlib raises InsecureTransportError
+import os
+os.environ.setdefault('OAUTHLIB_INSECURE_TRANSPORT', '1')
+
 # Apply VW auth patch if the connector is installed
 try:
     from scripts.patch_vw_auth import main as patch_vw

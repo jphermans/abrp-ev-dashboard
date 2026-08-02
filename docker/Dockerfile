@@ -39,6 +39,7 @@ EXPOSE 8765
 ENV PORT=8765
 ENV HOST=0.0.0.0
 ENV PYTHONUNBUFFERED=1
+ENV OAUTHLIB_INSECURE_TRANSPORT=1
 
 # Use gunicorn for production (2 workers = low memory on Pi)
 # --workers 2: enough for a few concurrent users

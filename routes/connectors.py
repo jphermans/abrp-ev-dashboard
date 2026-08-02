@@ -183,44 +183,6 @@ def register(app):
                 return jsonify({"error": msg[:200]}), 500
         return jsonify({"error": "Vehicle info not supported for this connector"}), 501
 
-    @app.route("/api/connector/<brand>/send-abrp-telemetry", methods=["POST"])
-    @login_required
-    def connector_send_abrp(brand):
-        """Send live vehicle telemetry to ABRP (requires ABRP token in credentials)."""
-        cls = get_connector_class(brand)
-        if not cls:
-            return jsonify({"error": f"Unknown connector: {brand}"}), 404
-        user_dir = get_user_data_dir(get_current_user_id())
-        config_file = user_dir / f"connector_{brand}.json"
-        if not config_file.exists():
-            return jsonify({"error": "No credentials configured"}), 400
-        try:
-            with open(config_file) as f:
-                credentials = json.load(f).get("credentials", {})
-        except (json.JSONDecodeError, IOError):
-            return jsonify({"error": "Config file corrupt"}), 500
-        if not credentials.get("abrp_token"):
-            return jsonify({"error": "No ABRP token configured. Add your ABRP Live Data token in Settings."}), 400
-        rate_limited()
-        credentials["_token_file"] = str(user_dir / f"token_{brand}.json")
-        instance = cls(credentials=credentials)
-        # Get vehicle info first
-        if hasattr(instance, "get_vehicle_info"):
-            try:
-                vehicles = instance.get_vehicle_info()
-                if vehicles:
-                    if hasattr(instance, "send_telemetry_to_abrp"):
-                        result = instance.send_telemetry_to_abrp(vehicles[0])
-                        return jsonify(result)
-                    return jsonify({"error": "Telemetry sending not supported"}), 501
-                return jsonify({"error": "No vehicle data available"}), 503
-            except Exception as e:
-                msg = str(e)
-                if "location" in msg:
-                    return jsonify({"error": "VW authenticatie tijdelijk niet beschikbaar. Probeer later opnieuw."}), 503
-                return jsonify({"error": msg[:200]}), 500
-        return jsonify({"error": "Vehicle info not supported"}), 501
-
     # Legacy VW routes
     @app.route("/api/vw/sync", methods=["POST"])
     @login_required

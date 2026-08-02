@@ -188,7 +188,7 @@ routes/
   vehicles.py          Multi-vehicle CRUD + fleet overview
 connectors/
   base.py              BaseConnector ABC — subclass to add brands
-  vw_connector.py      Volkswagen WeConnect (CarConnectivity + ABRP telemetry)
+  vw_connector.py      Volkswagen WeConnect (CarConnectivity)
   __init__.py          Registry — add new brands here
 scripts/
   install.sh           Bare-metal installer (systemd service)
@@ -234,7 +234,6 @@ templates/
 | `POST /api/connector/<brand>/test` | Test connector connection |
 | `POST /api/connector/<brand>/sync` | Fetch trips + charging from manufacturer |
 | `GET /api/connector/<brand>/vehicle-info` | Fetch vehicle details (model, odometer, battery, doors, windows, GPS, software, maintenance) |
-| `POST /api/connector/<brand>/send-abrp-telemetry` | Forward live vehicle data to ABRP (requires ABRP token) |
 | `POST /api/auth/change-password` | Change current user's password |
 | `GET /api/locales` | List available languages |
 | `GET /api/locales/<code>` | Get a language file |
@@ -293,13 +292,6 @@ Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + pas
 
 > **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library. As of August 2026, VW changed their OIDC flow — the old hybrid/implicit grant (`response_type=code id_token token`) is rejected with `unauthorized_client`, and the BFF proxy endpoint returns 403. The dashboard ships with an automatic patch (`scripts/patch_vw_auth.py`) that fixes the auth flow at startup by switching to `response_type=code` with plain browser headers. **With your real VW credentials, the sync should now work.**
 
-### ABRP Live Data Forwarding (VW only)
-When you add an **ABRP Live Data token** to your VW connector credentials (Settings → 🚗 Volkswagen WeConnect → "ABRP Live Data token"), the dashboard forwards real-time vehicle data (SoC, odometer, range, GPS, temperature, charging state) to ABRP via `api.iternio.com/1/tlm/send`. This enables ABRP to plan routes with live data — no manual updates needed.
-
-> **Note:** The ABRP token can only SEND telemetry data, not fetch activities. To get data INTO the dashboard, use Excel upload or manufacturer sync.
-
-Get your token: [abetterrouteplanner.com](https://abetterrouteplanner.com) → select your car → **Live Data** → **Generic** → copy the token.
-
 ---
 
 ## 🛠️ Troubleshooting
@@ -309,7 +301,6 @@ Get your token: [abetterrouteplanner.com](https://abetterrouteplanner.com) → s
 | Can't access dashboard | Check firewall / port forwarding |
 | Port 8000 in use | Set `PORT=8080` in systemd or docker-compose |
 | VW login fails | VW changed OIDC flow (May 2026). Dashboard auto-patches `response_type=code`. If "failed to run flow" persists, use Excel upload — VW server-side issue |
-| ABRP token 403 | The free-tier token can only SEND telemetry, not fetch data — use Excel upload |
 | Blank dashboard | Upload data or run a manufacturer sync |
 | No data after sync | Vehicle may not expose trip history via WeConnect |
 | SD card full | Clean `data/users/*/` for old files |

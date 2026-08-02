@@ -3,4 +3,3 @@ gunicorn==23.0.0
 openpyxl==3.1.5
 carconnectivity
 carconnectivity-connector-volkswagen
-carconnectivity-plugin-abrp

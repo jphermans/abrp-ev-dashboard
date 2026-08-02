@@ -19,6 +19,14 @@ def patch_we_connect_session(filepath: Path) -> bool:
     src = filepath.read_text()
     changed = False
 
+    # 0. Ensure required imports are present
+    if "import base64" not in src:
+        src = src.replace("import json", "import base64\nimport json", 1)
+        changed = True
+    if "import hashlib" not in src:
+        src = src.replace("import json", "import hashlib\nimport json", 1)
+        changed = True
+
     # 1. Fix authorization_url() — bypass BFF, use identity.vwgroup.io directly with PKCE
     if "emea.bff.cariad.digital/user-login/v1/authorize" in src:
         old_block = """        auth_url: str = add_params_to_uri('https://emea.bff.cariad.digital/user-login/v1/authorize', params)

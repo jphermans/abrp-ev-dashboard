@@ -105,7 +105,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 .setting-input:focus { outline:none; border-color:var(--accent); }
 .setting-hint { font-size:.72rem; color:var(--text-muted); margin-top:6px; }
 .theme-toggle-group { display:flex; gap:8px; }
-.theme-btn { flex:1; padding:12px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; font-size:.85rem; font-weight:600; transition:all .2s; }
+.theme-btn { flex:1; padding:10px 8px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; font-size:.78rem; font-weight:600; transition:all .2s; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .theme-btn.active { border-color:var(--accent); background:rgba(59,130,246,.1); color:var(--accent-light); }
 .palette-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
 .palette-option { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:8px; border:2px solid var(--border); background:var(--bg); cursor:pointer; font-size:.82rem; transition:all .2s; }
@@ -196,25 +196,25 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <h2>⚙️ Instellingen</h2>
 
     <div class="setting-section">
-      <div class="setting-label">🌐 Taal</div>
+      <div class="setting-label" data-i18n="settings.language">🌐 Taal</div>
       <select id="langSelect" class="setting-input" onchange="changeLanguage(this.value)" style="margin-bottom:8px;"></select>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="downloadTemplate()" style="font-size:.8rem;padding:8px 12px;">⬇ Template</button>
-        <button class="btn btn-secondary" onclick="uploadLanguageFile()" style="font-size:.8rem;padding:8px 12px;">⬆ Upload</button>
+        <button class="btn btn-secondary" onclick="downloadTemplate()" style="font-size:.8rem;padding:8px 12px;" data-i18n="settings.download_template">⬇ Template</button>
+        <button class="btn btn-secondary" onclick="uploadLanguageFile()" style="font-size:.8rem;padding:8px 12px;" data-i18n="settings.upload_language">⬆ Upload</button>
       </div>
-      <div class="setting-hint" style="margin-top:6px;">Download een template, vertaal deze, en upload je eigen taalbestand.</div>
+      <div class="setting-hint" style="margin-top:6px;" data-i18n="settings.lang_hint">Download een template, vertaal deze, en upload je eigen taalbestand.</div>
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🎨 Thema</div>
+      <div class="setting-label" data-i18n="settings.theme">🎨 Thema</div>
       <div class="theme-toggle-group">
-        <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')">🌙 Donker</button>
-        <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Licht</button>
+        <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')" data-i18n="settings.dark">🌙 Donker</button>
+        <button class="theme-btn" data-theme="light" onclick="setTheme('light')" data-i18n="settings.light">☀️ Licht</button>
       </div>
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🌈 Kleurenpalet</div>
+      <div class="setting-label" data-i18n="settings.palette">🌈 Kleurenpalet</div>
       <div class="palette-grid" id="paletteGrid"></div>
     </div>
 
@@ -233,8 +233,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🚗 Voertuig Connecties</div>
-      <div class="setting-hint" style="margin-bottom:10px;">Koppel je auto om automatisch ritten en laaddata op te halen. Kies je merk hieronder.</div>
+      <div class="setting-label" data-i18n="settings.vehicle_connections">🚗 Voertuig Connecties</div>
+      <div class="setting-hint" style="margin-bottom:10px;" data-i18n="settings.connections_hint">Koppel je auto om automatisch ritten en laaddata op te halen. Kies je merk hieronder.</div>
       <div id="connectorsContainer"></div>
     </div>
 
@@ -248,19 +248,19 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">ℹ️ Systeem</div>
+      <div class="setting-label" data-i18n="settings.system">ℹ️ Systeem</div>
       <div id="systemInfo" style="font-size:.8rem;color:var(--text-muted);line-height:1.6;"></div>
     </div>
 
     <div class="setting-section">
-      <div class="setting-label" style="color:var(--red);">🗑️ Account verwijderen</div>
-      <div class="setting-hint" style="margin-bottom:8px;">Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.</div>
-      <input type="password" class="setting-input" id="deleteAccountPassword" placeholder="Typ je wachtwoord om te bevestigen" style="margin-bottom:8px;">
-      <button class="btn btn-danger" onclick="deleteAccount()" style="width:100%;font-size:.85rem;padding:10px;">Account permanent verwijderen</button>
+      <div class="setting-label" style="color:var(--red);" data-i18n="settings.delete_account">🗑️ Account verwijderen</div>
+      <div class="setting-hint" style="margin-bottom:8px;" data-i18n="settings.delete_account_hint">Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.</div>
+      <input type="password" class="setting-input" id="deleteAccountPassword" data-i18n-ph="settings.delete_password_ph" placeholder="Typ je wachtwoord om te bevestigen" style="margin-bottom:8px;">
+      <button class="btn btn-danger" onclick="deleteAccount()" style="width:100%;font-size:.85rem;padding:10px;" data-i18n="settings.delete_account_btn">Account permanent verwijderen</button>
       <div id="deleteStatus" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>
     </div>
 
-    <button class="btn btn-primary" onclick="closeSettings()" style="width:100%;margin-top:8px;">Sluiten</button>
+    <button class="btn btn-primary" onclick="closeSettings()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
   </div>
 </div>
 

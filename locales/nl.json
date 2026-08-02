@@ -98,7 +98,12 @@
     "not_connected": "● Niet gekoppeld",
     "not_installed": "⚠ Niet geïnstalleerd",
     "sync": "🔄 Sync",
-    "required": "is verplicht"
+    "required": "is verplicht",
+    "lang_hint": "Download een template, vertaal deze, en upload je eigen taalbestand.",
+    "delete_account": "🗑️ Account verwijderen",
+    "delete_account_hint": "Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.",
+    "delete_password_ph": "Typ je wachtwoord om te bevestigen",
+    "delete_account_btn": "Account permanent verwijderen"
   },
   "vehicle": {
     "details_title": "🚗 Voertuig Details",

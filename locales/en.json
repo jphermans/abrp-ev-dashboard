@@ -98,7 +98,12 @@
     "not_connected": "● Not paired",
     "not_installed": "⚠ Not installed",
     "sync": "🔄 Sync",
-    "required": "is required"
+    "required": "is required",
+    "lang_hint": "Download a template, translate it, and upload your own language file.",
+    "delete_account": "🗑️ Delete account",
+    "delete_account_hint": "Removes your account and all data (trips, charging sessions, Excel files, connector logins). This cannot be undone.",
+    "delete_password_ph": "Type your password to confirm",
+    "delete_account_btn": "Permanently delete account"
   },
   "vehicle": {
     "details_title": "🚗 Vehicle Details",

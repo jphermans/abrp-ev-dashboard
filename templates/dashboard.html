@@ -135,7 +135,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <body>
 <div id="dashboard-content">
 <div class="header">
-  <div><h1>🚗 ABRP <span>Rijdashboard</span></h1><div class="header-sub" id="vehicleInfo">EV — kilometerstatistieken, laadgedrag & providers</div></div>
+  <div><h1>🚗 ABRP <span>Rijdashboard</span></h1><div class="header-sub" id="vehicleInfo" data-i18n="ui.subtitle">EV — kilometerstatistieken, laadgedrag & providers</div></div>
   <div class="toolbar">
     <select id="vehicleSelector" onchange="switchVehicle(this.value)" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;cursor:pointer;display:none;"></select>
     <button class="btn btn-secondary" onclick="showVehicleManager()" title="Voertuigen beheren" id="vehicleMgrBtn" style="display:none;">🚗</button>
@@ -1407,8 +1407,7 @@ function renderDashboard(){
   if (data.length === 0) { showToast('Geen data in deze periode', true); return; }
   const k=calcKPIs(data);renderKPIs(k);renderCharts(data,currentPeriod);renderChargeLocations(data);renderTable(data);
   // Update vehicle info using translated subtitle
-  const v=(data[0]?.vehicle||RAW_DATA[0]?.vehicle||'EV');
-  document.getElementById('vehicleInfo').textContent = v + ' — ' + t('ui.subtitle').replace('EV — ','');
+  document.getElementById('vehicleInfo').textContent = t('ui.subtitle');
   // Update date range info if filter is active
   if (dateRangeFilter) {
     const range = document.getElementById('dateRangeInfo');

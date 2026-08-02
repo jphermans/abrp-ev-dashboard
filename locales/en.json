@@ -252,7 +252,7 @@
     "add_data": "📂 Adding Data",
     "upload_desc": "Click Upload and select one or more ABRP Excel exports. The server parses the files, converts miles to km, detects charge providers, and merges everything.",
     "vw_desc": "In Settings you can link your VW account (free). Click Sync to fetch trips and charging data directly from Volkswagen servers.",
-    "abrp_desc": "For premium ABRP API keys. Save your token in Settings to fetch activities directly from ABRP.",
+    "abrp_desc": "With an ABRP Live Data token (in 🚗 VW connector settings) the dashboard sends real-time vehicle data to ABRP. Token can only send data, not fetch.",
     "settings_section": "⚙️ Settings",
     "dark_light_desc": "Switch between dark and light appearance. Preference is saved in your browser.",
     "palette_desc": "Choose from 6 color palettes: Default, Warm, Ocean, Forest, Sunset, Mono. All charts change colors instantly.",

@@ -252,7 +252,7 @@
     "add_data": "📂 Data toevoegen",
     "upload_desc": "Klik op Upload en selecteer één of meer ABRP Excel exports. De server parset de bestanden, converteert mijlen naar km, detecteert laadproviders, en merget alles samen.",
     "vw_desc": "In Instellingen kun je je VW account koppelen (gratis). Klik op Sync om ritten en laaddata direct van Volkswagen servers op te halen.",
-    "abrp_desc": "Voor premium ABRP API keys. Sla je token op in Instellingen om activiteiten rechtstreeks van ABRP op te halen.",
+    "abrp_desc": "Met een ABRP Live Data token (in 🚗 VW connector instellingen) stuurt het dashboard real-time voertuigdata naar ABRP. Token kan alleen data versturen, niet ophalen.",
     "settings_section": "⚙️ Instellingen",
     "dark_light_desc": "Schakel tussen donker en licht uiterlijk. Voorkeur wordt in je browser opgeslagen.",
     "palette_desc": "Kies uit 6 kleurenpaletten: Default, Warm, Ocean, Forest, Sunset, Mono. Alle grafieken kleuren onmiddellijk mee.",

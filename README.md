@@ -125,7 +125,6 @@ CONNECTORS["polestar"] = PolestarConnector
 |--------|------|-----|
 | 📂 **Excel upload** | Free | Upload ABRP exports via the dashboard |
 | 🚗 **Manufacturer API** | Free | VW WeConnect (email + password). More brands via plugin system |
-| 🔑 **ABRP API** | Premium key | Fetch activities directly from ABRP servers |
 
 ### 👥 Multi-User & Fleet Support
 
@@ -155,7 +154,6 @@ CONNECTORS["polestar"] = PolestarConnector
 | 🌐 **Language** | Dropdown selector, template download, custom upload |
 | 🎨 **Theme** | Dark / Light mode toggle |
 | 🌈 **Color palette** | 6 palettes: Default, Warm, Ocean, Forest, Sunset, Mono |
-| 🔑 **ABRP API** | Email, password, API key — save, test, delete |
 | 🚗 **Vehicle connections** | Dynamic — auto-renders all registered connector brands |
 | 🔑 **Password change** | Change your password (current + new + confirm) |
 | 🗑️ **Account deletion** | Permanently delete your account and all data |
@@ -179,7 +177,7 @@ data_utils.py          Shared merge/dedup helper (atomic writes)
 auth.py                SQLite users DB, PBKDF2 auth, sessions, vehicles, fleet
 routes/
   core.py              Dashboard page, data API, upload, status
-  abrp.py              ABRP API proxy (requires premium key)
+  abrp.py              ABRP routes (deprecated — token is send-only)
   connectors.py        Generic /api/connector/<brand>/* endpoints
   locales.py           Language list, download template, upload, delete
   vehicles.py          Multi-vehicle CRUD + fleet overview
@@ -285,11 +283,10 @@ Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + pas
 
 > **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library. As of August 2026, VW changed their OIDC flow — the old hybrid/implicit grant (`response_type=code id_token token`) is rejected with `unauthorized_client`, and the BFF proxy endpoint returns 403. The dashboard ships with an automatic patch (`scripts/patch_vw_auth.py`) that fixes the auth flow at startup by switching to `response_type=code` with plain browser headers. **With your real VW credentials, the sync should now work.**
 
-### ABRP API
-Login → ⚙️ Settings → 🔑 ABRP API → enter email, password, and API key → Test. Requires a premium API key with the `session` feature.
-
 ### ABRP Live Data Forwarding (VW only)
 When you add an **ABRP Live Data token** to your VW connector credentials (Settings → 🚗 Volkswagen WeConnect → "ABRP Live Data token"), the dashboard forwards real-time vehicle data (SoC, odometer, range, GPS, temperature, charging state) to ABRP via `api.iternio.com/1/tlm/send`. This enables ABRP to plan routes with live data — no manual updates needed.
+
+> **Note:** The ABRP token can only SEND telemetry data, not fetch activities. To get data INTO the dashboard, use Excel upload or manufacturer sync.
 
 Get your token: [abetterrouteplanner.com](https://abetterrouteplanner.com) → select your car → **Live Data** → **Generic** → copy the token.
 
@@ -302,7 +299,7 @@ Get your token: [abetterrouteplanner.com](https://abetterrouteplanner.com) → s
 | Can't access dashboard | Check firewall / port forwarding |
 | Port 8000 in use | Set `PORT=8080` in systemd or docker-compose |
 | VW login fails | VW changed OIDC flow (May 2026). Dashboard auto-patches `response_type=code`. If "failed to run flow" persists, use Excel upload — VW server-side issue |
-| ABRP API 403 | Free-tier keys lack the `session` feature — use Excel upload |
+| ABRP token 403 | The free-tier token can only SEND telemetry, not fetch data — use Excel upload |
 | Blank dashboard | Upload data or run a manufacturer sync |
 | No data after sync | Vehicle may not expose trip history via WeConnect |
 | SD card full | Clean `data/users/*/` for old files |

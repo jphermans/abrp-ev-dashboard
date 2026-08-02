@@ -251,20 +251,6 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label" data-i18n="settings.abrp_api">🔑 ABRP API</div>
-      <input type="email" class="setting-input" id="abrpEmailInput" data-i18n-ph="settings.abrp_email" placeholder="ABRP e-mail" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="abrpPasswordInput" data-i18n-ph="settings.abrp_password" placeholder="ABRP wachtwoord" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="abrpTokenInput" data-i18n-ph="settings.abrp_api_key" placeholder="API key (021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx)">
-      <div class="setting-hint" data-i18n="settings.abrp_hint">E-mail, wachtwoord en API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Vereist voor live data ophalen.</div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="saveToken()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
-        <button class="btn btn-danger" onclick="deleteToken()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
-        <button class="btn btn-secondary" onclick="testToken()" style="font-size:.8rem;padding:8px 16px;">Test verbinding</button>
-      </div>
-      <div id="tokenStatus" style="margin-top:8px;font-size:.78rem;"></div>
-    </div>
-
-    <div class="setting-section">
       <div class="setting-label" data-i18n="settings.vehicle_connections">🚗 Voertuig Connecties</div>
       <div class="setting-hint" style="margin-bottom:10px;" data-i18n="settings.connections_hint">Koppel je auto om automatisch ritten en laaddata op te halen. Kies je merk hieronder.</div>
       <div id="connectorsContainer"></div>
@@ -352,7 +338,6 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
       <h3 data-i18n="help.add_data">📂 Data toevoegen</h3>
       <div class="help-card"><div class="help-card-icon">📤</div><div class="help-card-body"><h4 data-i18n="ui.upload">Excel Upload</h4><p data-i18n="help.upload_desc">Klik op 📂 Upload en selecteer één of meer ABRP Excel exports. De server parset de bestanden, converteert mijlen naar km, detecteert laadproviders, en merget alles samen.</p></div></div>
       <div class="help-card"><div class="help-card-icon">🚗</div><div class="help-card-body"><h4 data-i18n="settings.vehicle_connections">Volkswagen WeConnect</h4><p data-i18n="help.vw_desc">In ⚙️ Instellingen kun je je VW account koppelen (gratis). Klik op 🔄 Sync om ritten en laaddata direct van Volkswagen servers op te halen.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🔑</div><div class="help-card-body"><h4 data-i18n="settings.abrp_api">ABRP API</h4><p data-i18n="help.abrp_desc">Voor premium ABRP API keys. Sla je token op in ⚙️ Instellingen om activiteiten rechtstreeks van ABRP op te halen.</p></div></div>
     </div>
 
     <div class="help-section">
@@ -940,10 +925,7 @@ async function loadData() {
 // SETTINGS
 // ═════════════════════════════════════════════════════════════════
 function openSettings() {
-  // Load current ABRP values
-  document.getElementById('abrpEmailInput').value = localStorage.getItem('abrp_email') || '';
-  document.getElementById('abrpPasswordInput').value = localStorage.getItem('abrp_password') ? '••••••••' : '';
-  document.getElementById('abrpTokenInput').value = localStorage.getItem('abrp_token') || '';
+  // Load current values
   const theme = localStorage.getItem('theme') || 'dark';
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
   currentPalette = localStorage.getItem('palette') || 'default';
@@ -988,57 +970,7 @@ function setPalette(name) {
   localStorage.setItem('palette', name);
   renderPalettes();
   if (RAW_DATA.length > 0) renderCharts(RAW_DATA, currentPeriod);
-  showToast(`Palet: ${name}`);
-}
-
-function saveToken() {
-  const email = document.getElementById('abrpEmailInput').value.trim();
-  const password = document.getElementById('abrpPasswordInput').value.trim();
-  const token = document.getElementById('abrpTokenInput').value.trim();
-  if (!token) { showToast('Vul een API key in', true); return; }
-  localStorage.setItem('abrp_token', token);
-  if (email) localStorage.setItem('abrp_email', email); else localStorage.removeItem('abrp_email');
-  if (password && password !== '••••••••') localStorage.setItem('abrp_password', password);
-  document.getElementById('tokenStatus').innerHTML = '✅ ' + t('messages.saved');
-  showToast(t('messages.abrp_saved'));
-}
-
-function deleteToken() {
-  localStorage.removeItem('abrp_token');
-  localStorage.removeItem('abrp_email');
-  localStorage.removeItem('abrp_password');
-  document.getElementById('abrpEmailInput').value = '';
-  document.getElementById('abrpPasswordInput').value = '';
-  document.getElementById('abrpTokenInput').value = '';
-  document.getElementById('tokenStatus').innerHTML = '🗑️ ' + t('messages.deleted');
-  showToast(t('messages.abrp_deleted'));
-}
-
-async function testToken() {
-  const email = document.getElementById('abrpEmailInput').value.trim();
-  const password = document.getElementById('abrpPasswordInput').value.trim();
-  const token = document.getElementById('abrpTokenInput').value.trim();
-  if (!token) { showToast('Vul eerst een API key in', true); return; }
-  document.getElementById('tokenStatus').innerHTML = '⏳ Testen...';
-  try {
-    // Send email + password (or stored password if dots shown)
-    const sendPassword = (password && password !== '••••••••') ? password : (localStorage.getItem('abrp_password') || '');
-    const resp = await fetch('/api/abrp/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: sendPassword, api_key: token })
-    });
-    const data = await resp.json();
-    if (data.error && data.error.includes('session')) {
-      document.getElementById('tokenStatus').innerHTML = '⚠️ API key geldig maar mist "session" feature (premium vereist). Excel upload werkt wel.';
-    } else if (data.error) {
-      document.getElementById('tokenStatus').innerHTML = '❌ ' + esc(data.error.substring(0, 100));
-    } else {
-      document.getElementById('tokenStatus').innerHTML = '✅ Verbinding succesvol!';
-    }
-  } catch(e) {
-    document.getElementById('tokenStatus').innerHTML = '⚠️ Server niet bereikbaar — instellingen lokaal opgeslagen';
-  }
+  showToast('Palet: ${name}');
 }
 
 // ─── Help Modal ──────────────────────────────────────────────────

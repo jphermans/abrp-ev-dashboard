@@ -252,7 +252,7 @@
     "add_data": "📂 Ajouter des données",
     "upload_desc": "Cliquez sur Importer et sélectionnez un ou plusieurs exports Excel ABRP.",
     "vw_desc": "Dans Paramètres, vous pouvez lier votre compte VW (gratuit). Cliquez sur Sync pour récupérer les données.",
-    "abrp_desc": "Pour les clés API ABRP premium. Enregistrez votre jeton dans Paramètres.",
+    "abrp_desc": "Avec un jeton ABRP Live Data (dans les paramètres 🚗 VW) le tableau de bord envoie les données en temps réel à ABRP. Le jeton ne peut qu'envoyer, pas récupérer.",
     "settings_section": "⚙️ Paramètres",
     "dark_light_desc": "Basculez entre apparence sombre et claire.",
     "palette_desc": "Choisissez parmi 6 palettes de couleurs.",

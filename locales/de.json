@@ -252,7 +252,7 @@
     "add_data": "📂 Daten hinzufügen",
     "upload_desc": "Klicken Sie auf Hochladen und wählen Sie ABRP Excel-Exporte aus.",
     "vw_desc": "Unter Einstellungen können Sie Ihr VW-Konto verknüpfen (kostenlos).",
-    "abrp_desc": "Für Premium ABRP API-Schlüssel. Speichern Sie Ihren Token in den Einstellungen.",
+    "abrp_desc": "Mit einem ABRP Live Data Token (in den 🚗 VW-Einstellungen) sendet das Dashboard Echtzeitdaten an ABRP. Token kann nur senden, nicht abrufen.",
     "settings_section": "⚙️ Einstellungen",
     "dark_light_desc": "Wechseln zwischen dunklem und hellem Erscheinungsbild.",
     "palette_desc": "Wählen Sie aus 6 Farbpaletten.",

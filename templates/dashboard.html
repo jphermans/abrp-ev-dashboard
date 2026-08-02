@@ -1431,7 +1431,7 @@ function renderDashboard(){
 }
 
 // ─── Filters ─────────────────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentPeriod=btn.dataset.period;if(RAW_DATA.length>0)renderCharts(RAW_DATA,currentPeriod);}));
+document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentPeriod=btn.dataset.period;if(RAW_DATA.length>0)renderDashboard();}));
 
 // ─── PDF Export ──────────────────────────────────────────────────
 async function exportPDF(){

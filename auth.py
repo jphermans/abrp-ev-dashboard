@@ -54,8 +54,11 @@ def init_db():
     try:
         conn.execute("SELECT must_change_password FROM users LIMIT 1")
     except sqlite3.OperationalError:
-        conn.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0")
-        print("   DB migrated: added must_change_password column")
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0")
+            print("   DB migrated: added must_change_password column")
+        except sqlite3.OperationalError:
+            pass  # Another worker already added it
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_settings (
             user_id INTEGER NOT NULL,
@@ -69,8 +72,11 @@ def init_db():
     try:
         conn.execute("SELECT is_fleet_manager FROM users LIMIT 1")
     except sqlite3.OperationalError:
-        conn.execute("ALTER TABLE users ADD COLUMN is_fleet_manager INTEGER DEFAULT 0")
-        print("   DB migrated: added is_fleet_manager column")
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN is_fleet_manager INTEGER DEFAULT 0")
+            print("   DB migrated: added is_fleet_manager column")
+        except sqlite3.OperationalError:
+            pass  # Another worker already added it
     # Vehicles table — supports multiple vehicles per user
     conn.execute("""
         CREATE TABLE IF NOT EXISTS vehicles (

@@ -105,7 +105,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 .setting-input:focus { outline:none; border-color:var(--accent); }
 .setting-hint { font-size:.72rem; color:var(--text-muted); margin-top:6px; }
 .theme-toggle-group { display:flex; gap:8px; }
-.theme-btn { flex:1; padding:10px 8px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; font-size:.78rem; font-weight:600; transition:all .2s; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.theme-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 8px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; font-size:.72rem; font-weight:600; transition:all .2s; }
+.theme-btn .theme-icon { font-size:1.4rem; }
 .theme-btn.active { border-color:var(--accent); background:rgba(59,130,246,.1); color:var(--accent-light); }
 .palette-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
 .palette-option { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:8px; border:2px solid var(--border); background:var(--bg); cursor:pointer; font-size:.82rem; transition:all .2s; }
@@ -208,8 +209,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <div class="setting-section">
       <div class="setting-label" data-i18n="settings.theme">🎨 Thema</div>
       <div class="theme-toggle-group">
-        <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')" data-i18n="settings.dark">🌙 Donker</button>
-        <button class="theme-btn" data-theme="light" onclick="setTheme('light')" data-i18n="settings.light">☀️ Licht</button>
+        <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')" data-i18n="settings.dark"><span class="theme-icon">🌙</span><span>Donker</span></button>
+        <button class="theme-btn" data-theme="light" onclick="setTheme('light')" data-i18n="settings.light"><span class="theme-icon">☀️</span><span>Licht</span></button>
       </div>
     </div>
 

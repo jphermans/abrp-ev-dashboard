@@ -78,6 +78,7 @@ The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, 
 - **8 interactive charts** — distance, energy, battery SoC, odometer, weekday distribution, distance buckets, provider breakdown
 - **6 KPI cards** — total km, total kWh, consumption (kWh/100km), active days, top provider, longest trip
 - **Vehicle info bar** — shows vehicle name, odometer, battery SoC, total km, trip/charge counts. Uses live connector data or falls back to Excel data automatically
+- **Vehicle details page** — 🔍 button opens full vehicle info: general specs, battery & charging, climate, doors, windows, GPS position, software version, maintenance schedule, parking brake. Shows live data when connector works, Excel-derived stats as fallback
 - **Time filters** — Day / Week / Month / Year / All — all charts update instantly
 - **Date range picker** — select a custom from/to date range to filter all data. Works in combination with time filters
 - **Full data tables** — every trip and charging session with provider detection
@@ -153,8 +154,10 @@ CONNECTORS["polestar"] = PolestarConnector
 | 🌐 **Language** | Dropdown selector, template download, custom upload |
 | 🎨 **Theme** | Dark / Light mode toggle |
 | 🌈 **Color palette** | 6 palettes: Default, Warm, Ocean, Forest, Sunset, Mono |
-| 🔑 **ABRP API token** | Save, test, delete |
+| 🔑 **ABRP API** | Email, password, API key — save, test, delete |
 | 🚗 **Vehicle connections** | Dynamic — auto-renders all registered connector brands |
+| 🔑 **Password change** | Change your password (current + new + confirm) |
+| 🗑️ **Account deletion** | Permanently delete your account and all data |
 | ℹ️ **System** | Server status, Pi model, record count, active connections |
 
 ### ❓ Built-in Help
@@ -168,24 +171,24 @@ A comprehensive help modal (❓ button) explains every chart, KPI card, filter, 
 ### Modular Server
 
 ```
-server.py              Entry point + startup (64 lines)
+server.py              Entry point + startup
 config.py              Paths, rate limiter, cache
 excel_parser.py        ABRP Excel parsing + provider detection
 data_utils.py          Shared merge/dedup helper (atomic writes)
-auth.py                SQLite users DB, PBKDF2 auth, sessions, login/register/logout
+auth.py                SQLite users DB, PBKDF2 auth, sessions, vehicles, fleet
 routes/
   core.py              Dashboard page, data API, upload, status
   abrp.py              ABRP API proxy (requires premium key)
   connectors.py        Generic /api/connector/<brand>/* endpoints
   locales.py           Language list, download template, upload, delete
+  vehicles.py          Multi-vehicle CRUD + fleet overview
 connectors/
   base.py              BaseConnector ABC — subclass to add brands
-  vw_connector.py      Volkswagen WeConnect (implemented)
-  tesla_connector.py   Tesla (stub)
-  bmw_connector.py     BMW (stub)
-  hyundai_kia.py       Hyundai/Kia (stub)
-  mercedes.py          Mercedes (stub)
+  vw_connector.py      Volkswagen WeConnect (CarConnectivity + ABRP telemetry)
   __init__.py          Registry — add new brands here
+scripts/
+  install.sh           Bare-metal installer (systemd service)
+  patch_vw_auth.py     Auto-patches CarConnectivity VW auth at startup
 locales/
   nl.json, en.json, fr.json, de.json
 templates/
@@ -217,7 +220,9 @@ templates/
 | `GET /api/connector/<brand>/status` | Check if connector is configured |
 | `POST /api/connector/<brand>/test` | Test connector connection |
 | `POST /api/connector/<brand>/sync` | Fetch trips + charging from manufacturer |
-| `GET /api/connector/<brand>/vehicle-info` | Fetch vehicle details (model, odometer, battery) |
+| `GET /api/connector/<brand>/vehicle-info` | Fetch vehicle details (model, odometer, battery, doors, windows, GPS, software, maintenance) |
+| `POST /api/connector/<brand>/send-abrp-telemetry` | Forward live vehicle data to ABRP (requires ABRP token) |
+| `POST /api/auth/change-password` | Change current user's password |
 | `GET /api/locales` | List available languages |
 | `GET /api/locales/<code>` | Get a language file |
 | `GET /api/locales/template` | Download translation template |
@@ -276,7 +281,12 @@ Login → ⚙️ Settings → 🚗 Volkswagen WeConnect → enter VW email + pas
 > **VW Note:** The VW connector uses the [CarConnectivity](https://github.com/tillsteinbach/CarConnectivity) library. As of August 2026, VW changed their OIDC flow — the old hybrid/implicit grant (`response_type=code id_token token`) is rejected with `unauthorized_client`, and the BFF proxy endpoint returns 403. The dashboard ships with an automatic patch (`scripts/patch_vw_auth.py`) that fixes the auth flow at startup by switching to `response_type=code` with plain browser headers. **With your real VW credentials, the sync should now work.**
 
 ### ABRP API
-Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requires a premium API key with the `session` feature.
+Login → ⚙️ Settings → 🔑 ABRP API → enter email, password, and API key → Test. Requires a premium API key with the `session` feature.
+
+### ABRP Live Data Forwarding (VW only)
+When you add an **ABRP Live Data token** to your VW connector credentials (Settings → 🚗 Volkswagen WeConnect → "ABRP Live Data token"), the dashboard forwards real-time vehicle data (SoC, odometer, range, GPS, temperature, charging state) to ABRP via `api.iternio.com/1/tlm/send`. This enables ABRP to plan routes with live data — no manual updates needed.
+
+Get your token: [abetterrouteplanner.com](https://abetterrouteplanner.com) → select your car → **Live Data** → **Generic** → copy the token.
 
 ---
 
@@ -286,7 +296,7 @@ Login → ⚙️ Settings → 🔑 ABRP API Token → paste key → Test. Requir
 |---------|----------|
 | Can't access dashboard | Check firewall / port forwarding |
 | Port 8000 in use | Set `PORT=8080` in systemd or docker-compose |
-| VW login fails | VW changed auth flow (May 2026). Use Excel upload until library is updated |
+| VW login fails | VW changed OIDC flow (May 2026). Dashboard auto-patches `response_type=code`. If "failed to run flow" persists, use Excel upload — VW server-side issue |
 | ABRP API 403 | Free-tier keys lack the `session` feature — use Excel upload |
 | Blank dashboard | Upload data or run a manufacturer sync |
 | No data after sync | Vehicle may not expose trip history via WeConnect |

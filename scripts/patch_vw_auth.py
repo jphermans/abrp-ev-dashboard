@@ -1,33 +1,59 @@
 #!/usr/bin/env python3
 """
-Patch the CarConnectivity VW connector for the May 2026 auth change.
+Patch the CarConnectivity VW connector for the May/August 2026 auth change.
 
-VW deprecated:
-1. The BFF endpoint (emea.bff.cariad.digital) → 403
-2. The hybrid/implicit OIDC flow (response_type=code id_token token) → unauthorized_client
-
-This patch:
-- Changes authorization_url() to use identity.vwgroup.io with response_type=code
-- Changes login() to use identity.vwgroup.io/oidc/v1/token for token exchange
-- Changes _get_login_form() to use plain browser headers (VW Android headers → 400)
-
-Run this script once after installing carconnectivity-connector-volkswagen.
+VW changed:
+1. BFF authorize endpoint → 403
+2. BFF token endpoint → broken
+3. VW Android app User-Agent headers → 400 on Auth0 login pages
 """
 import sys
+import hashlib
+import base64
+import re
 from pathlib import Path
 
 
 def patch_we_connect_session(filepath: Path) -> bool:
-    """Patch we_connect_session.py."""
+    """Patch we_connect_session.py to bypass the dead BFF endpoints."""
     src = filepath.read_text()
     changed = False
 
-    # 1. Add PKCE imports
-    if "import base64" not in src:
-        src = src.replace("import json", "import base64\nimport json", 1)
-        changed = True
+    # 1. Fix authorization_url() — bypass BFF, use identity.vwgroup.io directly with PKCE
+    if "emea.bff.cariad.digital/user-login/v1/authorize" in src:
+        old_block = """        auth_url: str = add_params_to_uri('https://emea.bff.cariad.digital/user-login/v1/authorize', params)
+        try_login_response: requests.Response = self.get(auth_url, allow_redirects=False, access_type=AccessType.NONE)  # pyright: ignore reportCallIssue
+        if try_login_response.status_code != requests.codes['see_other'] or 'Location' not in try_login_response.headers:
+            raise AuthenticationError('Authorization URL could not be fetched due to WeConnect failure')
+        # Redirect is URL to authorize
+        redirect: str = try_login_response.headers['Location']
+        query: str = urlparse(redirect).query
+        query_params: Dict[str, str] = dict(parse_qsl(query))
+        if 'state' in query_params:
+            self.state = query_params['state']
 
-    # 2. Fix login() — use identity.vwgroup.io token endpoint (not BFF)
+        return redirect"""
+
+        new_block = """        self._code_verifier = __import__('secrets').token_urlsafe(64)
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(self._code_verifier.encode()).digest()
+        ).rstrip(b'=').decode()
+        params.append(('client_id', self.client_id))
+        params.append(('response_type', 'code'))
+        params.append(('scope', 'openid profile'))
+        params.append(('code_challenge', code_challenge))
+        params.append(('code_challenge_method', 'S256'))
+        if state is None:
+            self.state = __import__('secrets').token_urlsafe(32)
+            state = self.state
+        auth_url: str = add_params_to_uri(url, params)
+        return auth_url"""
+
+        if old_block in src:
+            src = src.replace(old_block, new_block)
+            changed = True
+
+    # 2. Fix login() token endpoint
     if "emea.bff.cariad.digital/user-login/login/v1" in src:
         src = src.replace(
             "self.fetch_tokens('https://emea.bff.cariad.digital/user-login/login/v1',",
@@ -35,49 +61,60 @@ def patch_we_connect_session(filepath: Path) -> bool:
         )
         changed = True
 
-    # 3. Fix authorization_url() — use identity.vwgroup.io with response_type=code
-    if "emea.bff.cariad.digital/user-login/v1/authorize" in src:
-        # Replace the BFF URL in add_params_to_uri calls
+    # 3. Fix refresh() token endpoint
+    if "emea.bff.cariad.digital/login/v1/idk/token" in src:
         src = src.replace(
-            "add_params_to_uri('https://emea.bff.cariad.digital/user-login/v1/authorize'",
-            "add_params_to_uri(url"
+            "'https://emea.bff.cariad.digital/login/v1/idk/token'",
+            "'https://identity.vwgroup.io/oidc/v1/token'"
         )
         changed = True
 
     if changed:
         filepath.write_text(src)
-
     return changed
 
 
 def patch_vw_web_session(filepath: Path) -> bool:
-    """Patch vw_web_session.py — use plain browser headers."""
+    """Patch vw_web_session.py — use plain browser headers for Auth0 GET requests."""
     src = filepath.read_text()
 
-    if "VW's Auth0 requires session cookies" in src:
-        return False  # Already patched
+    if "PATCHED: plain headers" in src:
+        return False
 
-    # Replace the response = self.websession.get(url, allow_redirects=False)
-    # with a version using plain browser headers
-    old = "response = self.websession.get(url, allow_redirects=False)"
-    new = """# VW's Auth0 requires plain browser headers — VW Android app headers cause 400
-            plain_headers = {
-                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'accept-language': 'en-US,en;q=0.9',
-                'user-agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36',
-            }
-            response = self.websession.get(url, headers=plain_headers, allow_redirects=False)"""
+    lines = src.split('\n')
+    patched_lines = []
+    i = 0
+    changed = False
 
-    if old in src:
-        src = src.replace(old, new, 1)
-        filepath.write_text(src)
-        return True
+    while i < len(lines):
+        line = lines[i]
 
-    return False
+        # Only patch lines that are GET requests with allow_redirects=False
+        # that DON'T already have headers= parameter
+        if 'self.websession.get(' in line and 'allow_redirects=False' in line and 'headers=' not in line:
+            # Extract indentation
+            indent = len(line) - len(line.lstrip())
+            indent_str = ' ' * indent
+
+            # Insert plain headers block before the GET line
+            patched_lines.append(f"{indent_str}# PATCHED: plain headers for Auth0")
+            patched_lines.append(f"{indent_str}_ph = {{'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9', 'user-agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36'}}")
+            # Modify the GET line to include headers=_ph
+            new_line = line.replace('allow_redirects=False)', 'headers=_ph, allow_redirects=False)')
+            patched_lines.append(new_line)
+            changed = True
+        else:
+            patched_lines.append(line)
+
+        i += 1
+
+    if changed:
+        filepath.write_text('\n'.join(patched_lines))
+
+    return changed
 
 
 def main():
-    # Find the carconnectivity VW connector package
     try:
         import carconnectivity_connectors.volkswagen as vw_pkg
         base = Path(vw_pkg.__file__).parent / "auth"

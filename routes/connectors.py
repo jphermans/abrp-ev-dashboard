@@ -136,7 +136,7 @@ def register(app):
                 return jsonify({"error": "Login failed — check credentials"}), 401
             return jsonify({"error": msg[:500]}), 500
         if not records:
-            return jsonify({"status": "ok", "message": "Login OK but no trip data found.", "fetched": 0, "total": 0})
+            return jsonify({"status": "ok", "message": "Login OK — VW WeConnect does not expose trip history. Use Excel upload for historical data.", "fetched": 0, "total": 0})
         total = merge_and_save_records(user_dir, records)
         # Update last_sync — don't persist _token_file (M5)
         if config_data is None:

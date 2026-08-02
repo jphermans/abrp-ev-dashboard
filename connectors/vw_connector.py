@@ -144,7 +144,55 @@ class VolkswagenConnector(BaseConnector):
             for vehicle in garage.list_vehicles():
                 vehicle_name = getattr(vehicle, 'name', None) or vehicle.id or 'VW'
 
-                # ─── Drives (trips) ───
+                # VW WeConnect API does NOT expose trip/drive history.
+                # The "drives" object contains powertrain info (motor type, range),
+                # not individual trips. We can only get the current vehicle status snapshot.
+                # To get trip history, users must use Excel exports from ABRP.
+                # However, we CAN create a snapshot record from the current status
+                # (odometer, SoC, charging state) which is useful for live tracking.
+
+                # ─── Current status snapshot ───
+                try:
+                    import datetime as _dt
+                    now = _dt.datetime.now().strftime("%Y-%m-%dT%H:%M")
+
+                    # Get odometer
+                    odometer_km = None
+                    if hasattr(vehicle, 'measurements') and vehicle.measurements:
+                        meas = vehicle.measurements
+                        if hasattr(meas, 'odometer') and meas.odometer:
+                            odometer_km = meas.odometer.value
+
+                    # Get battery SoC
+                    soc = None
+                    if hasattr(vehicle, 'battery') and vehicle.battery:
+                        if hasattr(vehicle.battery, 'current_soc_pct') and vehicle.battery.current_soc_pct:
+                            soc = vehicle.battery.current_soc_pct.value
+
+                    # Get charging status
+                    charging_state = None
+                    if hasattr(vehicle, 'charging') and vehicle.charging:
+                        if hasattr(vehicle.charging, 'state') and vehicle.charging.state:
+                            charging_state = str(vehicle.charging.state.value) if vehicle.charging.state.value else None
+
+                    # Only create a record if we have meaningful data
+                    if odometer_km is not None or soc is not None:
+                        is_charging = charging_state and 'charg' in str(charging_state).lower()
+                        records.append(self.make_record(
+                            date=now[:10],
+                            time=now[11:16],
+                            datetime=now,
+                            activity="Laad op" if is_charging else "Status",
+                            distance_km=None,
+                            start_soc=None,
+                            end_soc=soc,
+                            energy_kwh=None,
+                            vehicle=str(vehicle_name),
+                        ))
+                except Exception:
+                    pass
+
+                # ─── Try to read drives (powertrain info, not trips) ───
                 try:
                     drives = vehicle.get_by_path("drives") if hasattr(vehicle, 'get_by_path') else None
                     if drives:

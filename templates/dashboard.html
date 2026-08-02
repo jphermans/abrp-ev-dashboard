@@ -150,8 +150,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <input type="date" id="dateFromInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
     <span style="color:var(--text-muted);font-size:.78rem;">→</span>
     <input type="date" id="dateToInput" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;">
-    <button class="btn btn-secondary" onclick="applyDateRange()" style="font-size:.75rem;padding:6px 12px;">Toepassen</button>
-    <button class="btn btn-secondary" onclick="clearDateRange()" style="font-size:.75rem;padding:6px 12px;">Reset</button>
+    <button class="btn btn-secondary" onclick="applyDateRange()" style="font-size:.75rem;padding:6px 12px;" data-i18n="filters.apply">Toepassen</button>
+    <button class="btn btn-secondary" onclick="clearDateRange()" style="font-size:.75rem;padding:6px 12px;" data-i18n="filters.reset">Reset</button>
   </div>
   <div class="date-range" id="dateRangeInfo"></div>
 </div>
@@ -219,11 +219,11 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🔑 ABRP API</div>
-      <input type="email" class="setting-input" id="abrpEmailInput" placeholder="ABRP e-mail" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="abrpPasswordInput" placeholder="ABRP wachtwoord" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="API key (021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx)">
-      <div class="setting-hint">E-mail, wachtwoord en API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Vereist voor live data ophalen.</div>
+      <div class="setting-label" data-i18n="settings.abrp_api">🔑 ABRP API</div>
+      <input type="email" class="setting-input" id="abrpEmailInput" data-i18n-ph="settings.abrp_email" placeholder="ABRP e-mail" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="abrpPasswordInput" data-i18n-ph="settings.abrp_password" placeholder="ABRP wachtwoord" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="abrpTokenInput" data-i18n-ph="settings.abrp_api_key" placeholder="API key (021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx)">
+      <div class="setting-hint" data-i18n="settings.abrp_hint">E-mail, wachtwoord en API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Vereist voor live data ophalen.</div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveToken()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
         <button class="btn btn-danger" onclick="deleteToken()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
@@ -239,11 +239,11 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🔑 Wachtwoord wijzigen</div>
-      <input type="password" class="setting-input" id="oldPassword" placeholder="Huidig wachtwoord" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="newPassword" placeholder="Nieuw wachtwoord (min. 8 tekens)" style="margin-bottom:6px;">
-      <input type="password" class="setting-input" id="confirmPassword" placeholder="Herhaal nieuw wachtwoord" style="margin-bottom:6px;">
-      <button class="btn btn-primary" onclick="changePassword()" style="width:100%;font-size:.85rem;padding:10px;">Wachtwoord wijzigen</button>
+      <div class="setting-label" data-i18n="settings.password_change">🔑 Wachtwoord wijzigen</div>
+      <input type="password" class="setting-input" id="oldPassword" data-i18n-ph="settings.old_password" placeholder="Huidig wachtwoord" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="newPassword" data-i18n-ph="settings.new_password" placeholder="Nieuw wachtwoord (min. 8 tekens)" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="confirmPassword" data-i18n-ph="settings.confirm_password" placeholder="Herhaal nieuw wachtwoord" style="margin-bottom:6px;">
+      <button class="btn btn-primary" onclick="changePassword()" style="width:100%;font-size:.85rem;padding:10px;" data-i18n="settings.password_change">Wachtwoord wijzigen</button>
       <div id="pwChangeStatus" style="margin-top:8px;font-size:.78rem;min-height:1.2em;"></div>
     </div>
 
@@ -351,10 +351,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <!-- Force Password Change Modal (first login) -->
 <div class="modal-overlay" id="forceChangeModal">
   <div class="modal">
-    <h2 style="color:var(--accent);">🔑 Wachtwoord wijzigen vereist</h2>
-    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;">
-      Dit is je eerste login met het standaardwachtwoord. Kies een nieuw wachtwoord om door te gaan.
-    </p>
+    <h2 style="color:var(--accent);" data-i18n="vehicle.password_required_title">🔑 Wachtwoord wijzigen vereist</h2>
+    <p style="color:var(--text-muted);margin-bottom:16px;" data-i18n="vehicle.password_required_desc">Voor je veiligheid moet je je wachtwoord wijzigen bij de eerste aanmelding.</p>
     <input type="password" class="setting-input" id="forceOldPw" placeholder="Huidig wachtwoord" style="margin-bottom:8px;">
     <input type="password" class="setting-input" id="forceNewPw" placeholder="Nieuw wachtwoord (min. 8 tekens)" style="margin-bottom:8px;">
     <input type="password" class="setting-input" id="forceConfPw" placeholder="Herhaal nieuw wachtwoord" style="margin-bottom:8px;">
@@ -368,7 +366,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <!-- Vehicle Details Modal -->
 <div class="modal-overlay" id="vehicleDetailsModal">
   <div class="modal wide">
-    <h2>🚗 Voertuig Details</h2>
+    <h2 data-i18n="vehicle.details_title">🚗 Voertuig Details</h2>
     <div id="vehicleDetailsContent">
       <p style="color:var(--text-muted);text-align:center;padding:40px;">Laden...</p>
     </div>
@@ -379,25 +377,25 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <!-- Vehicle Manager Modal -->
 <div class="modal-overlay" id="vehicleManagerModal">
   <div class="modal wide">
-    <h2>🚗 Mijn Voertuigen</h2>
-    <div id="vehicleManagerContent"><p style="color:var(--text-muted);text-align:center;padding:20px;">Laden...</p></div>
+    <h2 data-i18n="vehicle.my_vehicles">🚗 Mijn Voertuigen</h2>
+    <div id="vehicleManagerContent"><p style="color:var(--text-muted);text-align:center;padding:20px;" data-i18n="vehicle.loading">Laden...</p></div>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
-      <h3 style="font-size:.9rem;margin-bottom:10px;">➕ Voertuig toevoegen</h3>
-      <input type="text" id="newVehicleName" placeholder="Naam (bijv. ID.7)" class="setting-input" style="margin-bottom:6px;">
-      <input type="text" id="newVehicleModel" placeholder="Model (optioneel)" class="setting-input" style="margin-bottom:6px;">
-      <input type="text" id="newVehiclePlate" placeholder="Kenteken (optioneel)" class="setting-input" style="margin-bottom:8px;">
-      <button class="btn btn-primary" onclick="addVehicle()" style="width:100%;">Toevoegen</button>
+      <h3 style="font-size:.9rem;margin-bottom:10px;" data-i18n="vehicle.add_vehicle">➕ Voertuig toevoegen</h3>
+      <input type="text" id="newVehicleName" data-i18n-ph="vehicle.name_placeholder" placeholder="Naam (bijv. ID.7)" class="setting-input" style="margin-bottom:6px;">
+      <input type="text" id="newVehicleModel" data-i18n-ph="vehicle.model_placeholder" placeholder="Model (optioneel)" class="setting-input" style="margin-bottom:6px;">
+      <input type="text" id="newVehiclePlate" data-i18n-ph="vehicle.plate_placeholder" placeholder="Kenteken (optioneel)" class="setting-input" style="margin-bottom:8px;">
+      <button class="btn btn-primary" onclick="addVehicle()" style="width:100%;" data-i18n="vehicle.add_btn">Toevoegen</button>
     </div>
-    <button class="btn btn-secondary" onclick="closeVehicleManager()" style="width:100%;margin-top:8px;">Sluiten</button>
+    <button class="btn btn-secondary" onclick="closeVehicleManager()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
   </div>
 </div>
 
 <!-- Fleet Overview Modal -->
 <div class="modal-overlay" id="fleetModal">
   <div class="modal wide">
-    <h2>📊 Fleet Overzicht</h2>
-    <div id="fleetContent"><p style="color:var(--text-muted);text-align:center;padding:20px;">Laden...</p></div>
-    <button class="btn btn-secondary" onclick="closeFleetOverview()" style="width:100%;margin-top:8px;">Sluiten</button>
+    <h2 data-i18n="vehicle.fleet_overview">📊 Fleet Overzicht</h2>
+    <div id="fleetContent"><p style="color:var(--text-muted);text-align:center;padding:20px;" data-i18n="vehicle.loading">Laden...</p></div>
+    <button class="btn btn-secondary" onclick="closeFleetOverview()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
   </div>
 </div>
 
@@ -466,7 +464,7 @@ function closeVehicleManager() {
 function renderVehicleList() {
   const content = document.getElementById('vehicleManagerContent');
   if (_vehicles.length === 0) {
-    content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Nog geen voertuigen. Voeg er hieronder één toe.</p>';
+    content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">' + t('vehicle.no_vehicles') + '</p>';
     return;
   }
   content.innerHTML = _vehicles.map(v => {
@@ -482,7 +480,7 @@ function renderVehicleList() {
 
 async function addVehicle() {
   const name = document.getElementById('newVehicleName').value.trim();
-  if (!name) { showToast('Voer een naam in', true); return; }
+  if (!name) { showToast(t('messages.enter_name'), true); return; }
   const model = document.getElementById('newVehicleModel').value.trim();
   const plate = document.getElementById('newVehiclePlate').value.trim();
   try {
@@ -492,7 +490,7 @@ async function addVehicle() {
     });
     const d = await resp.json();
     if (d.status === 'ok') {
-      showToast('✅ Voertuig toegevoegd');
+      showToast(t('messages.vehicle_added'));
       document.getElementById('newVehicleName').value = '';
       document.getElementById('newVehicleModel').value = '';
       document.getElementById('newVehiclePlate').value = '';
@@ -500,27 +498,26 @@ async function addVehicle() {
       renderVehicleList();
       renderVehicleSelector();
     } else {
-      showToast('❌ ' + (d.error || 'Fout'), true);
+      showToast('❌ ' + (d.error || t('messages.error')), true);
     }
-  } catch(e) { showToast('❌ Verbindingsfout', true); }
+  } catch(e) { showToast(t('messages.connection_error'), true); }
 }
 
 async function removeVehicle(vid) {
-  if (!confirm('Weet je het zeker? Alle data voor dit voertuig wordt verwijderd.')) return;
+  if (!confirm(t('vehicle.confirm_delete'))) return;
   try {
     await fetch('/api/vehicles/' + vid, { method: 'DELETE' });
-    showToast('✅ Voertuig verwijderd');
+    showToast(t('messages.vehicle_deleted'));
     await loadVehicles();
     renderVehicleList();
     renderVehicleSelector();
     if (_vehicles.length > 0) {
       await switchVehicle(_vehicles[0].id);
     } else {
-      _currentVehicleId = null;
       await loadData();
       renderDashboard();
     }
-  } catch(e) { showToast('❌ Fout', true); }
+  } catch(e) { showToast(t('messages.error'), true); }
 }
 
 // ─── Fleet Overview ─────────────────────────────────────────────
@@ -950,10 +947,9 @@ function saveToken() {
   if (!token) { showToast('Vul een API key in', true); return; }
   localStorage.setItem('abrp_token', token);
   if (email) localStorage.setItem('abrp_email', email); else localStorage.removeItem('abrp_email');
-  // Only save password if user typed something new (not the dots)
   if (password && password !== '••••••••') localStorage.setItem('abrp_password', password);
-  document.getElementById('tokenStatus').innerHTML = '✅ Opgeslagen in browser';
-  showToast('ABRP instellingen opgeslagen');
+  document.getElementById('tokenStatus').innerHTML = '✅ ' + t('messages.saved');
+  showToast(t('messages.abrp_saved'));
 }
 
 function deleteToken() {
@@ -963,8 +959,8 @@ function deleteToken() {
   document.getElementById('abrpEmailInput').value = '';
   document.getElementById('abrpPasswordInput').value = '';
   document.getElementById('abrpTokenInput').value = '';
-  document.getElementById('tokenStatus').innerHTML = '🗑️ Verwijderd';
-  showToast('ABRP instellingen verwijderd');
+  document.getElementById('tokenStatus').innerHTML = '🗑️ ' + t('messages.deleted');
+  showToast(t('messages.abrp_deleted'));
 }
 
 async function testToken() {

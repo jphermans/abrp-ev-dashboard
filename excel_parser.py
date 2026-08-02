@@ -89,7 +89,22 @@ def parse_excel_to_records(filepath):
         distance_mi = _safe_float(row[4])
         distance_km = round(distance_mi * 1.609344, 1) if distance_mi is not None else None
         energy = _safe_float(row[9])
-        all_loc = f"{row[5] or ''} {row[6] or ''}"
+
+        # Provider detection: use END location (row[6]) where the charger actually is,
+        # NOT the combined start+end text (which causes false matches when the car
+        # was at a provider location before driving elsewhere to charge)
+        start_loc = str(row[5] or '')
+        end_loc = str(row[6] or '')
+
+        if activity == "Laad op":
+            # Provider: detect from END location ONLY (where the charger is).
+            # Do NOT fall back to START — that's the previous destination,
+            # which may contain a different provider name and cause false attribution.
+            charge_provider = _extract_provider(end_loc)
+            charge_location = _extract_location(end_loc) or _extract_location(start_loc)
+        else:
+            charge_provider = None
+            charge_location = None
 
         records.append({
             "date": dt.strftime("%Y-%m-%d"),
@@ -106,8 +121,8 @@ def parse_excel_to_records(filepath):
             "start_odo_mi": _safe_float(row[10]),
             "end_odo_mi": _safe_float(row[11]),
             "vehicle": str(row[12] or "EV"),
-            "charge_provider": _extract_provider(all_loc) if activity == "Laad op" else None,
-            "charge_location": _extract_location(row[5] or row[6]) if activity == "Laad op" else None,
+            "charge_provider": charge_provider,
+            "charge_location": charge_location,
         })
     wb.close()
     return records

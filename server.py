@@ -29,6 +29,15 @@ from data_utils import merge_and_save_records
 
 app = Flask(__name__)
 
+# Prevent browser caching of HTML pages (ensures latest version is served)
+@app.after_request
+def add_no_cache_headers(response):
+    if 'text/html' in response.headers.get('Content-Type', ''):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 from routes.core import register as register_core
 from routes.abrp import register as register_abrp
 from routes.connectors import register as register_connectors

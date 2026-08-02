@@ -151,3 +151,48 @@ def register(app):
         if not db_path.exists():
             return jsonify([])
         return jsonify(get_charge_summary(db_path))
+
+    @app.route("/api/charge-locations")
+    @login_required
+    def charge_locations():
+        """Get unique charge locations with their current provider assignment."""
+        uid = get_current_user_id()
+        user_dir = get_user_data_dir(uid)
+        db_path = get_db_path(user_dir)
+        if not db_path.exists():
+            return jsonify([])
+        import sqlite3
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT 
+                id,
+                date,
+                charge_location,
+                charge_provider,
+                energy_kwh,
+                duration
+            FROM activities
+            WHERE activity = 'Laad op'
+            ORDER BY date DESC
+        """).fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+
+    @app.route("/api/charge-location/<int:activity_id>", methods=["PATCH"])
+    @login_required
+    def update_charge_location(activity_id):
+        """Update the charge_provider for a specific activity."""
+        uid = get_current_user_id()
+        user_dir = get_user_data_dir(uid)
+        db_path = get_db_path(user_dir)
+        if not db_path.exists():
+            return jsonify({"error": "No data"}), 404
+        data = request.json or {}
+        provider = data.get("provider", "").strip()
+        if not provider:
+            return jsonify({"error": "Provider required"}), 400
+        from db import update_charge_provider
+        update_charge_provider(db_path, activity_id, provider)
+        _cache.pop(f"data_{uid}", None)
+        return jsonify({"status": "ok", "message": f"Provider updated to {provider}"})

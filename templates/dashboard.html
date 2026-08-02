@@ -179,7 +179,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
   <div class="chart-card"><div class="chart-title" data-i18n="charts.energy_per_provider">⚡ Energie per provider (kWh)</div><div class="chart-canvas-wrap"><canvas id="providerEnergyChart"></canvas></div></div>
 </div>
 <div class="table-card">
-  <div class="table-title" data-i18n="sections.charge_locations">📍 Laadlocaties</div>
+  <div class="table-title" data-i18n="sections.charge_locations">📍 Laadlocaties <button class="btn btn-secondary" onclick="openChargeEditor()" style="font-size:.72rem;padding:4px 10px;margin-left:8px;" data-i18n="table.edit_providers">✏️ Provider aanpassen</button></div>
   <div class="table-wrap charge-loc-table-wrap" style="max-height:350px;">
     <table><thead><tr><th data-i18n="table.provider">Provider</th><th data-i18n="table.location">Locatie</th><th data-i18n="table.sessions">Sessies</th><th data-i18n="table.energy_kwh">Energie (kWh)</th><th data-i18n="table.last_visit">Laatste bezoek</th></tr></thead><tbody id="chargeLocationsBody"></tbody></table>
   </div>
@@ -433,6 +433,16 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     <h2 data-i18n="vehicle.fleet_overview">📊 Fleet Overzicht</h2>
     <div id="fleetContent"><p style="color:var(--text-muted);text-align:center;padding:20px;" data-i18n="vehicle.loading">Laden...</p></div>
     <button class="btn btn-secondary" onclick="closeFleetOverview()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
+  </div>
+</div>
+
+<!-- Charge Provider Editor Modal -->
+<div class="modal-overlay" id="chargeEditorModal">
+  <div class="modal wide">
+    <h2 data-i18n="table.edit_providers">✏️ Provider aanpassen</h2>
+    <div class="setting-hint" style="margin-bottom:12px;" data-i18n="table.edit_hint">Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie.</div>
+    <div id="chargeEditorContent" style="max-height:500px;overflow-y:auto;"><p style="color:var(--text-muted);text-align:center;padding:20px;" data-i18n="vehicle.loading">Laden...</p></div>
+    <button class="btn btn-primary" onclick="closeChargeEditor()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
   </div>
 </div>
 
@@ -786,7 +796,11 @@ function applyTranslations() {
   });
   // Update title
   const titleEl = document.querySelector('.header h1');
-  if (titleEl) titleEl.innerHTML = `${t('ui.title').includes('Rijdashboard') ? '🚗 ABRP <span>' + t('ui.title').replace('ABRP ','') + '</span>' : '🚗 ABRP <span>' + t('ui.title').replace('ABRP ','') + '</span>'}`;
+  if (titleEl) {
+    const fullTitle = t('ui.title');
+    const titlePart = fullTitle.replace(/^ABRP\s*/, '');
+    titleEl.innerHTML = '🚗 ABRP <span>' + esc(titlePart) + '</span>';
+  }
   document.querySelector('.header-sub').textContent = t('ui.subtitle');
   // Update section titles
   const sections = document.querySelectorAll('.section-title');
@@ -1274,6 +1288,72 @@ function renderProviderCharts(data){
 function renderChargeLocations(data){
   const charges=data.filter(r=>r.activity==='Laad op');const locs={};charges.forEach(r=>{const p=r.charge_provider||'Onbekend';const l=r.charge_location||'Onbekend';const key=p+'|'+l;if(!locs[key])locs[key]={provider:p,location:l,count:0,kwh:0,lastDate:''};locs[key].count++;locs[key].kwh+=r.energy_kwh||0;if(r.date>locs[key].lastDate)locs[key].lastDate=r.date;});const sorted=Object.values(locs).sort((a,b)=>b.count-a.count);
   document.getElementById('chargeLocationsBody').innerHTML=sorted.map(l=>'<tr><td><span class="provider-badge '+providerClass(l.provider)+'">'+esc(l.provider)+'</span></td><td>'+esc(l.location)+'</td><td>'+esc(l.count)+'</td><td>'+Math.round(l.kwh*10)/10+'</td><td>'+esc(l.lastDate)+'</td></tr>').join('');
+}
+
+// ─── Charge Provider Editor ─────────────────────────────────────
+const PROVIDER_OPTIONS = ['Unknown', 'DATS 24', 'Fastned', 'Allego', 'Shell Recharge', 'Ionity', 'Electra', 'EVBox', 'Lidl', 'PluginCompany', 'T-Line', 'Tesla', 'TotalEnergies', 'Home'];
+
+async function openChargeEditor() {
+  document.getElementById('chargeEditorModal').classList.add('show');
+  const content = document.getElementById('chargeEditorContent');
+  content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">' + t('vehicle.loading') + '</p>';
+
+  try {
+    const resp = await fetch('/api/charge-locations');
+    const sessions = await resp.json();
+    if (!sessions || sessions.length === 0) {
+      content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No charge sessions found.</p>';
+      return;
+    }
+    renderChargeEditor(sessions);
+  } catch(e) {
+    content.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">Error loading data</p>';
+  }
+}
+
+function closeChargeEditor() {
+  document.getElementById('chargeEditorModal').classList.remove('show');
+}
+
+function renderChargeEditor(sessions) {
+  const content = document.getElementById('chargeEditorContent');
+  content.innerHTML = sessions.map(s => {
+    const current = s.charge_provider || 'Unknown';
+    const options = PROVIDER_OPTIONS.map(p => {
+      const sel = (p === current || (p === 'Unknown' && !s.charge_provider)) ? 'selected' : '';
+      return '<option value="' + esc(p) + '" ' + sel + '>' + esc(p) + '</option>';
+    }).join('');
+    const locName = s.charge_location || '(unknown location)';
+    const energyStr = s.energy_kwh != null ? s.energy_kwh.toFixed(1) + ' kWh' : '';
+    const badgeClass = current === 'Unknown' ? 'provider-Other' : 'provider-' + current.replace(/[^a-zA-Z0-9]/g, '');
+
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:120px;"><strong>' + esc(s.date) + '</strong>' +
+      '<br><span style="font-size:.75rem;color:var(--text-muted);">' + esc(locName) + '</span>' +
+      (energyStr ? ' <span style="font-size:.72rem;color:var(--text-muted);">| ' + energyStr + '</span>' : '') +
+      '</div>' +
+      '<select class="setting-input" onchange="updateProvider(' + s.id + ', this.value)" style="width:auto;min-width:140px;padding:6px 10px;font-size:.78rem;">' +
+      options + '</select>' +
+      '</div>';
+  }).join('');
+}
+
+async function updateProvider(activityId, provider) {
+  try {
+    const resp = await fetch('/api/charge-location/' + activityId, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({provider: provider})
+    });
+    const d = await resp.json();
+    if (d.status === 'ok') {
+      showToast('✅ ' + provider);
+    } else {
+      showToast('❌ ' + (d.error || 'Error'), true);
+    }
+  } catch(e) {
+    showToast('❌ ' + t('messages.connection_error'), true);
+  }
 }
 
 // ─── Table Sort & Filter ────────────────────────────────────────

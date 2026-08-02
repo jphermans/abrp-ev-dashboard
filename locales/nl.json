@@ -5,7 +5,7 @@
     "author": "ABRP Dashboard"
   },
   "ui": {
-    "title": "ABRP Rijdashboard",
+    "title": "ABRP Rij-dashboard",
     "subtitle": "EV — kilometerstatistieken, laadgedrag & providers",
     "upload": "Upload",
     "pdf": "PDF",
@@ -74,7 +74,9 @@
     "table.records_lc": "records",
     "table.all_types_opt": "📋 Alle types",
     "table.drive_opt": "🚗 Rijden",
-    "table.charge_opt": "⚡ Laden"
+    "table.charge_opt": "⚡ Laden",
+    "table.edit_providers": "✏️ Provider aanpassen",
+    "table.edit_hint": "Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie."
   },
   "activity": {
     "drive": "🚗 Rijden",

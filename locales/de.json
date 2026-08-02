@@ -74,7 +74,9 @@
     "table.records_lc": "Datensätze",
     "table.all_types_opt": "📋 Alle Typen",
     "table.drive_opt": "🚗 Fahrt",
-    "table.charge_opt": "⚡ Laden"
+    "table.charge_opt": "⚡ Laden",
+    "table.edit_providers": "✏️ Anbieter ändern",
+    "table.edit_hint": "Klicken Sie auf das Dropdown-Menü, um den richtigen Anbieter zuzuweisen."
   },
   "activity": {
     "drive": "🚗 Fahrt",

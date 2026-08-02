@@ -74,7 +74,9 @@
     "table.records_lc": "enregistrements",
     "table.all_types_opt": "📋 Tous les types",
     "table.drive_opt": "🚗 Conduite",
-    "table.charge_opt": "⚡ Charge"
+    "table.charge_opt": "⚡ Charge",
+    "table.edit_providers": "✏️ Modifier fournisseur",
+    "table.edit_hint": "Cliquez sur le menu déroulant pour assigner le bon fournisseur de charge."
   },
   "activity": {
     "drive": "🚗 Conduite",

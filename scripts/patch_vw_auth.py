@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 """
 Patch the CarConnectivity VW connector for the May/August 2026 auth change.
-
-VW changed:
-1. BFF authorize endpoint → 403
-2. BFF token endpoint → broken
-3. VW Android app User-Agent headers → 400 on Auth0 login pages
 """
 import sys
 import hashlib
 import base64
-import re
 from pathlib import Path
 
 
 def patch_we_connect_session(filepath: Path) -> bool:
-    """Patch we_connect_session.py to bypass the dead BFF endpoints."""
+    """Patch we_connect_session.py."""
     src = filepath.read_text()
     changed = False
 
-    # 0. Ensure required imports are present
+    # 0. Ensure imports
     if "import base64" not in src:
         src = src.replace("import json", "import base64\nimport json", 1)
         changed = True
@@ -27,7 +21,7 @@ def patch_we_connect_session(filepath: Path) -> bool:
         src = src.replace("import json", "import hashlib\nimport json", 1)
         changed = True
 
-    # 1. Fix authorization_url() — bypass BFF, use identity.vwgroup.io directly with PKCE
+    # 1. Fix authorization_url()
     if "emea.bff.cariad.digital/user-login/v1/authorize" in src:
         old_block = """        auth_url: str = add_params_to_uri('https://emea.bff.cariad.digital/user-login/v1/authorize', params)
         try_login_response: requests.Response = self.get(auth_url, allow_redirects=False, access_type=AccessType.NONE)  # pyright: ignore reportCallIssue
@@ -62,15 +56,13 @@ def patch_we_connect_session(filepath: Path) -> bool:
             src = src.replace(old_block, new_block)
             changed = True
 
-    # 2. Fix login() token endpoint
+    # 2. Fix token endpoints
     if "emea.bff.cariad.digital/user-login/login/v1" in src:
         src = src.replace(
             "self.fetch_tokens('https://emea.bff.cariad.digital/user-login/login/v1',",
             "self.fetch_tokens('https://identity.vwgroup.io/oidc/v1/token',"
         )
         changed = True
-
-    # 3. Fix refresh() token endpoint
     if "emea.bff.cariad.digital/login/v1/idk/token" in src:
         src = src.replace(
             "'https://emea.bff.cariad.digital/login/v1/idk/token'",
@@ -78,14 +70,12 @@ def patch_we_connect_session(filepath: Path) -> bool:
         )
         changed = True
 
-    # 4. Replace fetch_tokens() to use authorization code + PKCE (not hybrid flow)
+    # 3. Replace fetch_tokens() with PKCE code exchange
     if "self.parse_from_fragment(authorization_response)" in src and "grant_type" not in src:
         old_start = "    def fetch_tokens("
         old_end = "    def parse_from_body("
-
         start_idx = src.find(old_start)
         end_idx = src.find(old_end)
-
         if start_idx != -1 and end_idx != -1:
             new_method = '''    def fetch_tokens(
         self,
@@ -102,9 +92,12 @@ def patch_we_connect_session(filepath: Path) -> bool:
         parsed = urlparse(authorization_response)
         params = parse_qs(parsed.query)
         code = params.get('code', [None])[0]
+        if not code and parsed.fragment:
+            params = parse_qs(parsed.fragment)
+            code = params.get('code', [None])[0]
 
         if not code:
-            LOG.error("No authorization code in response: %s", authorization_response[:200])
+            LOG.error("No authorization code in response: %s", str(authorization_response)[:200])
             return None
 
         token_body = {
@@ -153,42 +146,52 @@ def patch_we_connect_session(filepath: Path) -> bool:
 
 
 def patch_vw_web_session(filepath: Path) -> bool:
-    """Patch vw_web_session.py — use plain browser headers for Auth0 GET requests."""
+    """Patch vw_web_session.py — plain browser headers + ? fragment handling."""
     src = filepath.read_text()
-
-    if "PATCHED: plain headers" in src:
-        return False
-
-    lines = src.split('\n')
-    patched_lines = []
-    i = 0
     changed = False
 
-    while i < len(lines):
-        line = lines[i]
+    # 1. Plain browser headers for all GET requests without headers=
+    if "PATCHED: plain headers" not in src:
+        lines = src.split('\n')
+        patched_lines = []
+        for line in lines:
+            if 'self.websession.get(' in line and 'allow_redirects=False' in line and 'headers=' not in line:
+                indent = len(line) - len(line.lstrip())
+                indent_str = ' ' * indent
+                patched_lines.append(f"{indent_str}# PATCHED: plain headers for Auth0")
+                patched_lines.append(f"{indent_str}_ph = {{'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9', 'user-agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36'}}")
+                new_line = line.replace('allow_redirects=False)', 'headers=_ph, allow_redirects=False)')
+                patched_lines.append(new_line)
+                changed = True
+            else:
+                patched_lines.append(line)
+        if changed:
+            src = '\n'.join(patched_lines)
 
-        # Only patch lines that are GET requests with allow_redirects=False
-        # that DON'T already have headers= parameter
-        if 'self.websession.get(' in line and 'allow_redirects=False' in line and 'headers=' not in line:
-            # Extract indentation
-            indent = len(line) - len(line.lstrip())
-            indent_str = ' ' * indent
+    # 2. Fix do_web_auth to handle ? as well as # in weconnect:// URLs
+    if "weconnect://authenticated?" not in src.split("def _handle_consent_form")[0] if "def _handle_consent_form" in src else True:
+        # Add the ? transform after the # transform
+        old = """        if url.startswith('weconnect://authenticated#'):
+            # Transform weconnect://authenticated# to https://egal?
+            transformed_url = url.replace('weconnect://authenticated#', 'https://egal?')
+            LOG.debug(f"DEBUG [do_web_auth]: Transformed weconnect://authenticated# URL to: {transformed_url[:150]}")
+            return transformed_url
+        elif self.redirect_uri and url.startswith(self.redirect_uri + '#'):"""
 
-            # Insert plain headers block before the GET line
-            patched_lines.append(f"{indent_str}# PATCHED: plain headers for Auth0")
-            patched_lines.append(f"{indent_str}_ph = {{'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9', 'user-agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36'}}")
-            # Modify the GET line to include headers=_ph
-            new_line = line.replace('allow_redirects=False)', 'headers=_ph, allow_redirects=False)')
-            patched_lines.append(new_line)
+        new = """        if url.startswith('weconnect://authenticated#'):
+            transformed_url = url.replace('weconnect://authenticated#', 'https://egal?', 1)
+            return transformed_url
+        elif url.startswith('weconnect://authenticated?'):
+            transformed_url = url.replace('weconnect://authenticated?', 'https://egal?', 1)
+            return transformed_url
+        elif self.redirect_uri and url.startswith(self.redirect_uri + '#'):"""
+
+        if old in src:
+            src = src.replace(old, new)
             changed = True
-        else:
-            patched_lines.append(line)
-
-        i += 1
 
     if changed:
-        filepath.write_text('\n'.join(patched_lines))
-
+        filepath.write_text(src)
     return changed
 
 

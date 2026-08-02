@@ -97,12 +97,15 @@ def init_db():
     # Create default admin if no users exist
     count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     if count == 0:
-        admin_pw = "admin123"  # Fixed default — forced to change on first login
-        _create_user(conn, "admin", "admin@local", admin_pw, "Administrator", is_admin=1)
-        conn.execute("UPDATE users SET must_change_password = 1 WHERE username = 'admin'")
-        conn.commit()
-        print(f"   Default admin created — password: {admin_pw}")
-        print(f"   You will be forced to change this password on first login!")
+        try:
+            admin_pw = "admin123"  # Fixed default — forced to change on first login
+            _create_user(conn, "admin", "admin@local", admin_pw, "Administrator", is_admin=1)
+            conn.execute("UPDATE users SET must_change_password = 1 WHERE username = 'admin'")
+            conn.commit()
+            print(f"   Default admin created — password: {admin_pw}")
+            print(f"   You will be forced to change this password on first login!")
+        except sqlite3.IntegrityError:
+            pass  # Another worker already created the admin
 
     conn.close()
 

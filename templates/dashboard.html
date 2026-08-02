@@ -135,7 +135,7 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <body>
 <div id="dashboard-content">
 <div class="header">
-  <div><h1>🚗 ABRP <span>Rijdashboard</span></h1><div class="header-sub" id="vehicleInfo" data-i18n="ui.subtitle">EV — kilometerstatistieken, laadgedrag & providers</div></div>
+  <div><h1>🚗 EV <span>Dashboard</span></h1><div class="header-sub" id="vehicleInfo" data-i18n="ui.subtitle">kilometerstatistieken, laadgedrag & providers</div></div>
   <div class="toolbar">
     <select id="vehicleSelector" onchange="switchVehicle(this.value)" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;cursor:pointer;display:none;"></select>
     <button class="btn btn-secondary" onclick="showVehicleManager()" title="Voertuigen beheren" id="vehicleMgrBtn" style="display:none;">🚗</button>
@@ -307,7 +307,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
         <span class="provider-badge provider-Other">Andere</span> 🟣
       </p></div></div>
       <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4 data-i18n="charts.energy_per_provider">Energie per provider</h4><p data-i18n="help.energy_provider_desc">Toont hoeveel kWh je per provider hebt bijgeladen. Nuttig om te zien waar je de meeste energie haalt.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">📍</div><div class="help-card-body"><h4 data-i18n="sections.charge_locations">Laadlocaties tabel</h4><p data-i18n="help.charge_locations_desc">Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📍</div><div class="help-card-body"><h4 data-i18n="sections.charge_locations">Laadlocaties tabel</h4><p data-i18n="help.charge_locations_desc">Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt. Klik op ✏️ Provider aanpassen om per sessie de juiste laadprovider te kiezen.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">✏️</div><div class="help-card-body"><h4 data-i18n="table.edit_providers">Provider aanpassen</h4><p data-i18n="help.edit_providers_desc">Niet alle laadsessies hebben automatisch de juiste provider. Klik op ✏️ om per sessie de correcte provider te kiezen. Ontbreekt een provider? Typ de naam in het veld bovenaan en klik op + om deze toe te voegen. De provider is daarna voor iedereen beschikbaar in de dropdown.</p></div></div>
     </div>
 
     <div class="help-section">
@@ -782,8 +783,8 @@ function applyTranslations() {
   const titleEl = document.querySelector('.header h1');
   if (titleEl) {
     const fullTitle = t('ui.title');
-    const titlePart = fullTitle.replace(/^ABRP\s*/, '');
-    titleEl.innerHTML = '🚗 ABRP <span>' + esc(titlePart) + '</span>';
+    const titlePart = fullTitle.replace(/^EV\s*/, '');
+    titleEl.innerHTML = '🚗 EV <span>' + esc(titlePart) + '</span>';
   }
   document.querySelector('.header-sub').textContent = t('ui.subtitle');
   // Update section titles
@@ -1222,8 +1223,21 @@ function renderChargeLocations(data){
 
 // ─── Charge Provider Editor ─────────────────────────────────────
 const PROVIDER_OPTIONS = ['Unknown', 'DATS 24', 'Fastned', 'Allego', 'Shell Recharge', 'Ionity', 'Electra', 'EVBox', 'Lidl', 'PluginCompany', 'T-Line', 'Tesla', 'TotalEnergies', 'Home'];
+let _customProviders = [];
+
+async function loadCustomProviders() {
+  try {
+    const resp = await fetch('/api/custom-providers');
+    _customProviders = await resp.json();
+  } catch(e) { _customProviders = []; }
+}
+
+function getAllProviders() {
+  return [...PROVIDER_OPTIONS, ..._customProviders.filter(p => !PROVIDER_OPTIONS.includes(p))];
+}
 
 async function openChargeEditor() {
+  await loadCustomProviders();
   document.getElementById('chargeEditorModal').classList.add('show');
   const content = document.getElementById('chargeEditorContent');
   content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">' + t('vehicle.loading') + '</p>';
@@ -1232,12 +1246,12 @@ async function openChargeEditor() {
     const resp = await fetch('/api/charge-locations');
     const sessions = await resp.json();
     if (!sessions || sessions.length === 0) {
-      content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No charge sessions found.</p>';
+      content.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">' + t('table.no_sessions') + '</p>';
       return;
     }
     renderChargeEditor(sessions);
   } catch(e) {
-    content.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">Error loading data</p>';
+    content.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">' + t('messages.error') + '</p>';
   }
 }
 
@@ -1247,25 +1261,94 @@ function closeChargeEditor() {
 
 function renderChargeEditor(sessions) {
   const content = document.getElementById('chargeEditorContent');
-  content.innerHTML = sessions.map(s => {
-    const current = s.charge_provider || 'Unknown';
-    const options = PROVIDER_OPTIONS.map(p => {
-      const sel = (p === current || (p === 'Unknown' && !s.charge_provider)) ? 'selected' : '';
+  const allProviders = getAllProviders();
+
+  // Build the "add custom provider" section
+  var html = '<div style="border:1px solid var(--accent);background:var(--card-hover);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+    '<span style="font-size:.78rem;color:var(--text-muted);" data-i18n="table.add_custom">' + t('table.add_custom') + '</span>' +
+    '<input type="text" id="newCustomProvider" placeholder="' + esc(t('table.custom_ph')) + '" style="flex:1;min-width:120px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" maxlength="50">' +
+    '<button class="btn btn-primary" onclick="addCustomProvider()" style="font-size:.75rem;padding:6px 14px;">+</button>' +
+    '</div>';
+
+  html += '<div id="chargeSessionsList" style="max-height:380px;overflow-y:auto;">';
+  html += sessions.map(function(s) {
+    var current = s.charge_provider || 'Unknown';
+    var options = allProviders.map(function(p) {
+      var sel = (p === current || (p === 'Unknown' && !s.charge_provider)) ? 'selected' : '';
       return '<option value="' + esc(p) + '" ' + sel + '>' + esc(p) + '</option>';
     }).join('');
-    const locName = s.charge_location || '(unknown location)';
-    const energyStr = s.energy_kwh != null ? s.energy_kwh.toFixed(1) + ' kWh' : '';
-    const badgeClass = current === 'Unknown' ? 'provider-Other' : 'provider-' + current.replace(/[^a-zA-Z0-9]/g, '');
+    var locName = s.charge_location || '(' + t('table.unknown_loc') + ')';
+    var energyStr = s.energy_kwh != null ? s.energy_kwh.toFixed(1) + ' kWh' : '';
 
     return '<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
       '<div style="flex:1;min-width:120px;"><strong>' + esc(s.date) + '</strong>' +
       '<br><span style="font-size:.75rem;color:var(--text-muted);">' + esc(locName) + '</span>' +
       (energyStr ? ' <span style="font-size:.72rem;color:var(--text-muted);">| ' + energyStr + '</span>' : '') +
       '</div>' +
-      '<select class="setting-input" onchange="updateProvider(' + s.id + ', this.value)" style="width:auto;min-width:140px;padding:6px 10px;font-size:.78rem;">' +
+      '<select class="setting-input provider-select" data-activity-id="' + s.id + '" style="width:auto;min-width:140px;padding:6px 10px;font-size:.78rem;">' +
       options + '</select>' +
       '</div>';
   }).join('');
+  html += '</div>';
+
+  content.innerHTML = html;
+
+  // Attach change listeners to all dropdowns
+  content.querySelectorAll('.provider-select').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      updateProvider(parseInt(this.dataset.activityId), this.value);
+    });
+  });
+}
+
+async function addCustomProvider() {
+  var input = document.getElementById('newCustomProvider');
+  var name = input.value.trim();
+  if (!name) return;
+
+  try {
+    var resp = await fetch('/api/custom-providers', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: name})
+    });
+    var d = await resp.json();
+    if (d.status === 'ok') {
+      _customProviders = d.providers;
+      showToast('\u2705 ' + name + ' ' + t('messages.added'));
+      input.value = '';
+      // Re-render the dropdowns to include the new provider
+      var sessions = collectCurrentSessions();
+      renderChargeEditor(sessions);
+    } else {
+      showToast('\u274c ' + (d.error || t('messages.error')), true);
+    }
+  } catch(e) {
+    showToast('\u274c ' + t('messages.connection_error'), true);
+  }
+}
+
+function collectCurrentSessions() {
+  // Rebuild session objects from the currently rendered dropdowns
+  var sessions = [];
+  document.querySelectorAll('.provider-select').forEach(function(sel) {
+    var row = sel.closest('div[style*="border:1px solid"]');
+    if (row) {
+      var strong = row.querySelector('strong');
+      var date = strong ? strong.textContent : '';
+      var spans = row.querySelectorAll('span');
+      var loc = spans.length > 0 ? spans[0].textContent : '';
+      var energy = spans.length > 1 ? spans[1].textContent.replace('| ', '') : '';
+      sessions.push({
+        id: parseInt(sel.dataset.activityId),
+        date: date,
+        charge_location: loc,
+        energy_kwh: energy ? parseFloat(energy) : null,
+        charge_provider: sel.value
+      });
+    }
+  });
+  return sessions;
 }
 
 async function updateProvider(activityId, provider) {

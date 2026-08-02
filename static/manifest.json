@@ -1,6 +1,6 @@
 {
-  "name": "ABRP EV Dashboard",
-  "short_name": "ABRP",
+  "name": "EV Dashboard",
+  "short_name": "EV Dash",
   "description": "Self-hosted EV driving and charging analytics dashboard",
   "start_url": "/",
   "scope": "/",

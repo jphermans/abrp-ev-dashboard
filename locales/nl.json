@@ -5,8 +5,8 @@
     "author": "ABRP Dashboard"
   },
   "ui": {
-    "title": "ABRP Rij-dashboard",
-    "subtitle": "EV — kilometerstatistieken, laadgedrag & providers",
+    "title": "EV Dashboard",
+    "subtitle": "kilometerstatistieken, laadgedrag & providers",
     "upload": "Upload",
     "pdf": "PDF",
     "help": "Help",
@@ -68,16 +68,19 @@
     "sessions": "Sessies",
     "energy_kwh": "Energie (kWh)",
     "last_visit": "Laatste bezoek",
-    "table.search_ph": "🔍 Zoeken in alle kolommen...",
-    "table.all_types": "Alle types",
-    "table.all_providers": "Alle providers",
-    "table.records_lc": "records",
-    "table.all_types_opt": "📋 Alle types",
-    "table.drive_opt": "🚗 Rijden",
-    "table.charge_opt": "⚡ Laden",
-    "table.edit_providers": "✏️ Provider aanpassen",
-    "table.edit_hint": "Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie.",
-    "records_lc": "records"
+    "records_lc": "records",
+    "add_custom": "➕ Eigen provider toevoegen:",
+    "custom_ph": "Bv. Luminus, Engie, ...",
+    "no_sessions": "Geen laadsessies gevonden.",
+    "unknown_loc": "onbekende locatie",
+    "search_ph": "🔍 Zoeken in alle kolommen...",
+    "all_types": "Alle types",
+    "all_providers": "Alle providers",
+    "all_types_opt": "📋 Alle types",
+    "drive_opt": "🚗 Rijden",
+    "charge_opt": "⚡ Laden",
+    "edit_providers": "✏️ Provider aanpassen",
+    "edit_hint": "Klik op de provider dropdown om de juiste laadprovider te kiezen voor elke sessie."
   },
   "activity": {
     "drive": "🚗 Rijden",
@@ -221,7 +224,8 @@
     "date_range_reset": "Datumbereik gereset",
     "date_range_select": "Kies eerst een datum",
     "date_range_applied": "records",
-    "no_data_period": "Geen data in deze periode"
+    "no_data_period": "Geen data in deze periode",
+    "added": "toegevoegd"
   },
   "help": {
     "title": "❓ Help — Hoe het dashboard werkt",
@@ -235,7 +239,7 @@
     "charging_stats": "⚡ Laadstatistieken & Providers",
     "sessions_provider_desc": "Toont het aantal laadbeurten per provider. Elke kleur represents een andere provider.",
     "energy_provider_desc": "Toont hoeveel kWh je per provider hebt bijgeladen. Nuttig om te zien waar je de meeste energie haalt.",
-    "charge_locations_desc": "Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt.",
+    "charge_locations_desc": "Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt. Klik op ✏️ Provider aanpassen om per sessie de juiste laadprovider te kiezen.",
     "driving_stats": "📊 Rijstatistieken",
     "distance_period_desc": "Balkgrafiek met totale km per dag, week, maand of jaar — afhankelijk van het actieve filter.",
     "energy_charged_desc": "Balkgrafiek met totale kWh bijgeladen per periode.",
@@ -272,7 +276,8 @@
     "help.filter_month_desc": "Kies een maand (standaard). Toont alle data van die maand.",
     "help.filter_year_desc": "Kies een jaar. Toont alle data van dat jaar.",
     "help.filter_all_desc": "Toont alle data zonder filter.",
-    "help.filters_note": "KPI's, grafieken, laadlocaties en activiteitentabel updaten allemaal onmiddellijk bij het wijzigen van de periode of de picker."
+    "help.filters_note": "KPI's, grafieken, laadlocaties en activiteitentabel updaten allemaal onmiddellijk bij het wijzigen van de periode of de picker.",
+    "edit_providers_desc": "Niet alle laadsessies hebben automatisch de juiste provider. Klik op ✏️ om per sessie de correcte provider te kiezen. Ontbreekt een provider? Typ de naam in het veld bovenaan en klik op + om deze toe te voegen. De provider is daarna voor iedereen beschikbaar in de dropdown."
   },
   "providers": {
     "DATS 24": "DATS 24",

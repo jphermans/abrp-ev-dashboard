@@ -152,6 +152,53 @@ def register(app):
             return jsonify([])
         return jsonify(get_charge_summary(db_path))
 
+    # ── Custom charge providers (global, shared across all users) ──
+    @app.route("/api/custom-providers")
+    @login_required
+    def get_custom_providers():
+        """Get the global custom charge providers."""
+        import sqlite3 as _sqlite3
+        conn = _sqlite3.connect(str(Path(__file__).parent.parent / "data" / "users.db"))
+        conn.row_factory = _sqlite3.Row
+        row = conn.execute(
+            "SELECT value FROM user_settings WHERE key='custom_providers'"
+        ).fetchone()
+        conn.close()
+        if row and row["value"]:
+            import json as _json
+            return jsonify(_json.loads(row["value"]))
+        return jsonify([])
+
+    @app.route("/api/custom-providers", methods=["POST"])
+    @login_required
+    def add_custom_provider():
+        """Add a global custom charge provider (shared across all users)."""
+        data = request.json or {}
+        name = (data.get("name") or "").strip()
+        if not name:
+            return jsonify({"error": "Provider name required"}), 400
+        if len(name) > 50:
+            return jsonify({"error": "Name too long (max 50 chars)"}), 400
+
+        import sqlite3 as _sqlite3, json as _json
+        conn = _sqlite3.connect(str(Path(__file__).parent.parent / "data" / "users.db"))
+        conn.row_factory = _sqlite3.Row
+        row = conn.execute(
+            "SELECT value FROM user_settings WHERE key='custom_providers'"
+        ).fetchone()
+        providers = _json.loads(row["value"]) if row and row["value"] else []
+
+        if name not in providers:
+            providers.append(name)
+            conn.execute(
+                "INSERT OR REPLACE INTO user_settings (user_id, key, value) VALUES (?, ?, ?)",
+                (0, "custom_providers", _json.dumps(providers))
+            )
+            conn.commit()
+
+        conn.close()
+        return jsonify({"status": "ok", "providers": providers})
+
     @app.route("/api/charge-locations")
     @login_required
     def charge_locations():

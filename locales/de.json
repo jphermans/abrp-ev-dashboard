@@ -5,8 +5,8 @@
     "author": "ABRP Dashboard"
   },
   "ui": {
-    "title": "ABRP Fahr-Dashboard",
-    "subtitle": "EV — Kilometerstatistiken, Ladeverhalten & Anbieter",
+    "title": "EV Dashboard",
+    "subtitle": "Kilometerstatistiken, Ladeverhalten & Anbieter",
     "upload": "Hochladen",
     "pdf": "PDF",
     "help": "Hilfe",
@@ -68,16 +68,19 @@
     "sessions": "Vorgänge",
     "energy_kwh": "Energie (kWh)",
     "last_visit": "Letzter Besuch",
-    "table.search_ph": "🔍 Alle Spalten durchsuchen...",
-    "table.all_types": "Alle Typen",
-    "table.all_providers": "Alle Anbieter",
-    "table.records_lc": "Datensätze",
-    "table.all_types_opt": "📋 Alle Typen",
-    "table.drive_opt": "🚗 Fahrt",
-    "table.charge_opt": "⚡ Laden",
-    "table.edit_providers": "✏️ Anbieter ändern",
-    "table.edit_hint": "Klicken Sie auf das Dropdown-Menü, um den richtigen Anbieter zuzuweisen.",
-    "records_lc": "Einträge"
+    "records_lc": "Datensätze",
+    "add_custom": "➕ Anbieter hinzufügen:",
+    "custom_ph": "z.B. Luminus, Engie, ...",
+    "no_sessions": "Keine Ladevorgänge gefunden.",
+    "unknown_loc": "unbekannter Ort",
+    "search_ph": "🔍 Alle Spalten durchsuchen...",
+    "all_types": "Alle Typen",
+    "all_providers": "Alle Anbieter",
+    "all_types_opt": "📋 Alle Typen",
+    "drive_opt": "🚗 Fahrt",
+    "charge_opt": "⚡ Laden",
+    "edit_providers": "✏️ Anbieter ändern",
+    "edit_hint": "Klicken Sie auf das Dropdown-Menü, um den richtigen Anbieter zuzuweisen."
   },
   "activity": {
     "drive": "🚗 Fahrt",
@@ -221,7 +224,8 @@
     "date_range_reset": "Datumsbereich zurückgesetzt",
     "date_range_select": "Zuerst ein Datum auswählen",
     "date_range_applied": "Datensätze",
-    "no_data_period": "Keine Daten in diesem Zeitraum"
+    "no_data_period": "Keine Daten in diesem Zeitraum",
+    "added": "hinzugefügt"
   },
   "help": {
     "title": "❓ Hilfe — So funktioniert das Dashboard",
@@ -235,7 +239,7 @@
     "charging_stats": "⚡ Ladestatistiken & Anbieter",
     "sessions_provider_desc": "Zeigt die Anzahl der Ladevorgänge pro Anbieter. Jede Farbe steht für einen anderen Anbieter.",
     "energy_provider_desc": "Zeigt, wie viel kWh Sie pro Anbieter geladen haben.",
-    "charge_locations_desc": "Übersicht jedes Ladestandorts mit Anzahl der Vorgänge, gesamten kWh und letztem Besuch.",
+    "charge_locations_desc": "Übersicht jedes Ladestandorts mit Anzahl Sitzungen, Gesamt-kWh und letztem Besuch. Klicken Sie auf ✏️ Anbieter ändern um den richtigen Anbieter pro Sitzung zuzuweisen.",
     "driving_stats": "📊 Fahrstatistiken",
     "distance_period_desc": "Balkendiagramm mit Gesamt-km pro Tag, Woche, Monat oder Jahr.",
     "energy_charged_desc": "Balkendiagramm mit gesamten geladenen kWh pro Zeitraum.",
@@ -272,7 +276,8 @@
     "help.filter_month_desc": "Wählen Sie einen Monat (Standard). Zeigt alle Daten dieses Monats.",
     "help.filter_year_desc": "Wählen Sie ein Jahr. Zeigt alle Daten dieses Jahres.",
     "help.filter_all_desc": "Zeigt alle Daten ohne Filter.",
-    "help.filters_note": "KPIs, Diagramme, Ladestationen und Aktivitätstabelle aktualisieren sich sofort."
+    "help.filters_note": "KPIs, Diagramme, Ladestationen und Aktivitätstabelle aktualisieren sich sofort.",
+    "edit_providers_desc": "Nicht alle Ladevorgänge haben automatisch den richtigen Anbieter. Klicken Sie auf ✏️ um den richtigen Anbieter pro Sitzung zu wählen. Fehlt ein Anbieter? Geben Sie den Namen oben ein und klicken Sie auf + um ihn hinzuzufügen. Der Anbieter ist dann für alle verfügbar."
   },
   "providers": {
     "DATS 24": "DATS 24",

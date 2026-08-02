@@ -1,4 +1,4 @@
-# 🚗 ABRP EV Dashboard
+# 🚗 EV Dashboard
 
 > A self-hosted analytics dashboard for electric vehicle data. Runs anywhere — Raspberry Pi, Intel/AMD, NAS, cloud. Import ABRP (A Better Routeplanner) Excel exports, sync directly from your car manufacturer's servers, and get rich insights into driving habits, charging sessions, and energy consumption.
 
@@ -84,6 +84,7 @@ The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, 
 - **Date range picker** — select a day, week, month, or year from a picker. All KPIs, charts, tables, and charge locations update instantly to match the selected period
 - **Full data tables** — every trip and charging session with provider detection. Sortable by any column (click header ⬆⬇), searchable across all columns, filterable by type (drive/charge) and provider
 - **Charge location analytics** — per-provider session counts, total kWh, last visit
+- **Editable charge providers** — ✏️ button to correct the provider for any charge session. Missing a provider? Add custom providers (e.g. "Luminus", "Engie") that are shared globally across all users
 - **PDF export** — save the entire dashboard as a multi-page report
 - **Fully responsive** — works on phones, tablets, and desktops (all data accessible at every screen size)
 - **PWA installable** — install as a native app on iOS (Add to Home Screen) and Android (Install App). Full offline app shell, custom icon, status bar integration, and home screen shortcuts (Upload, Settings)
@@ -216,6 +217,10 @@ templates/
 | `GET /api/vehicles/<id>/data` | Get activity data for a specific vehicle |
 | `POST /api/vehicles/<id>/upload` | Upload Excel files for a specific vehicle |
 | `GET /api/fleet` | Fleet overview (fleet managers + admins only) |
+| `GET /api/charge-locations` | List all charge sessions with id, location, provider |
+| `PATCH /api/charge-location/<id>` | Update charge_provider for one session |
+| `GET /api/custom-providers` | List all custom charge providers (global) |
+| `POST /api/custom-providers` | Add a custom charge provider (global, shared) |
 | `GET /api/data` | Get all activity records (per-user) |
 | `POST /api/upload` | Upload ABRP Excel files (per-user) |
 | `GET /api/status` | Server health + user info |

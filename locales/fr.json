@@ -5,7 +5,7 @@
     "author": "ABRP Dashboard"
   },
   "ui": {
-    "title": "Tableau de bord ABRP",
+    "title": "EV Dashboard",
     "subtitle": "statistiques de distance, comportement de charge & fournisseurs",
     "upload": "Importer",
     "pdf": "PDF",
@@ -68,16 +68,19 @@
     "sessions": "Sessions",
     "energy_kwh": "Énergie (kWh)",
     "last_visit": "Dernière visite",
-    "table.search_ph": "🔍 Rechercher dans toutes les colonnes...",
-    "table.all_types": "Tous les types",
-    "table.all_providers": "Tous les fournisseurs",
-    "table.records_lc": "enregistrements",
-    "table.all_types_opt": "📋 Tous les types",
-    "table.drive_opt": "🚗 Conduite",
-    "table.charge_opt": "⚡ Charge",
-    "table.edit_providers": "✏️ Modifier fournisseur",
-    "table.edit_hint": "Cliquez sur le menu déroulant pour assigner le bon fournisseur de charge.",
-    "records_lc": "enregistrements"
+    "records_lc": "enregistrements",
+    "add_custom": "➕ Ajouter un fournisseur :",
+    "custom_ph": "ex. Luminus, Engie, ...",
+    "no_sessions": "Aucune session de charge trouvée.",
+    "unknown_loc": "lieu inconnu",
+    "search_ph": "🔍 Rechercher dans toutes les colonnes...",
+    "all_types": "Tous les types",
+    "all_providers": "Tous les fournisseurs",
+    "all_types_opt": "📋 Tous les types",
+    "drive_opt": "🚗 Conduite",
+    "charge_opt": "⚡ Charge",
+    "edit_providers": "✏️ Modifier fournisseur",
+    "edit_hint": "Cliquez sur le menu déroulant pour assigner le bon fournisseur de charge."
   },
   "activity": {
     "drive": "🚗 Conduite",
@@ -221,7 +224,8 @@
     "date_range_reset": "Plage de dates réinitialisée",
     "date_range_select": "Sélectionnez d'abord une date",
     "date_range_applied": "enregistrements",
-    "no_data_period": "Aucune donnée dans cette période"
+    "no_data_period": "Aucune donnée dans cette période",
+    "added": "ajouté"
   },
   "help": {
     "title": "❓ Aide — Comment fonctionne le tableau de bord",
@@ -235,7 +239,7 @@
     "charging_stats": "⚡ Statistiques de charge & Fournisseurs",
     "sessions_provider_desc": "Nombre de charges par fournisseur. Chaque couleur représente un fournisseur différent.",
     "energy_provider_desc": "Quantité de kWh chargée par fournisseur. Utile pour voir d'où vient la majeure partie de votre énergie.",
-    "charge_locations_desc": "Aperçu de chaque lieu de charge avec nombre de sessions, total kWh et dernière visite.",
+    "charge_locations_desc": "Aperçu de chaque lieu de charge avec le nombre de sessions, le total kWh et la dernière visite. Cliquez sur ✏️ Modifier fournisseur pour assigner le bon fournisseur par session.",
     "driving_stats": "📊 Statistiques de conduite",
     "distance_period_desc": "Graphique à barres avec le total km par jour, semaine, mois ou année.",
     "energy_charged_desc": "Graphique à barres avec le total kWh chargé par période.",
@@ -272,7 +276,8 @@
     "help.filter_month_desc": "Choisissez un mois (par défaut). Affiche toutes les données de ce mois.",
     "help.filter_year_desc": "Choisissez une année. Affiche toutes les données de cette année.",
     "help.filter_all_desc": "Affiche toutes les données sans filtre.",
-    "help.filters_note": "KPI, graphiques, lieux de charge et tableau d'activités se mettent à jour instantanément."
+    "help.filters_note": "KPI, graphiques, lieux de charge et tableau d'activités se mettent à jour instantanément.",
+    "edit_providers_desc": "Toutes les sessions n'ont pas automatiquement le bon fournisseur. Cliquez sur ✏️ pour choisir le bon fournisseur par session. Un fournisseur manque ? Tapez son nom dans le champ en haut et cliquez sur + pour l'ajouter. Le fournisseur est ensuite disponible pour tous."
   },
   "providers": {
     "DATS 24": "DATS 24",

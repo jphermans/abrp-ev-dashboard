@@ -5,8 +5,8 @@
     "author": "ABRP Dashboard"
   },
   "ui": {
-    "title": "ABRP Driving Dashboard",
-    "subtitle": "EV — distance statistics, charging behavior & providers",
+    "title": "EV Dashboard",
+    "subtitle": "distance statistics, charging behavior & providers",
     "upload": "Upload",
     "pdf": "PDF",
     "help": "Help",
@@ -68,16 +68,19 @@
     "sessions": "Sessions",
     "energy_kwh": "Energy (kWh)",
     "last_visit": "Last visit",
-    "table.search_ph": "🔍 Search all columns...",
-    "table.all_types": "All types",
-    "table.all_providers": "All providers",
-    "table.records_lc": "records",
-    "table.all_types_opt": "📋 All types",
-    "table.drive_opt": "🚗 Drive",
-    "table.charge_opt": "⚡ Charge",
-    "table.edit_providers": "✏️ Edit provider",
-    "table.edit_hint": "Click the provider dropdown to assign the correct charging provider for each session.",
-    "records_lc": "records"
+    "records_lc": "records",
+    "add_custom": "➕ Add custom provider:",
+    "custom_ph": "e.g. Luminus, Engie, ...",
+    "no_sessions": "No charge sessions found.",
+    "unknown_loc": "unknown location",
+    "search_ph": "🔍 Search all columns...",
+    "all_types": "All types",
+    "all_providers": "All providers",
+    "all_types_opt": "📋 All types",
+    "drive_opt": "🚗 Drive",
+    "charge_opt": "⚡ Charge",
+    "edit_providers": "✏️ Edit provider",
+    "edit_hint": "Click the provider dropdown to assign the correct charging provider for each session."
   },
   "activity": {
     "drive": "🚗 Drive",
@@ -221,7 +224,8 @@
     "date_range_reset": "Date range reset",
     "date_range_select": "Select a date first",
     "date_range_applied": "records",
-    "no_data_period": "No data in this period"
+    "no_data_period": "No data in this period",
+    "added": "added"
   },
   "help": {
     "title": "❓ Help — How the dashboard works",
@@ -235,7 +239,7 @@
     "charging_stats": "⚡ Charging Statistics & Providers",
     "sessions_provider_desc": "Shows the number of charges per provider. Each color represents a different provider.",
     "energy_provider_desc": "Shows how much kWh you charged per provider. Useful to see where you get most energy.",
-    "charge_locations_desc": "Overview of each charge location with session count, total kWh, and last visit date.",
+    "charge_locations_desc": "Overview of each charge location with session count, total kWh, and last visit date. Click ✏️ Edit provider to assign the correct charging provider per session.",
     "driving_stats": "📊 Driving Statistics",
     "distance_period_desc": "Bar chart with total km per day, week, month, or year — depending on the active filter.",
     "energy_charged_desc": "Bar chart with total kWh charged per period.",
@@ -272,7 +276,8 @@
     "help.filter_month_desc": "Pick a month (default). Shows all data for that month.",
     "help.filter_year_desc": "Pick a year. Shows all data for that year.",
     "help.filter_all_desc": "Shows all data without filtering.",
-    "help.filters_note": "KPIs, charts, charge locations, and activity table all update instantly when changing the period or picker."
+    "help.filters_note": "KPIs, charts, charge locations, and activity table all update instantly when changing the period or picker.",
+    "edit_providers_desc": "Not all charge sessions have the correct provider automatically. Click ✏️ to choose the right provider per session. Missing a provider? Type the name in the field at the top and click + to add it. The provider is then available for everyone in the dropdown."
   },
   "providers": {
     "DATS 24": "DATS 24",

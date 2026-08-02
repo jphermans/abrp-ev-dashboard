@@ -187,8 +187,30 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 </div>
 <div class="table-card">
   <div class="table-title" data-i18n="sections.all_activities">📋 Alle activiteiten</div>
+  <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="tableSearchInput" data-i18n-ph="table.search_ph" placeholder="🔍 Zoeken in alle kolommen..." style="flex:1;min-width:150px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.8rem;" oninput="applyTableFilter()">
+    <select id="tableTypeFilter" style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="applyTableFilter()">
+      <option value="" data-i18n="table.all_types_opt">📋 Alle types</option>
+      <option value="Rijd" data-i18n="table.drive_opt">🚗 Rijden</option>
+      <option value="Laad op" data-i18n="table.charge_opt">⚡ Laden</option>
+    </select>
+    <select id="tableProviderFilter" style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;" onchange="applyTableFilter()">
+      <option value="">🔌 Alle providers</option>
+    </select>
+    <span id="tableRowCount" style="font-size:.72rem;color:var(--text-muted);white-space:nowrap;"></span>
+  </div>
   <div class="table-wrap">
-    <table><thead><tr><th data-i18n="table.date">Datum</th><th data-i18n="table.time">Tijd</th><th data-i18n="table.type">Type</th><th data-i18n="table.duration">Duur</th><th data-i18n="table.distance_km">Afstand (km)</th><th data-i18n="table.soc">SoC</th><th data-i18n="table.charged">Bijgeladen</th><th data-i18n="table.provider">Provider</th><th data-i18n="table.location">Locatie</th></tr></thead><tbody id="dataTableBody"></tbody></table>
+    <table id="activitiesTable"><thead><tr>
+      <th onclick="sortTable('date')" style="cursor:pointer;user-select:none;" data-i18n="table.date">Datum <span id="sort-date"></span></th>
+      <th onclick="sortTable('time')" style="cursor:pointer;user-select:none;" data-i18n="table.time">Tijd <span id="sort-time"></span></th>
+      <th onclick="sortTable('activity')" style="cursor:pointer;user-select:none;" data-i18n="table.type">Type <span id="sort-activity"></span></th>
+      <th onclick="sortTable('duration')" style="cursor:pointer;user-select:none;" data-i18n="table.duration">Duur <span id="sort-duration"></span></th>
+      <th onclick="sortTable('distance_km')" style="cursor:pointer;user-select:none;" data-i18n="table.distance_km">Afstand (km) <span id="sort-distance_km"></span></th>
+      <th onclick="sortTable('start_soc')" style="cursor:pointer;user-select:none;" data-i18n="table.soc">SoC <span id="sort-start_soc"></span></th>
+      <th onclick="sortTable('energy_kwh')" style="cursor:pointer;user-select:none;" data-i18n="table.charged">Bijgeladen <span id="sort-energy_kwh"></span></th>
+      <th onclick="sortTable('charge_provider')" style="cursor:pointer;user-select:none;" data-i18n="table.provider">Provider <span id="sort-charge_provider"></span></th>
+      <th onclick="sortTable('charge_location')" style="cursor:pointer;user-select:none;" data-i18n="table.location">Locatie <span id="sort-charge_location"></span></th>
+    </tr></thead><tbody id="dataTableBody"></tbody></table>
   </div>
 </div>
 </div>
@@ -1246,8 +1268,95 @@ function renderChargeLocations(data){
   document.getElementById('chargeLocationsBody').innerHTML=sorted.map(l=>'<tr><td><span class="provider-badge '+providerClass(l.provider)+'">'+esc(l.provider)+'</span></td><td>'+esc(l.location)+'</td><td>'+esc(l.count)+'</td><td>'+Math.round(l.kwh*10)/10+'</td><td>'+esc(l.lastDate)+'</td></tr>').join('');
 }
 
-function renderTable(data){
-  document.getElementById('dataTableBody').innerHTML=data.slice().reverse().map(r=>'<'+'tr><td>'+esc(r.date)+'</td><td>'+esc(r.datetime.slice(11,16))+'</td><td><span class="badge '+(r.activity==='Rijd'?'badge-drive':'badge-charge')+'">'+(r.activity==='Rijd'?t('activity.drive'):t('activity.charge'))+'</span></td><td>'+esc(r.duration)+'</td><td>'+(r.distance_km!=null?r.distance_km:'—')+'</td><td>'+(r.start_soc!=null?r.start_soc+'%':'—')+'</td><td>'+(r.energy_kwh!=null?r.energy_kwh+' kWh':'—')+'</td><td>'+(r.charge_provider?'<span class="provider-badge '+providerClass(r.charge_provider)+'">'+esc(r.charge_provider)+'</span>':'—')+'</td><td style="font-size:.78rem;color:var(--text-muted)">'+esc(r.charge_location||'—')+'</td></tr>').join('');
+// ─── Table Sort & Filter ────────────────────────────────────────
+let tableSort = { col: 'date', dir: 'desc' };
+let tableFilters = { search: '', type: '', provider: '' };
+
+function getTableData() {
+  let data = getFilteredData().slice();
+  // Apply filters
+  if (tableFilters.search) {
+    const q = tableFilters.search.toLowerCase();
+    data = data.filter(r => {
+      return Object.values(r).some(v => v != null && String(v).toLowerCase().includes(q));
+    });
+  }
+  if (tableFilters.type) {
+    data = data.filter(r => r.activity === tableFilters.type);
+  }
+  if (tableFilters.provider) {
+    data = data.filter(r => r.charge_provider === tableFilters.provider);
+  }
+  // Apply sort
+  const col = tableSort.col;
+  const dir = tableSort.dir === 'asc' ? 1 : -1;
+  data.sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+    return String(va).localeCompare(String(vb)) * dir;
+  });
+  return data;
+}
+
+function sortTable(col) {
+  if (tableSort.col === col) {
+    tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    tableSort.col = col;
+    tableSort.dir = 'asc';
+  }
+  updateSortIndicators();
+  renderTableRows();
+}
+
+function updateSortIndicators() {
+  // Clear all indicators
+  document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+  // Set active indicator
+  const el = document.getElementById('sort-' + tableSort.col);
+  if (el) el.textContent = tableSort.dir === 'asc' ? '⬆' : '⬇';
+}
+
+function applyTableFilter() {
+  tableFilters.search = document.getElementById('tableSearchInput').value.trim();
+  tableFilters.type = document.getElementById('tableTypeFilter').value;
+  tableFilters.provider = document.getElementById('tableProviderFilter').value;
+  renderTableRows();
+}
+
+function populateProviderFilter(data) {
+  const select = document.getElementById('tableProviderFilter');
+  const currentVal = select.value;
+  const providers = [...new Set(data.map(r => r.charge_provider).filter(p => p))].sort();
+  select.innerHTML = '<option value="">🔌 ' + t('table.all_providers') + '</option>' +
+    providers.map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('');
+  select.value = currentVal;
+}
+
+function renderTable(data) {
+  // Populate provider dropdown on first render
+  populateProviderFilter(data);
+  updateSortIndicators();
+  renderTableRows();
+}
+
+function renderTableRows() {
+  const data = getTableData();
+  document.getElementById('tableRowCount').textContent = data.length + ' / ' + getFilteredData().length + ' ' + t('table.records_lc');
+  document.getElementById('dataTableBody').innerHTML = data.map(r =>
+    '<' + 'tr><td>' + esc(r.date) + '</td>' +
+    '<td>' + esc(r.datetime.slice(11, 16)) + '</td>' +
+    '<td><span class="badge ' + (r.activity === 'Rijd' ? 'badge-drive' : 'badge-charge') + '">' +
+      (r.activity === 'Rijd' ? t('activity.drive') : t('activity.charge')) + '</span></td>' +
+    '<td>' + esc(r.duration) + '</td>' +
+    '<td>' + (r.distance_km != null ? r.distance_km : '—') + '</td>' +
+    '<td>' + (r.start_soc != null ? r.start_soc + '%' : '—') + '</td>' +
+    '<td>' + (r.energy_kwh != null ? r.energy_kwh + ' kWh' : '—') + '</td>' +
+    '<td>' + (r.charge_provider ? '<span class="provider-badge ' + providerClass(r.charge_provider) + '">' + esc(r.charge_provider) + '</span>' : '—') + '</td>' +
+    '<td style="font-size:.78rem;color:var(--text-muted)">' + esc(r.charge_location || '—') + '</td></tr>'
+  ).join('');
 }
 
 function getFilteredData() {

@@ -65,7 +65,14 @@
     "location": "Standort",
     "sessions": "Vorgänge",
     "energy_kwh": "Energie (kWh)",
-    "last_visit": "Letzter Besuch"
+    "last_visit": "Letzter Besuch",
+    "table.search_ph": "🔍 Alle Spalten durchsuchen...",
+    "table.all_types": "Alle Typen",
+    "table.all_providers": "Alle Anbieter",
+    "table.records_lc": "Datensätze",
+    "table.all_types_opt": "📋 Alle Typen",
+    "table.drive_opt": "🚗 Fahrt",
+    "table.charge_opt": "⚡ Laden"
   },
   "activity": {
     "drive": "🚗 Fahrt",

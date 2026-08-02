@@ -65,7 +65,14 @@
     "location": "Location",
     "sessions": "Sessions",
     "energy_kwh": "Energy (kWh)",
-    "last_visit": "Last visit"
+    "last_visit": "Last visit",
+    "table.search_ph": "🔍 Search all columns...",
+    "table.all_types": "All types",
+    "table.all_providers": "All providers",
+    "table.records_lc": "records",
+    "table.all_types_opt": "📋 All types",
+    "table.drive_opt": "🚗 Drive",
+    "table.charge_opt": "⚡ Charge"
   },
   "activity": {
     "drive": "🚗 Drive",

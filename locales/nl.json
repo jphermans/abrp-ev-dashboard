@@ -65,7 +65,14 @@
     "location": "Locatie",
     "sessions": "Sessies",
     "energy_kwh": "Energie (kWh)",
-    "last_visit": "Laatste bezoek"
+    "last_visit": "Laatste bezoek",
+    "table.search_ph": "🔍 Zoeken in alle kolommen...",
+    "table.all_types": "Alle types",
+    "table.all_providers": "Alle providers",
+    "table.records_lc": "records",
+    "table.all_types_opt": "📋 Alle types",
+    "table.drive_opt": "🚗 Rijden",
+    "table.charge_opt": "⚡ Laden"
   },
   "activity": {
     "drive": "🚗 Rijden",

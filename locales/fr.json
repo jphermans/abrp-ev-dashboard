@@ -103,7 +103,8 @@
     "delete_account": "🗑️ Supprimer le compte",
     "delete_account_hint": "Supprime votre compte et toutes les données (trajets, sessions de charge, fichiers Excel, connexions). Action irréversible.",
     "delete_password_ph": "Tapez votre mot de passe pour confirmer",
-    "delete_account_btn": "Supprimer définitivement le compte"
+    "delete_account_btn": "Supprimer définitivement le compte",
+    "dark_light": "Thème Sombre / Clair"
   },
   "vehicle": {
     "details_title": "🚗 Détails du véhicule",

@@ -103,7 +103,8 @@
     "delete_account": "🗑️ Konto löschen",
     "delete_account_hint": "Entfernt Ihr Konto und alle Daten (Fahrten, Ladevorgänge, Excel-Dateien, Verbindungen). Kann nicht rückgängig gemacht werden.",
     "delete_password_ph": "Passwort eingeben zur Bestätigung",
-    "delete_account_btn": "Konto dauerhaft löschen"
+    "delete_account_btn": "Konto dauerhaft löschen",
+    "dark_light": "Dunkel / Hell Design"
   },
   "vehicle": {
     "details_title": "🚗 Fahrzeugdetails",

@@ -103,7 +103,8 @@
     "delete_account": "🗑️ Delete account",
     "delete_account_hint": "Removes your account and all data (trips, charging sessions, Excel files, connector logins). This cannot be undone.",
     "delete_password_ph": "Type your password to confirm",
-    "delete_account_btn": "Permanently delete account"
+    "delete_account_btn": "Permanently delete account",
+    "dark_light": "Dark / Light theme"
   },
   "vehicle": {
     "details_title": "🚗 Vehicle Details",

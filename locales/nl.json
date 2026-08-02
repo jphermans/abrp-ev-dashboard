@@ -103,7 +103,8 @@
     "delete_account": "🗑️ Account verwijderen",
     "delete_account_hint": "Verwijdert je account én alle gegevens (ritten, laadsessies, Excel bestanden, connector logins). Dit kan niet ongedaan worden gemaakt.",
     "delete_password_ph": "Typ je wachtwoord om te bevestigen",
-    "delete_account_btn": "Account permanent verwijderen"
+    "delete_account_btn": "Account permanent verwijderen",
+    "dark_light": "Donker / Licht thema"
   },
   "vehicle": {
     "details_title": "🚗 Voertuig Details",

@@ -269,21 +269,21 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
 <!-- Help Modal -->
 <div class="modal-overlay" id="helpModal" onclick="if(event.target===this)closeHelp()">
   <div class="modal wide">
-    <h2>❓ Help — Hoe het dashboard werkt</h2>
+    <h2 data-i18n="help.title">❓ Help — Hoe het dashboard werkt</h2>
 
     <div class="help-section">
-      <h3>📊 KPI Kaarten</h3>
-      <div class="help-card"><div class="help-card-icon">🛣️</div><div class="help-card-body"><h4>Totaal gereden</h4><p>Alle gereden kilometers in de geselecteerde periode. Het getal eronder toont het aantal ritten.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4>Totaal bijgeladen</h4><p>Totaal aantal kWh bijgeladen via alle laadsessies. Het getal eronder toont het aantal laadsessies.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">📊</div><div class="help-card-body"><h4>Verbruik</h4><p>Gemiddeld energieverbruik in kWh per 100 km. Berekend als: totale kWh bijgeladen ÷ totale km × 100. Lager = efficiënter rijden.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">📅</div><div class="help-card-body"><h4>Actieve dagen</h4><p>Aantal unieke dagen waarop gereden is. Subtekst toont gemiddelde km per actieve dag.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🔌</div><div class="help-card-body"><h4>Top provider</h4><p>Welke laadprovider je het meest gebruikt (bijv. DATS 24, Fastned, Allego). Subtekst toont hoe vaak je daar geladen hebt.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🏆</div><div class="help-card-body"><h4>Langste rit</h4><p>De langste enkele rit in kilometers binnen de geselecteerde periode.</p></div></div>
+      <h3 data-i18n="help.kpi_cards">📊 KPI Kaarten</h3>
+      <div class="help-card"><div class="help-card-icon">🛣️</div><div class="help-card-body"><h4 data-i18n="kpi.total_driven">Totaal gereden</h4><p data-i18n="help.total_driven_desc">Alle gereden kilometers in de geselecteerde periode. Het getal eronder toont het aantal ritten.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4 data-i18n="kpi.total_charged">Totaal bijgeladen</h4><p data-i18n="help.total_charged_desc">Totaal aantal kWh bijgeladen via alle laadsessies. Het getal eronder toont het aantal laadsessies.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📊</div><div class="help-card-body"><h4 data-i18n="kpi.consumption">Verbruik</h4><p data-i18n="help.consumption_desc">Gemiddeld energieverbruik in kWh per 100 km. Berekend als: totale kWh bijgeladen ÷ totale km × 100. Lager = efficiënter rijden.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📅</div><div class="help-card-body"><h4 data-i18n="kpi.active_days">Actieve dagen</h4><p data-i18n="help.active_days_desc">Aantal unieke dagen waarop gereden is. Subtekst toont gemiddelde km per actieve dag.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🔌</div><div class="help-card-body"><h4 data-i18n="kpi.top_provider">Top provider</h4><p data-i18n="help.top_provider_desc">Welke laadprovider je het meest gebruikt (bijv. DATS 24, Fastned, Allego). Subtekst toont hoe vaak je daar geladen hebt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🏆</div><div class="help-card-body"><h4 data-i18n="kpi.longest_trip">Langste rit</h4><p data-i18n="help.longest_trip_desc">De langste enkele rit in kilometers binnen de geselecteerde periode.</p></div></div>
     </div>
 
     <div class="help-section">
-      <h3>⚡ Laadstatistieken & Providers</h3>
-      <div class="help-card"><div class="help-card-icon">🔌</div><div class="help-card-body"><h4>Laadsessies per provider (donut grafiek)</h4><p>Toont het aantal laadbeurten per provider. Elke kleur represents een andere provider:</p>
+      <h3 data-i18n="help.charging_stats">⚡ Laadstatistieken & Providers</h3>
+      <div class="help-card"><div class="help-card-icon">🔌</div><div class="help-card-body"><h4 data-i18n="charts.sessions_per_provider">Laadsessies per provider</h4><p data-i18n="help.sessions_provider_desc">Toont het aantal laadbeurten per provider. Elke kleur represents een andere provider.</p>
       <p style="margin-top:6px;">
         <span class="provider-badge provider-DATS24">DATS 24</span> 🟠
         <span class="provider-badge provider-Fastned">Fastned</span> 🔵
@@ -291,62 +291,67 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
         <span class="provider-badge provider-ShellRecharge">Shell Recharge</span> 🔴
         <span class="provider-badge provider-Other">Andere</span> 🟣
       </p></div></div>
-      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4>Energie per provider (balkgrafiek)</h4><p>Toont hoeveel kWh je per provider hebt bijgeladen. Nuttig om te zien waar je de meeste energie haalt.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">📍</div><div class="help-card-body"><h4>Laadlocaties tabel</h4><p>Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4 data-i18n="charts.energy_per_provider">Energie per provider</h4><p data-i18n="help.energy_provider_desc">Toont hoeveel kWh je per provider hebt bijgeladen. Nuttig om te zien waar je de meeste energie haalt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📍</div><div class="help-card-body"><h4 data-i18n="sections.charge_locations">Laadlocaties tabel</h4><p data-i18n="help.charge_locations_desc">Overzicht van elke laadlocatie met het aantal sessies, totale kWh, en wanneer je er voor het laatst geladen hebt.</p></div></div>
     </div>
 
     <div class="help-section">
-      <h3>📊 Rijstatistieken</h3>
-      <div class="help-card"><div class="help-card-icon">📊</div><div class="help-card-body"><h4>Afstand per periode</h4><p>Balkgrafiek met totale km per dag, week, maand of jaar — afhankelijk van het actieve filter.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4>Energie bijgeladen</h4><p>Balkgrafiek met totale kWh bijgeladen per periode.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🔋</div><div class="help-card-body"><h4>Batterij SoC verloop</h4><p>Lijndiagram van de gemiddelde batterijlading (State of Charge) bij start van elke periode. Een dalende lijn betekent dat je gemiddeld met minder batterij begint te rijden.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🏁</div><div class="help-card-body"><h4>Kilometerteller (cumulatief)</h4><p>Lijndiagram van de kilometerstand van de wagen over tijd. Toont hoe snel de wagen slijt.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">📅</div><div class="help-card-body"><h4>Ritten per weekdag</h4><p>Balkgrafiek met aantal ritten per dag van de week (Ma-Zo). Helpt inzichtelijk maken op welke dagen je het meest rijdt.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🛣️</div><div class="help-card-body"><h4>Afstand verdeling</h4><p>Donut grafiek met verdeling van ritten in afstandscategorieën: 0-10 km (kort), 10-50 km (woon-werk), 50-100 km (regionaal), 100-200 km (lang), 200+ km (zeer lang).</p></div></div>
+      <h3 data-i18n="help.driving_stats">📊 Rijstatistieken</h3>
+      <div class="help-card"><div class="help-card-icon">📊</div><div class="help-card-body"><h4 data-i18n="charts.distance_per_period">Afstand per periode</h4><p data-i18n="help.distance_period_desc">Balkgrafiek met totale km per dag, week, maand of jaar — afhankelijk van het actieve filter.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">⚡</div><div class="help-card-body"><h4 data-i18n="charts.energy_charged">Energie bijgeladen</h4><p data-i18n="help.energy_charged_desc">Balkgrafiek met totale kWh bijgeladen per periode.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🔋</div><div class="help-card-body"><h4 data-i18n="charts.soc_trend">Batterij SoC verloop</h4><p data-i18n="help.soc_trend_desc">Lijndiagram van de gemiddelde batterijlading (State of Charge) bij start van elke periode. Een dalende lijn betekent dat je gemiddeld met minder batterij begint te rijden.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🏁</div><div class="help-card-body"><h4 data-i18n="charts.odometer">Kilometerteller (cumulatief)</h4><p data-i18n="help.odometer_desc">Lijndiagram van de kilometerstand van de wagen over tijd. Toont hoe snel de wagen slijt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">📅</div><div class="help-card-body"><h4 data-i18n="charts.weekday_trips">Ritten per weekdag</h4><p data-i18n="help.weekday_desc">Balkgrafiek met aantal ritten per dag van de week (Ma-Zo). Helpt inzichtelijk maken op welke dagen je het meest rijdt.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🛣️</div><div class="help-card-body"><h4 data-i18n="charts.distance_distribution">Afstand verdeling</h4><p data-i18n="help.distribution_desc">Donut grafiek met verdeling van ritten in afstandscategorieën: 0-10 km (kort), 10-50 km (woon-werk), 50-100 km (regionaal), 100-200 km (lang), 200+ km (zeer lang).</p></div></div>
     </div>
 
     <div class="help-section">
-      <h3>🔀 Tijdfilters</h3>
-      <p>Met de filterknoppen bovenaan kies je hoe de data wordt gegroepeerd:</p>
+      <h3 data-i18n="help.time_filters">🔀 Tijdfilters</h3>
+      <p data-i18n="help.filters_intro">Met de filterknoppen bovenaan kies je hoe de data wordt gegroepeerd:</p>
       <ul>
-        <li><span class="kbd">Dag</span> — Elke individuele dag als aparte kolom/rij</li>
-        <li><span class="kbd">Week</span> — Gegroepeerd per ISO-weeknummer</li>
-        <li><span class="kbd">Maand</span> — Gegroepeerd per maand (standaard)</li>
-        <li><span class="kbd">Jaar</span> — Jaartotalen</li>
-        <li><span class="kbd">Alles</span> — Alle data samengevoegd als één periode</li>
+        <li><span class="kbd" data-i18n="filters.day">Dag</span> — <span data-i18n="help.filter_day_desc">Elke individuele dag als aparte kolom/rij</span></li>
+        <li><span class="kbd" data-i18n="filters.week">Week</span> — <span data-i18n="help.filter_week_desc">Gegroepeerd per ISO-weeknummer</span></li>
+        <li><span class="kbd" data-i18n="filters.month">Maand</span> — <span data-i18n="help.filter_month_desc">Gegroepeerd per maand (standaard)</span></li>
+        <li><span class="kbd" data-i18n="filters.year">Jaar</span> — <span data-i18n="help.filter_year_desc">Jaartotalen</span></li>
+        <li><span class="kbd" data-i18n="filters.all">Alles</span> — <span data-i18n="help.filter_all_desc">Alle data samengevoegd als één periode</span></li>
       </ul>
-      <p style="margin-top:8px;">Alle grafieken updaten onmiddellijk bij het wijzigen van filter.</p>
+      <p style="margin-top:8px;" data-i18n="help.filters_note">Alle grafieken updaten onmiddellijk bij het wijzigen van filter.</p>
     </div>
 
     <div class="help-section">
-      <h3>📂 Data toevoegen</h3>
-      <div class="help-card"><div class="help-card-icon">📤</div><div class="help-card-body"><h4>Excel Upload</h4><p>Klik op <span class="kbd">📂 Upload</span> en selecteer één of meer ABRP Excel exports. De server parset de bestanden, converteert mijlen naar km, detecteert laadproviders, en merget alles samen. Bestanden worden lokaal opgeslagen.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🚗</div><div class="help-card-body"><h4>Volkswagen WeConnect</h4><p>In <span class="kbd">⚙️ Instellingen</span> kun je je VW account koppelen (gratis). Klik op <span class="kbd">🔄 Sync</span> om ritten en laaddata direct van Volkswagen servers op te halen.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🔑</div><div class="help-card-body"><h4>ABRP API Token</h4><p>Voor premium ABRP API keys. Sla je token op in <span class="kbd">⚙️ Instellingen</span> om activiteiten rechtstreeks van ABRP op te halen.</p></div></div>
+      <h3 data-i18n="help.add_data">📂 Data toevoegen</h3>
+      <div class="help-card"><div class="help-card-icon">📤</div><div class="help-card-body"><h4 data-i18n="ui.upload">Excel Upload</h4><p data-i18n="help.upload_desc">Klik op 📂 Upload en selecteer één of meer ABRP Excel exports. De server parset de bestanden, converteert mijlen naar km, detecteert laadproviders, en merget alles samen.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🚗</div><div class="help-card-body"><h4 data-i18n="settings.vehicle_connections">Volkswagen WeConnect</h4><p data-i18n="help.vw_desc">In ⚙️ Instellingen kun je je VW account koppelen (gratis). Klik op 🔄 Sync om ritten en laaddata direct van Volkswagen servers op te halen.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🔑</div><div class="help-card-body"><h4 data-i18n="settings.abrp_api">ABRP API</h4><p data-i18n="help.abrp_desc">Voor premium ABRP API keys. Sla je token op in ⚙️ Instellingen om activiteiten rechtstreeks van ABRP op te halen.</p></div></div>
     </div>
 
     <div class="help-section">
-      <h3>⚙️ Instellingen</h3>
-      <div class="help-card"><div class="help-card-icon">🌙</div><div class="help-card-body"><h4>Donker / Licht thema</h4><p>Schakel tussen donker en licht uiterlijk. Voorkeur wordt in je browser opgeslagen.</p></div></div>
-      <div class="help-card"><div class="help-card-icon">🌈</div><div class="help-card-body"><h4>Kleurenpalet</h4><p>Kies uit 6 kleurenpaletten: Default, Warm, Ocean, Forest, Sunset, Mono. Alle grafieken kleuren onmiddellijk mee.</p></div></div>
+      <h3 data-i18n="help.settings_section">⚙️ Instellingen</h3>
+      <div class="help-card"><div class="help-card-icon">🌙</div><div class="help-card-body"><h4 data-i18n="settings.dark_light">Donker / Licht thema</h4><p data-i18n="help.dark_light_desc">Schakel tussen donker en licht uiterlijk. Voorkeur wordt in je browser opgeslagen.</p></div></div>
+      <div class="help-card"><div class="help-card-icon">🌈</div><div class="help-card-body"><h4 data-i18n="settings.palette">Kleurenpalet</h4><p data-i18n="help.palette_desc">Kies uit 6 kleurenpaletten: Default, Warm, Ocean, Forest, Sunset, Mono. Alle grafieken kleuren onmiddellijk mee.</p></div></div>
     </div>
 
     <div class="help-section">
-      <h3>📄 Export</h3>
-      <p>Klik op <span class="kbd">📄 PDF</span> om het volledige dashboard (alle kaarten, grafieken en tabellen) op te slaan als een PDF rapport. De PDF bevat meerdere pagina's als het dashboard niet op één pagina past.</p>
+      <h3 data-i18n="help.export_section">📄 Export</h3>
+      <p data-i18n="help.export_desc">Klik op 📄 PDF om het volledige dashboard (alle kaarten, grafieken en tabellen) op te slaan als een PDF rapport.</p>
     </div>
 
     <div class="help-section">
-      <h3>📱 Mobiel</h3>
-      <p>Het dashboard werkt op telefoons en tablets. KPI-kaarten tonen in 2 kolommen, grafieken stapelen verticaal, en tabellen scrollen horizontaal met touch. Alle data blijft beschikbaar — niets wordt verborgen.</p>
+      <h3 data-i18n="help.mobile_section">📱 Mobiel</h3>
+      <p data-i18n="help.mobile_desc">Het dashboard werkt op telefoons en tablets. KPI-kaarten tonen in 2 kolommen, grafieken stapelen verticaal, en tabellen scrollen horizontaal met touch.</p>
     </div>
 
     <div class="help-section">
-      <h3>🔒 Privacy</h3>
-      <p>Alle data blijft lokaal op je Raspberry Pi. De server stuurt geen data naar externe servers, tenzij je expliciet WeConnect of ABRP API gebruikt. Credentials worden opgeslagen in <code>data/vw_config.json</code> (lokaal, niet in de browser).</p>
+      <h3 data-i18n="help.privacy_section">🔒 Privacy</h3>
+      <p data-i18n="help.privacy_desc">Alle data blijft lokaal op je server. De server stuurt geen data naar externe servers, tenzij je expliciet WeConnect of ABRP API gebruikt.</p>
     </div>
 
-    <button class="btn btn-primary" onclick="closeHelp()" style="width:100%;margin-top:8px;">Sluiten</button>
+    <div class="help-section">
+      <h3 data-i18n="help.language_section">🌐 Taal</h3>
+      <p data-i18n="help.language_desc">Het dashboard ondersteunt meerdere talen. Download een template, vertaal deze, en upload je eigen taalbestand in de Instellingen.</p>
+    </div>
+
+    <button class="btn btn-primary" onclick="closeHelp()" style="width:100%;margin-top:8px;" data-i18n="ui.close">Sluiten</button>
   </div>
 </div>
 

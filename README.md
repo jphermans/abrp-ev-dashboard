@@ -85,6 +85,7 @@ The dashboard runs on **any Linux system** — Raspberry Pi, Intel/AMD servers, 
 - **Charge location analytics** — per-provider session counts, total kWh, last visit
 - **PDF export** — save the entire dashboard as a multi-page report
 - **Fully responsive** — works on phones, tablets, and desktops (all data accessible at every screen size)
+- **PWA installable** — install as a native app on iOS (Add to Home Screen) and Android (Install App). Full offline app shell, custom icon, status bar integration, and home screen shortcuts (Upload, Settings)
 - **Centered button text** — all buttons have centered labels on every screen size
 
 ### 🚗 Multi-Brand Vehicle Connectors (Plugin System)
@@ -189,6 +190,10 @@ connectors/
 scripts/
   install.sh           Bare-metal installer (systemd service)
   patch_vw_auth.py     Auto-patches CarConnectivity VW auth at startup
+static/
+  manifest.json        PWA manifest (installable app metadata)
+  sw.js                Service worker (offline app shell caching)
+  icons/               App icons (192px, 512px, maskable, Apple touch, favicon)
 locales/
   nl.json, en.json, fr.json, de.json
 templates/

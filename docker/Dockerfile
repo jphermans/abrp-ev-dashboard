@@ -23,9 +23,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py config.py excel_parser.py auth.py data_utils.py ./
 COPY templates/ templates/
 COPY routes/ routes/
-COPY routes/ routes/
 COPY connectors/ connectors/
 COPY locales/ locales/
+COPY static/ static/
+COPY scripts/ scripts/
 
 # Create data directory (will be mounted as volume)
 RUN mkdir -p /app/data

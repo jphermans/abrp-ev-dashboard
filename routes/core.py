@@ -4,13 +4,14 @@ import json
 import time
 from pathlib import Path
 from werkzeug.utils import secure_filename
-from flask import send_file, request, jsonify, session
+from flask import send_file, send_from_directory, request, jsonify, session
 from config import DATA_DIR, DASHBOARD_HTML, _cache, CACHE_TTL
 from excel_parser import parse_excel_to_records, get_data_file
 from auth import login_required, get_current_user_id, get_current_username, get_user_data_dir
 from data_utils import merge_and_save_records
 
 LOGIN_HTML = Path(__file__).parent.parent / "templates" / "login.html"
+STATIC_DIR = Path(__file__).parent.parent / "static"
 
 
 def register(app):
@@ -23,6 +24,23 @@ def register(app):
     @app.route("/login")
     def login_page():
         return send_file(LOGIN_HTML)
+
+    # PWA static files (manifest, service worker, icons)
+    @app.route("/static/<path:filename>")
+    def serve_static(filename):
+        return send_from_directory(str(STATIC_DIR), filename)
+
+    @app.route("/sw.js")
+    def service_worker():
+        return send_from_directory(str(STATIC_DIR), "sw.js", mimetype="application/javascript")
+
+    @app.route("/manifest.json")
+    def manifest():
+        return send_from_directory(str(STATIC_DIR), "manifest.json", mimetype="application/manifest+json")
+
+    @app.route("/favicon.ico")
+    def favicon():
+        return send_from_directory(str(STATIC_DIR), "icons/favicon-32.png", mimetype="image/png")
 
     @app.route("/api/data")
     @login_required

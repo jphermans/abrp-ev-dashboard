@@ -219,9 +219,11 @@ td { padding:8px 12px; border-bottom:1px solid var(--border); } tr:hover td { ba
     </div>
 
     <div class="setting-section">
-      <div class="setting-label">🔑 ABRP API Token</div>
-      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <div class="setting-hint">Je ABRP API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Lokaal opgeslagen in je browser.</div>
+      <div class="setting-label">🔑 ABRP API</div>
+      <input type="email" class="setting-input" id="abrpEmailInput" placeholder="ABRP e-mail" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="abrpPasswordInput" placeholder="ABRP wachtwoord" style="margin-bottom:6px;">
+      <input type="password" class="setting-input" id="abrpTokenInput" placeholder="API key (021bb269-xxxx-xxxx-xxxx-xxxxxxxxxxxx)">
+      <div class="setting-hint">E-mail, wachtwoord en API key (gratis via <a href="https://www.iternio.com/api" target="_blank">iternio.com/api</a>). Vereist voor live data ophalen.</div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveToken()" style="font-size:.8rem;padding:8px 16px;">Opslaan</button>
         <button class="btn btn-danger" onclick="deleteToken()" style="font-size:.8rem;padding:8px 16px;">Verwijderen</button>
@@ -890,9 +892,10 @@ async function loadData() {
 // SETTINGS
 // ═════════════════════════════════════════════════════════════════
 function openSettings() {
-  // Load current values
-  const token = localStorage.getItem('abrp_token') || '';
-  document.getElementById('abrpTokenInput').value = token;
+  // Load current ABRP values
+  document.getElementById('abrpEmailInput').value = localStorage.getItem('abrp_email') || '';
+  document.getElementById('abrpPasswordInput').value = localStorage.getItem('abrp_password') ? '••••••••' : '';
+  document.getElementById('abrpTokenInput').value = localStorage.getItem('abrp_token') || '';
   const theme = localStorage.getItem('theme') || 'dark';
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
   currentPalette = localStorage.getItem('palette') || 'default';
@@ -941,40 +944,53 @@ function setPalette(name) {
 }
 
 function saveToken() {
+  const email = document.getElementById('abrpEmailInput').value.trim();
+  const password = document.getElementById('abrpPasswordInput').value.trim();
   const token = document.getElementById('abrpTokenInput').value.trim();
-  if (!token) { showToast('Vul een token in', true); return; }
+  if (!token) { showToast('Vul een API key in', true); return; }
   localStorage.setItem('abrp_token', token);
-  document.getElementById('tokenStatus').innerHTML = '✅ Token opgeslagen in browser';
-  showToast('Token opgeslagen');
+  if (email) localStorage.setItem('abrp_email', email); else localStorage.removeItem('abrp_email');
+  // Only save password if user typed something new (not the dots)
+  if (password && password !== '••••••••') localStorage.setItem('abrp_password', password);
+  document.getElementById('tokenStatus').innerHTML = '✅ Opgeslagen in browser';
+  showToast('ABRP instellingen opgeslagen');
 }
 
 function deleteToken() {
   localStorage.removeItem('abrp_token');
+  localStorage.removeItem('abrp_email');
+  localStorage.removeItem('abrp_password');
+  document.getElementById('abrpEmailInput').value = '';
+  document.getElementById('abrpPasswordInput').value = '';
   document.getElementById('abrpTokenInput').value = '';
-  document.getElementById('tokenStatus').innerHTML = '🗑️ Token verwijderd';
-  showToast('Token verwijderd');
+  document.getElementById('tokenStatus').innerHTML = '🗑️ Verwijderd';
+  showToast('ABRP instellingen verwijderd');
 }
 
 async function testToken() {
+  const email = document.getElementById('abrpEmailInput').value.trim();
+  const password = document.getElementById('abrpPasswordInput').value.trim();
   const token = document.getElementById('abrpTokenInput').value.trim();
-  if (!token) { showToast('Vul eerst een token in', true); return; }
+  if (!token) { showToast('Vul eerst een API key in', true); return; }
   document.getElementById('tokenStatus').innerHTML = '⏳ Testen...';
   try {
+    // Send email + password (or stored password if dots shown)
+    const sendPassword = (password && password !== '••••••••') ? password : (localStorage.getItem('abrp_password') || '');
     const resp = await fetch('/api/abrp/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: '', password: '', api_key: token })
+      body: JSON.stringify({ email: email, password: sendPassword, api_key: token })
     });
     const data = await resp.json();
     if (data.error && data.error.includes('session')) {
-      document.getElementById('tokenStatus').innerHTML = '⚠️ Token geldig maar mist "session" feature (premium vereist). Excel upload werkt wel.';
+      document.getElementById('tokenStatus').innerHTML = '⚠️ API key geldig maar mist "session" feature (premium vereist). Excel upload werkt wel.';
     } else if (data.error) {
-      document.getElementById('tokenStatus').innerHTML = '❌ ' + data.error.substring(0, 100);
+      document.getElementById('tokenStatus').innerHTML = '❌ ' + esc(data.error.substring(0, 100));
     } else {
       document.getElementById('tokenStatus').innerHTML = '✅ Verbinding succesvol!';
     }
   } catch(e) {
-    document.getElementById('tokenStatus').innerHTML = '⚠️ Server niet bereikbaar — token lokaal opgeslagen';
+    document.getElementById('tokenStatus').innerHTML = '⚠️ Server niet bereikbaar — instellingen lokaal opgeslagen';
   }
 }
 

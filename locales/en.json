@@ -35,7 +35,9 @@
     "charged_times": "x charged",
     "single_trip": "single trip",
     "km_day": "km/day",
-    "average": "average"
+    "average": "average",
+    "odometer": "Odometer",
+    "started_at": "started at"
   },
   "sections": {
     "charging": "⚡ Charging Statistics & Providers",

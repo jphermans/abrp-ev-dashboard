@@ -35,7 +35,9 @@
     "charged_times": "x geladen",
     "single_trip": "enkele rit",
     "km_day": "km/dag",
-    "average": "gemiddeld"
+    "average": "gemiddeld",
+    "odometer": "Kilometerstand",
+    "started_at": "bij aanvang"
   },
   "sections": {
     "charging": "⚡ Laadstatistieken & Providers",

@@ -35,7 +35,9 @@
     "charged_times": "x chargé",
     "single_trip": "trajet unique",
     "km_day": "km/jour",
-    "average": "moyenne"
+    "average": "moyenne",
+    "odometer": "Kilométrage",
+    "started_at": "départ à"
   },
   "sections": {
     "charging": "⚡ Statistiques de charge & Fournisseurs",

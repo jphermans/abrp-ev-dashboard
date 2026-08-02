@@ -35,7 +35,9 @@
     "charged_times": "x geladen",
     "single_trip": "einzelne Fahrt",
     "km_day": "km/Tag",
-    "average": "Durchschnitt"
+    "average": "Durchschnitt",
+    "odometer": "Kilometerstand",
+    "started_at": "Start bei"
   },
   "sections": {
     "charging": "⚡ Ladestatistiken & Anbieter",
